@@ -206,8 +206,9 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 <script>
 'use strict';
 // ====== konfigurasi online (Supabase Realtime Broadcast; tanpa tabel) ======
-const SB_URL = '__SB_URL__';
-const SB_KEY = '__SB_KEY__';
+const SB_OVERRIDE = (() => { try { return JSON.parse(localStorage.getItem('ndbd_sb')); } catch (e) { return null; } })(); // hanya untuk tes lokal
+const SB_URL = (SB_OVERRIDE && SB_OVERRIDE.url) || '__SB_URL__';
+const SB_KEY = (SB_OVERRIDE && SB_OVERRIDE.key) || '__SB_KEY__';
 
 const JT = window.JalanTikus, TUT = window.Tutorial;
 const $ = (s, el = document) => el.querySelector(s);
@@ -216,7 +217,7 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
 };
-const myId = store.get('ndbd_id', null) || (() => { const id = Math.random().toString(36).slice(2, 10); store.set('ndbd_id', id); return id; })();
+const myId = (store.get('ndbd_id', null) || (() => { const id = Math.random().toString(36).slice(2, 10); store.set('ndbd_id', id); return id; })()) + (new URLSearchParams(location.search).get('as') || ''); // ?as= untuk tes 2 tab
 const SEAT_COLOR = ['var(--s0)', 'var(--s1)', 'var(--s2)', 'var(--s3)'];
 const KELAS_EM = ['🧍', '🧺', '🏪', '🏢'];
 
