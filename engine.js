@@ -6,8 +6,8 @@
   'use strict';
 
   const C = {
-    PUTARAN: 12, GAJI: [2, 3, 5, 7], NAIK: [0, 4, 8, 12], PUNGLI: [0, 0, 3, 5],
-    TARIF_86: [1, 2, 3, 4], TILANG: [2, 3, 4, 5], PROSES_RESMI: 2, FEE: 0.2, FEE_BANK: 0.1,
+    PUTARAN: 20, GAJI: [2, 3, 5, 7], NAIK: [0, 6, 14, 24], PUNGLI: [0, 0, 3, 5], REKAYASA: 2, KARTU_TIAP: 4, RP_AWAL: 2, OKNUM_RP_AWAL: 3, N_POS: 4, GAJI_OKNUM: 0,
+    TARIF_86: [2, 4, 6, 9], TILANG: [3, 5, 7, 10], PROSES_RESMI: 2, FEE: 0.2, FEE_BANK: 0.1,
     CITRA_MIN: 7, PINJOL_DAPAT: 5, PINJOL_BAYAR: 7, REMISI: 3, SEL_MEWAH: 2, LAPOR_MIN: 8,
     BERSIH_BERSIH: 1, MUTASI: 1, TUMBAL_CITRA: 2,
   };
@@ -74,6 +74,7 @@
     10: ['Operasi Senyap', 'Rekayasa Kasus tanpa token, tapi Sorotan +2.'],
   };
   const REAKSI = new Set([5, 8]);
+  const JT_TILE_EM = (t) => TILE[t][0];
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -95,17 +96,18 @@
   function createGame(players, opts = {}) {
     const rng = opts.rng || Math.random;
     const script = opts.script || {};
-    const delay = opts.delay || 0;
+    const delayMs = () => (typeof opts.delay === 'function' ? opts.delay() : opts.delay || 0);
     const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    const acak = (a) => shuffle(a.slice()); // urutan acak dulu → seri tidak selalu jatuh ke kursi yang sama
     const d6 = (queue) => (queue && queue.length ? queue.shift() : 1 + Math.floor(rng() * 6));
 
     const S = {
       t: 0, putaran: opts.putaran || C.PUTARAN, phase: 'play', turn: null, dice: null, kabar: null,
       log: [], events: [], evN: 0, prompt: null, stats: {}, result: null,
       players: players.map((p) => ({ name: p.name, bot: !!p.bot, pid: p.pid || null })),
-      o: { seat: 0, rp: 3, aman: 0, citra: 5, sorotan: 2, backing: 1, rekayasa: 2, nPos: 3, pos: [],
+      o: { seat: 0, rp: C.OKNUM_RP_AWAL, aman: 0, citra: 5, sorotan: 2, backing: 1, rekayasa: C.REKAYASA, nPos: C.N_POS, pos: [],
         posTambahan: null, hand: [], bebasDi: 0, buzzer: false, tesUrine: false, dilindungi: [], tarifGanda: [] },
-      rs: players.slice(1).map((p, i) => ({ seat: i + 1, pos: 0, kelas: 0, rp: 2, aman: 0, izin: false, caloGratis: false,
+      rs: players.slice(1).map((p, i) => ({ seat: i + 1, pos: 0, kelas: 0, rp: C.RP_AWAL, aman: 0, izin: false, caloGratis: false,
         berkas: null, lapas: 0, rekaman: 1, utang: 0, demo: false, naikAt: null, strat: 'campur' })),
       f: {}, batalKabar: false,
       decks: { kabar: script.kabar ? script.kabar.slice() : shuffle(Object.keys(KABAR).map(Number)), nasib: [],
@@ -122,8 +124,12 @@
       S.events.push(e); if (S.events.length > 20) S.events.shift();
       update();
       if (opts.onEvent) await opts.onEvent(e, S);
+      if (PACE[type]) await pace(PACE[type]);
     }
-    const pace = async (k = 1) => { if (delay) await sleep(delay * k); };
+    // jeda (× delay) setelah tiap jenis kejadian, supaya pemain bisa mengikuti apa yang terjadi
+    const PACE = { putaran: 1, kabar: 2.5, pos: 1.2, turn: 0.4, gaji: 0.6, dice: 1, razia_hasil: 1.4, karet: 1.2, petak: 1,
+      nasib: 2.5, kartu_oknum: 2.5, naik: 1.2, calo: 1, transfer: 1.5, ott: 1.5, lapas: 1.5, demo: 2, rekaman: 0.8, lapor: 1, aksi: 1.2 };
+    const pace = async (k = 1) => { const d = delayMs(); if (d) await sleep(d * k); };
 
     function resetFlags() {
       S.f = { tarifPlus: 0, karet: 2, laporBebas: false, noRek: false, rekGratis: false, gusurJuragan: false, feeRakyat: null, demoGanda: false };
@@ -203,7 +209,7 @@
     // ---------- Kabar Istana ----------
     async function bukaKabar() {
       resetFlags();
-      if (!S.decks.kabar.length) { S.kabar = null; return; }
+      if (!S.decks.kabar.length) S.decks.kabar = shuffle(Object.keys(KABAR).map(Number));
       const k = S.decks.kabar.pop();
       if (k === 11) { S.decks.kabar.push(k); shuffle(S.decks.kabar); }
       if (S.batalKabar) {
@@ -274,7 +280,7 @@
       const tilang = C.TILANG[r.kelas];
       const options = [
         { id: '86', label: `Damai "86" (${tarif})`, sub: `Bayar ${tarif} ke Oknum, lanjut jalan · Sorotan Oknum +1`, disabled: r.rp < tarif },
-        { id: 'tilang', label: `Tilang resmi (${tilang})`, sub: `Bayar ${tilang} ke kas negara, langkah BERHENTI · Citra Oknum +1` },
+        { id: 'tilang', label: `Tilang resmi (${tilang})`, sub: `Bayar ${tilang} ke kas negara (bukan ke Oknum) · Citra Oknum +1` },
         { id: 'viral', label: 'Rekam & Viralkan 📹', sub: `Buang 1 Kartu Rekaman, tidak bayar · Sorotan Oknum +3 · risiko Pasal Karet`, disabled: !r.rekaman },
       ];
       const bot = r.rekaman && o.sorotan >= 5 ? 'viral' : (tarif <= tilang && r.rp >= tarif ? '86' : 'tilang');
@@ -305,16 +311,19 @@
         await ev('karet', { seat: r.seat, d, karet });
         if (d <= karet) { await masukLapas(r, 2, 'pasal_karet'); return true; }
         log(`Dadu Pasal Karet ${d}: ${name(r.seat)} aman.`);
+        await ev('razia_hasil', { seat: r.seat, c: 'viral' });
         return false;
       }
       if (c === '86') {
         o.tesUrine = false; st('uang_86', bayarOknum(r, tarif));
-        log(`${name(r.seat)} bayar "86" sebesar ${tarif}.`);
+        log(`${name(r.seat)} bayar "86" sebesar ${tarif} ke Oknum.`);
         await naikSorotan(1);
+        await ev('razia_hasil', { seat: r.seat, c: '86' });
         return false;
       }
       r.rp = Math.max(0, r.rp - tilang); o.citra += 1; st('tilang_resmi');
-      log(`${name(r.seat)} ditilang resmi (${tilang}), langkah berhenti.`);
+      log(`${name(r.seat)} memilih tilang resmi (${tilang}) ke kas negara.`);
+      await ev('razia_hasil', { seat: r.seat, c: 'tilang' });
       return true;
     }
 
@@ -398,17 +407,18 @@
           r.berkas = S.t + C.PROSES_RESMI; log(`🏛️ ${name(r.seat)} mengajukan berkas izin resmi (jadi putaran ${r.berkas}).`);
         }
         if (tile === 'DEMO') r.demo = true;
-        const kenaPos = o.pos.includes(r.pos) || o.posTambahan === r.pos;
-        if (kenaPos && aktif() && (await razia(r))) break;
-        if (delay) await sleep(delay / 4);
+        await pace(0.35);
       }
+      // Razia hanya kalau BERHENTI tepat di Pos (lewat saja aman)
+      if ((o.pos.includes(r.pos) || o.posTambahan === r.pos) && aktif()) await razia(r);
       if (r.lapas) return;
       const tile = BOARD[r.pos], f = S.f;
-      if (tile === 'KERJA') r.rp += 2;
-      else if (tile === 'PASAR') r.rp += r.kelas >= 1 ? 3 : 1;
-      else if (tile === 'PROYEK' && r.kelas >= 2) r.rp += 4;
-      else if (tile === 'BANSOS') r.rp += ({ 0: 3, 1: 0 })[r.kelas] ?? 2;
-      else if (tile === 'GUSURAN' && (r.kelas <= 1 || (r.kelas === 2 && f.gusurJuragan))) {
+      const dapat = { KERJA: 2, PASAR: r.kelas >= 1 ? 3 : 1, PROYEK: r.kelas >= 2 ? 4 : 0, BANSOS: ({ 0: 3, 1: 0 })[r.kelas] ?? 2 }[tile];
+      if (dapat !== undefined) {
+        r.rp += dapat;
+        log(dapat ? `${JT_TILE_EM(tile)} ${name(r.seat)} di ${TILE[tile][1]}: +${dapat} Rupiah.` : `${JT_TILE_EM(tile)} ${name(r.seat)} di ${TILE[tile][1]}: tidak dapat apa-apa.`);
+        await ev('petak', { seat: r.seat, tile });
+      } else if (tile === 'GUSURAN' && (r.kelas <= 1 || (r.kelas === 2 && f.gusurJuragan))) {
         const c = await ask(r.seat, { kind: 'gusuran', text: '🚜 Satpol datang menggusur lapak.', options: [
           { id: 'bayar', label: 'Bayar uang keamanan (1)', sub: 'Ke Oknum. Lapak aman.', disabled: r.rp < 1 },
           { id: 'gusur', label: 'Biarkan digusur', sub: 'Kehilangan 3 Rupiah' }] }, r.rp >= 1 ? 'bayar' : 'gusur');
@@ -449,6 +459,7 @@
     async function mainKartu(k) {
       o.hand.splice(o.hand.indexOf(k), 1); st('kartu_oknum_' + k);
       log(`🃏 ${name(0)} memainkan ${OKNUM[k][0]}.`);
+      await ev('kartu_oknum', { seat: 0, id: k });
       const kaya = rs.filter((r) => r.kelas >= 2 && !r.lapas);
       if (k === 1) o.buzzer = true;
       else if (k === 2) {
@@ -459,7 +470,7 @@
       } else if (k === 3) o.backing++;
       else if (k === 4) { o.rp += 4; await naikSorotan(2); }
       else if (k === 6) {
-        const target = kaya.slice().sort((a, b) => b.rp - a.rp);
+        const target = acak(kaya).sort((a, b) => b.rp - a.rp);
         const tSeat = await ask(0, { kind: 'target', text: 'Tawarkan "uang keamanan" ke siapa?', options: target.map((r) => ({ id: r.seat, label: name(r.seat), sub: `${KELAS[r.kelas]} · ${r.rp} Rupiah` })) }, target[0].seat);
         const r = rs.find((x) => x.seat === tSeat);
         const c = await ask(r.seat, { kind: 'uang_keamanan', text: `${name(0)} menawarkan "uang keamanan" 3 Rupiah.`, options: [
@@ -476,7 +487,7 @@
       }
     }
     function botTarget(list) {
-      return list.slice().sort((a, b) => ((a.rekaman > 0) - (b.rekaman > 0)) || (b.kelas - a.kelas) || (b.rp - a.rp))[0];
+      return acak(list).sort((a, b) => ((a.rekaman > 0) - (b.rekaman > 0)) || (b.kelas - a.kelas) || (b.rp - a.rp))[0];
     }
 
     async function giliranOknum() {
@@ -485,22 +496,21 @@
       update();
       if (!aktif()) { log(`🔒 ${name(0)} masih di Lapas. Semua Pos kosong.`); await pace(); return; }
       await ev('turn', { seat: 0 });
-      // Pos: bot memasang 3 petak di depan Rakyat (yang kaya diprioritaskan)
-      const tujuan = [];
-      rs.slice().sort((a, b) => b.kelas - a.kelas).forEach((r) => {
-        let p = (r.pos + 3) % 24;
-        while (!POS_OK.has(BOARD[p]) || tujuan.includes(p)) p = (p + 1) % 24;
-        tujuan.push(p);
-      });
-      while (tujuan.length < o.nPos) {
-        let p = Math.floor(rng() * 24);
-        while (!POS_OK.has(BOARD[p]) || tujuan.includes(p)) p = (p + 1) % 24;
-        tujuan.push(p);
-      }
+      if (C.GAJI_OKNUM) { o.rp += C.GAJI_OKNUM; log(`${name(0)} terima gaji aparat ${C.GAJI_OKNUM}.`); }
+      // Pos: bot memilih petak dengan harapan setoran terbesar. Rakyat mendarat di 1–6 petak di depannya
+      // dengan peluang sama (1/6); Rakyat yang memegang rekaman berbahaya saat Sorotan tinggi.
+      const nilai = (i) => rs.reduce((sum, r) => {
+        const d = (i - r.pos + 24) % 24;
+        if (r.lapas > 1 || d < 1 || d > 6) return sum;
+        return sum + C.TARIF_86[r.kelas] * (r.rekaman && o.sorotan >= 5 ? 0.3 : 1);
+      }, 0);
+      const tujuan = script.pos && script.pos.length ? script.pos.shift()
+        : BOARD.map((b, i) => i).filter((i) => POS_OK.has(BOARD[i]))
+          .map((i) => [i, nilai(i) + rng() * 0.01]).sort((x, y) => y[1] - x[1]).map((x) => x[0]);
       const tiles = BOARD.map((b, i) => i).filter((i) => POS_OK.has(BOARD[i]));
-      o.pos = await ask(0, { kind: 'pos', text: `Pasang ${o.nPos} Pos Razia. Tap petak di jalur Rakyat.`, pick: o.nPos, tiles, options: [] }, tujuan.slice(0, o.nPos));
+      o.pos = await ask(0, { kind: 'pos', text: `Pasang ${o.nPos} Pos Razia. Rakyat hanya kena razia kalau BERHENTI tepat di Pos.`, pick: o.nPos, tiles, options: [] }, tujuan.slice(0, o.nPos));
       log(`🚨 ${name(0)} memasang Pos Razia.`);
-      await ev('pos', { seat: 0 }); await pace();
+      await ev('pos', { seat: 0 });
 
       const f = S.f;
       const target = rs.filter((r) => !r.lapas);
@@ -513,7 +523,7 @@
         { id: 'kartu', label: 'Mainkan kartu', sub: kartu.map((k) => OKNUM[k][0]).join(', ') || 'Tidak ada kartu yang bisa dimainkan', disabled: !kartu.length },
       ];
       // heuristik bot = simulasi
-      const kaya = rs.filter((r) => r.kelas >= 2 && !r.lapas).sort((a, b) => ((a.rekaman > 0) - (b.rekaman > 0)) || (b.rp - a.rp));
+      const kaya = acak(rs.filter((r) => r.kelas >= 2 && !r.lapas)).sort((a, b) => ((a.rekaman > 0) - (b.rekaman > 0)) || (b.rp - a.rp));
       const botRek = kaya.length && S.t >= 3 && !f.noRek;
       let bot = 'opres', botKartu = null;
       if (o.sorotan >= 7 && o.rp >= 3) bot = 'sowan';
@@ -538,6 +548,7 @@
         const k = await ask(0, { kind: 'pilih_kartu', text: 'Kartu mana?', options: kartu.map((k) => ({ id: k, label: OKNUM[k][0], sub: OKNUM[k][1] })) }, botKartu !== null ? botKartu : kartu[0]);
         await mainKartu(k);
       }
+      if (c === 'sowan' || c === 'opres') await ev('aksi', { seat: 0, c });
       if (o.rp > 0 && aktif()) {
         const t = await ask(0, { kind: 'transfer_oknum', text: 'Pindahkan uang ke luar negeri?', options: [
           { id: 'transfer', label: `Transfer (−20%)`, sub: `${o.rp} Rupiah → ${Math.floor(o.rp * (1 - C.FEE))} Harta Aman · Sorotan +1` },
@@ -574,13 +585,13 @@
           if (aktif()) {
             const opt = demo.map((r) => ({ id: r.seat, label: name(r.seat), sub: 'Lapas 2 putaran · Sorotan +2' }));
             opt.push({ id: 'tidak', label: 'Biarkan', sub: '' });
-            const botPick = o.sorotan <= 7 ? demo.slice().sort((a, b) => b.kelas - a.kelas)[0].seat : 'tidak';
+            const botPick = o.sorotan <= 7 ? acak(demo).sort((a, b) => b.kelas - a.kelas)[0].seat : 'tidak';
             const c = await ask(0, { kind: 'penghasutan', text: 'Tangkap salah satu pendemo dengan tuduhan penghasutan?', options: opt }, botPick);
             if (c !== 'tidak') { await masukLapas(rs.find((x) => x.seat === c), 2, 'penghasutan'); await naikSorotan(2); }
           }
         }
         rs.forEach((r) => { r.demo = false; });
-        if (t === 3 || t === 6 || t === 9) ambilOknum(1);
+        if (t % C.KARTU_TIAP === 0) { const n = o.hand.length; ambilOknum(1); if (o.hand.length > n) await ev('ambil_oknum', { seat: 0, id: o.hand[o.hand.length - 1] }); }
       }
       if (stopped) { S.phase = 'stopped'; update(); return S; }
       // skor akhir

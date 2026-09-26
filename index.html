@@ -46,7 +46,6 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 /* game */
 #scr-game { padding: 0 8px; display: flex; flex-direction: column; }
 #scr-game[hidden] { display: none; }
-#prompt { margin-top: auto; }
 .topbar { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; align-items: center; gap: 8px; padding: 8px 2px; }
 .topbar .title { flex: 1; font-weight: 700; font-size: 14px; }
 .topbar button { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 6px 10px; font-size: 13px; }
@@ -73,7 +72,7 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 .meter > i { display: block; height: 100%; background: linear-gradient(90deg, #eab308, #dc2626); }
 .stats { display: flex; flex-wrap: wrap; gap: 3px 8px; }
 #log { flex: 1; min-height: 0; overflow: hidden; font-size: 10.5px; color: var(--muted); padding: 0 2px; }
-#log div:first-child { color: var(--ink); font-weight: 600; }
+#log div:first-child { color: var(--ink); font-weight: 700; font-size: 12px; border-radius: 4px; }
 #dice { font-size: 12px; font-weight: 700; }
 .players { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 6px 0; }
 .pcard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 5px 6px; font-size: 11px; min-width: 0; }
@@ -82,7 +81,7 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 .pcard .kl { font-size: 11.5px; }
 .pcard button { font-size: 10px; padding: 2px 5px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); margin-top: 2px; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 3px; }
-#prompt { position: sticky; bottom: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px 16px 0 0; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 16px rgba(0,0,0,.12); max-height: 52dvh; overflow: auto; z-index: 4; margin: 0 -8px; }
+#prompt { position: sticky; bottom: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px 16px 0 0; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 16px rgba(0,0,0,.12); max-height: 52dvh; overflow: auto; z-index: 4; margin: auto -8px 0; }
 #prompt .q { font-weight: 700; margin-bottom: 4px; }
 #prompt .opt { display: block; width: 100%; text-align: left; padding: 10px 12px; margin: 6px 0; border-radius: 11px; border: 1px solid var(--line); background: var(--bg); }
 #prompt .opt b { display: block; font-size: 14.5px; }
@@ -121,6 +120,21 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 .rank div { display: flex; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--line); }
 .rank div:first-child { font-weight: 800; }
 .korban li { margin: 3px 0; }
+.cardpop { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); z-index: 21; width: min(78vw, 300px); border-radius: 16px; background: var(--panel); border: 3px solid var(--gold); box-shadow: 0 12px 40px rgba(0,0,0,.45); padding: 14px 16px; text-align: center; animation: pop .35s ease-out; }
+.cardpop .kind { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
+.cardpop .big { font-size: 40px; line-height: 1.2; }
+.cardpop h4 { margin: 4px 0 6px; font-size: 18px; }
+.cardpop p { margin: 0; font-size: 14px; }
+.cardpop .close { margin-top: 10px; font-size: 11px; color: var(--muted); }
+.cardpop.nasib { border-color: var(--s1); } .cardpop.nasib .kind { color: var(--s1); }
+.cardpop.oknum { border-color: var(--danger); } .cardpop.oknum .kind { color: var(--danger); }
+@keyframes pop { from { transform: translate(-50%, -50%) scale(.6) rotate(-6deg); opacity: 0; } }
+#hovertip { position: fixed; z-index: 60; max-width: 240px; background: var(--ink); color: var(--bg); font-size: 12px; line-height: 1.35; padding: 6px 9px; border-radius: 8px; pointer-events: none; box-shadow: var(--shadow); }
+[data-tip] { cursor: help; }
+#log div:first-child.new { animation: flash 1.2s; }
+@keyframes flash { from { background: var(--gold-soft); } }
+.pawn.now { animation: bob .8s infinite; }
+@keyframes bob { 50% { transform: translateY(-3px); } }
 .banner { background: var(--danger-soft); color: var(--danger); border-radius: 10px; padding: 8px 10px; font-size: 13px; margin: 6px 0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
@@ -178,6 +192,7 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
   <div class="topbar">
     <div class="title" id="g-title">Putaran 1/12</div>
     <button id="btn-skip" hidden>Lewati tutorial</button>
+    <button id="btn-speed" data-tip="Kecepatan jalannya bot & animasi">▶ Normal</button>
     <button id="btn-help">? Aturan</button>
   </div>
   <div id="g-banner" class="banner" hidden></div>
@@ -201,6 +216,8 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 <div class="ov" id="ov-help" hidden><div class="card" id="help-card"></div></div>
 <div id="tip" hidden></div>
 <div id="toast" hidden></div>
+<div id="cardpop" class="cardpop" hidden></div>
+<div id="hovertip" hidden></div>
 <div id="coach" hidden><div class="coach-hl"></div><div class="coach-bubble"></div></div>
 
 <script>
@@ -227,7 +244,7 @@ let lock = null, lockTiles = null, pick = [], pickFor = 0, sentFor = 0, lastEv =
 let tutorialAnswer = null, tutorialChapter = null, tutorialAbort = false;
 let practiceRole = 'rakyat';
 
-function show(id) { document.querySelectorAll('.screen').forEach((s) => { s.hidden = s.id !== id; }); window.scrollTo(0, 0); }
+function show(id) { document.querySelectorAll('.screen').forEach((s) => { s.hidden = s.id !== id; }); window.scrollTo(0, 0); if (id === 'scr-game') renderSpeed(); }
 function toast(msg, ms = 2200) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => { t.hidden = true; }, ms); }
 function myName() { return ($('#in-name').value.trim() || 'Pemain').slice(0, 14); }
 
@@ -238,11 +255,12 @@ function cell(i) {
   if (i <= 18) return [1, 1 + (i - 12)];
   return [1 + (i - 18), 7];
 }
+function tip(t) { return `data-tip="${esc(t)}"`; }
 function buildBoard() {
   const b = $('#board');
   b.innerHTML = JT.BOARD.map((t, i) => {
     const [r, c] = cell(i), [em, nm] = JT.TILE[t];
-    return `<div class="tile" data-tile="${i}" style="grid-row:${r};grid-column:${c}"><div class="em">${em}</div><div>${nm}</div><div class="pawns"></div></div>`;
+    return `<div class="tile" data-tile="${i}" ${tip(`${nm}: ${JT.TILE[t][2]}`)} style="grid-row:${r};grid-column:${c}"><div class="em">${em}</div><div>${nm}</div><div class="pawns"></div></div>`;
   }).join('') + `<div class="center"><div id="kabar"></div><div id="oknum"></div><div id="dice"></div><div id="log"></div></div>`;
   b.onclick = (e) => {
     const t = e.target.closest('.tile'); if (!t) return;
@@ -277,33 +295,48 @@ function render() {
     el.classList.toggle('picked', picking && pick.includes(i));
     el.classList.toggle('locked', picking && !allowed);
     const pawns = S.rs.filter((r) => r.pos === i).map((r) =>
-      `<div class="pawn ${r.seat === mySeat ? 'me' : ''}" style="background:${SEAT_COLOR[r.seat]}">${esc(S.players[r.seat].name[0] || '?')}</div>`).join('');
+      `<div class="pawn ${r.seat === mySeat ? 'me' : ''} ${S.turn === r.seat ? 'now' : ''}" style="background:${SEAT_COLOR[r.seat]}" data-tip="${esc(S.players[r.seat].name)} · ${JT.KELAS[r.kelas]}">${esc(S.players[r.seat].name[0] || '?')}</div>`).join('');
     el.querySelector('.pawns').innerHTML = pawns;
   });
   // kabar
   const kb = $('#kabar');
-  if (S.kabar) { const [nm, tx] = JT.KABAR[S.kabar.id]; kb.className = S.kabar.batal ? 'batal' : ''; kb.innerHTML = `📰 <b>${esc(nm)}</b>${S.kabar.batal ? ' — <b style="text-decoration:none">DIBATALKAN demo</b>' : '<br>' + esc(tx)}`; }
+  if (S.kabar) { const [nm, tx] = JT.KABAR[S.kabar.id]; kb.className = S.kabar.batal ? 'batal' : ''; kb.innerHTML = `<span data-tip="Kabar Istana: kebijakan/skandal yang berlaku selama putaran ini.">📰</span> <b>${esc(nm)}</b>${S.kabar.batal ? ' — <b style="text-decoration:none">DIBATALKAN demo</b>' : '<br>' + esc(tx)}`; }
   else kb.innerHTML = '📰 <b>Kabar Istana</b><br>Dibuka tiap awal putaran.';
   // oknum
   const okEl = $('#oknum');
   okEl.classList.toggle('turn', S.turn === 0);
   okEl.classList.toggle('mine', mySeat === 0);
-  const hand = mySeat === 0 ? o.hand.map((k) => JT.OKNUM[k][0]).join(', ') || '-' : `${o.hand.length} kartu`;
-  okEl.innerHTML = `<div class="row" style="justify-content:space-between"><span class="name">👮 ${esc(S.players[0].name)}${mySeat === 0 ? ' (kamu)' : ''}</span>${okAktif ? '' : '<b style="color:var(--danger)">🔒 Lapas</b>'}</div>
-    <div class="small">Sorotan <b>${o.sorotan}</b>/10 ${o.sorotan >= 8 ? '⚠️' : ''}</div><div class="meter"><i style="width:${o.sorotan * 10}%"></i></div>
-    <div class="stats"><span>Citra <b>${o.citra}</b>/7</span><span>🛡️${o.backing}</span><span>⚖️${o.rekayasa}</span><span>🚨${o.nPos}</span><span>💰${o.rp}</span><span>🏦<b>${o.aman}</b></span><span>🃏${esc(hand)}</span></div>
+  const hand = mySeat === 0 ? o.hand.map((k) => JT.OKNUM[k][0]).join(', ') || '-' : `${o.hand.length}`;
+  const C = JT.C;
+  okEl.innerHTML = `<div class="row" style="justify-content:space-between"><span class="name">👮 ${esc(S.players[0].name)}${mySeat === 0 ? ' (kamu)' : ''}</span>${okAktif ? '' : '<b style="color:var(--danger)" data-tip="Oknum di Lapas: semua Pos kosong, Rakyat bebas lewat.">🔒 Lapas</b>'}</div>
+    <div class="small" ${tip('Sorotan publik 0–10. Naik saat Oknum memeras, transfer, atau diviralkan. Menyentuh 10 = OTT.')}>Sorotan <b>${o.sorotan}</b>/10 ${o.sorotan >= 8 ? '⚠️' : ''}</div><div class="meter"><i style="width:${o.sorotan * 10}%"></i></div>
+    <div class="stats">
+      <span ${tip(`Citra institusi. Harus ≥ ${C.CITRA_MIN} di akhir, kalau tidak Oknum dimutasi (Harta Aman ×0,7).`)}>Citra <b>${o.citra}</b>/${C.CITRA_MIN}</span>
+      <span ${tip('Backing: pelindung saat OTT. Sekali pakai, Sorotan turun ke 7.')}>🛡️${o.backing}</span>
+      <span ${tip('Token Rekayasa Kasus yang tersisa.')}>⚖️${o.rekayasa}</span>
+      <span ${tip('Jumlah Pos Razia. Berkurang permanen kalau bawahan ditumbalkan.')}>🚨${o.nPos}</span>
+      <span ${tip('Rupiah di tangan Oknum. Bisa disita saat OTT, hangus di akhir.')}>💰${o.rp}</span>
+      <span ${tip('Harta Aman di luar negeri = skor akhir. Tidak bisa disita.')}>🏦<b>${o.aman}</b></span>
+      <span ${tip(`Kartu Oknum di tangan (maks. 3). Dapat 1 kartu tiap ${C.KARTU_TIAP} putaran.`)}>🃏${esc(hand)}</span></div>
     ${hostSeatBtn(0)}`;
   $('#dice').textContent = S.dice ? `🎲 ${S.players[S.turn] ? S.players[S.turn].name : ''}: ${S.dice}` : '';
-  $('#log').innerHTML = S.log.slice(-5).reverse().map((l) => `<div>${esc(l.msg)}</div>`).join('');
+  const top = S.log.length ? S.log[S.log.length - 1].msg : '';
+  $('#log').innerHTML = S.log.slice(-5).reverse().map((l, k) => `<div class="${k === 0 && top !== render.top ? 'new' : ''}">${esc(l.msg)}</div>`).join('');
+  render.top = top;
   // players
   $('#players').innerHTML = S.rs.map((r) => {
-    const mine = r.seat === mySeat;
-    const izin = r.kelas === 0 || r.kelas === 3 ? '' : r.izin ? '📄✅' : r.berkas !== null ? `📄⏳${r.berkas}` : '📄–';
+    const mine = r.seat === mySeat, nx = r.kelas + 1;
+    const izin = r.kelas === 0 || r.kelas === 3 ? ''
+      : r.izin ? `<span ${tip(`Izin untuk jadi ${JT.KELAS[nx]} sudah ada.`)}>📄✅</span>`
+      : r.berkas !== null ? `<span ${tip(`Berkas izin resmi sedang diproses, jadi di putaran ${r.berkas}.`)}>📄⏳${r.berkas}</span>`
+      : `<span ${tip(`Belum punya izin untuk jadi ${JT.KELAS[nx]}. Lewat 🏛️ Kantor Izin (gratis, 2 putaran) atau pakai calo.`)}>📄–</span>`;
+    const kelasTip = r.kelas < 3 ? `Kelas ${JT.KELAS[r.kelas]}: gaji ${C.GAJI[r.kelas]}/giliran. Naik ke ${JT.KELAS[nx]}: biaya ${C.NAIK[nx]}${nx >= 2 ? ' + izin' : ''}.`
+      : `Pengusaha: gaji ${C.GAJI[3]}/giliran dan bisa Transfer ke Luar.`;
     return `<div class="pcard ${mine ? 'mine' : ''} ${S.turn === r.seat ? 'turn' : ''}" ${mine ? 'id="me"' : ''}>
       <div class="nm"><span class="dot" style="background:${SEAT_COLOR[r.seat]}"></span>${esc(S.players[r.seat].name)}${mine ? ' (kamu)' : ''}</div>
-      <div class="kl">${KELAS_EM[r.kelas]} ${JT.KELAS[r.kelas]} ${izin}</div>
-      <div>💰${r.rp} · 🏦<b>${r.aman}</b> · 📹${r.rekaman}</div>
-      <div>${r.lapas ? `🔒${r.lapas} ` : ''}${r.utang ? `📱−${r.utang} ` : ''}</div>${hostSeatBtn(r.seat)}</div>`;
+      <div class="kl"><span ${tip(kelasTip)}>${KELAS_EM[r.kelas]} ${JT.KELAS[r.kelas]}</span> ${izin}</div>
+      <div><span ${tip('Rupiah di tangan. Untuk bayar & naik kelas. Hangus di akhir permainan.')}>💰${r.rp}</span> · <span ${tip('Harta Aman di luar negeri = skor akhir. Hanya Pengusaha yang bisa transfer.')}>🏦<b>${r.aman}</b></span> · <span ${tip('Kartu Rekaman: untuk Viralkan saat razia (Sorotan Oknum +3) atau membongkar rekayasa kasus. Maks. 3.')}>📹${r.rekaman}</span></div>
+      <div>${r.lapas ? `<span ${tip(`Di Lapas: melewatkan ${r.lapas} putaran lagi.`)}>🔒${r.lapas}</span> ` : ''}${r.utang ? `<span ${tip(`Utang Pinjol: bayar ${r.utang} saat melewati 🌅 Subuh.`)}>📱−${r.utang}</span> ` : ''}</div>${hostSeatBtn(r.seat)}</div>`;
   }).join('');
   renderPrompt();
   handleEvents();
@@ -360,8 +393,56 @@ function handleEvents() {
     if (e.type === 'ott') tipFor('e:ott');
     if (e.type === 'lapas' && e.seat === mySeat) tipFor('e:lapas');
     if (e.type === 'nasib' && e.seat === mySeat) tipFor('e:nasib');
+    const nm = (seat) => (seat === mySeat ? 'Kamu' : S.players[seat].name);
+    if (e.type === 'kabar') showCard('kabar', '📰 Kabar Istana' + (e.batal ? ' · DIBATALKAN DEMO' : ''), '🏛️', JT.KABAR[e.id][0], e.batal ? 'Rakyat turun ke jalan. Kabar ini tidak berlaku.' : JT.KABAR[e.id][1]);
+    if (e.type === 'nasib') showCard('nasib', `🎲 Kartu Nasib · ${nm(e.seat)}`, '🎲', JT.NASIB[e.id][0], JT.NASIB[e.id][1]);
+    if (e.type === 'kartu_oknum') showCard('oknum', `🃏 Kartu Oknum · ${nm(0)}`, '👮', JT.OKNUM[e.id][0], JT.OKNUM[e.id][1]);
+    if (e.type === 'ambil_oknum') {
+      if (mySeat === 0) showCard('oknum', '🃏 Kamu dapat Kartu Oknum', '👮', JT.OKNUM[e.id][0], JT.OKNUM[e.id][1]);
+      else toast(`🃏 ${S.players[0].name} mengambil 1 Kartu Oknum (rahasia).`);
+    }
   }
 }
+// ====== kartu besar di tengah layar ======
+const cardQueue = [];
+function showCard(kind, head, em, title, text) {
+  cardQueue.push({ kind, head, em, title, text });
+  if ($('#cardpop').hidden) nextCard();
+}
+function nextCard() {
+  const el = $('#cardpop'), c = cardQueue.shift();
+  if (!c) { el.hidden = true; return; }
+  el.className = 'cardpop ' + c.kind;
+  el.innerHTML = `<div class="kind">${esc(c.head)}</div><div class="big">${c.em}</div><h4>${esc(c.title)}</h4><p>${esc(c.text)}</p><div class="close">tap untuk tutup</div>`;
+  el.hidden = false;
+  clearTimeout(nextCard.t);
+  nextCard.t = setTimeout(nextCard, Math.max(2600, speed() * 2.6));
+}
+$('#cardpop').onclick = () => nextCard();
+
+// ====== tooltip ikon: hover (desktop) / tap (HP) ======
+const hoverTip = $('#hovertip');
+const isTouch = () => matchMedia('(hover: none)').matches;
+document.addEventListener('mouseover', (e) => {
+  const t = !isTouch() && e.target.closest('[data-tip]');
+  if (!t) { hoverTip.hidden = true; return; }
+  hoverTip.textContent = t.dataset.tip; hoverTip.hidden = false;
+  const r = t.getBoundingClientRect(), w = hoverTip.offsetWidth, h = hoverTip.offsetHeight;
+  hoverTip.style.left = Math.max(6, Math.min(innerWidth - w - 6, r.left + r.width / 2 - w / 2)) + 'px';
+  hoverTip.style.top = (r.top - h - 6 < 4 ? r.bottom + 6 : r.top - h - 6) + 'px';
+});
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tip]');
+  if (!t || t.closest('.tile') || t.closest('button') || !isTouch()) return;
+  toast(t.dataset.tip, 3500);
+});
+
+// ====== kecepatan ======
+const SPEEDS = [['🐢 Lambat', 1600], ['▶ Normal', 1000], ['⏩ Cepat', 450]];
+let speedIdx = store.get('ndbd_speed', 1);
+const speed = () => SPEEDS[speedIdx][1];
+function renderSpeed() { $('#btn-speed').textContent = SPEEDS[speedIdx][0]; $('#btn-speed').hidden = mode === 'client'; }
+$('#btn-speed').onclick = () => { speedIdx = (speedIdx + 1) % SPEEDS.length; store.set('ndbd_speed', speedIdx); renderSpeed(); };
 function flyMoney(n) {
   const from = ($('#me') || $('#oknum')).getBoundingClientRect();
   let badge = $('#offshore');
@@ -379,12 +460,12 @@ function flyMoney(n) {
 }
 
 const TIPS = {
-  'p:razia': 'Kena Pos Razia 🚨. "86" = murah & tetap jalan, tapi uangnya ke Oknum. Tilang resmi = lebih mahal & berhenti. Viral = gratis & Sorotan Oknum +3, tapi ada risiko Pasal Karet (dadu 1–2 → Lapas).',
+  'p:razia': 'Kamu berhenti tepat di Pos Razia 🚨. "86" = lebih murah, tapi uangnya ke Oknum. Tilang resmi = lebih mahal, masuk kas negara. Viral = gratis & Sorotan Oknum +3, tapi ada risiko Pasal Karet (dadu 1–2 → Lapas).',
   'p:kelola': 'Setelah jalan, kamu bisa naik kelas, urus izin lewat calo, atau (kalau Pengusaha) Transfer ke Luar. Hanya Harta Aman 🏦 yang dihitung di akhir.',
   'p:lapas': 'Di Lapas kamu melewatkan giliran tanpa gaji. Yang punya uang bisa beli remisi (langsung bebas) atau sel mewah (tetap gajian).',
   'p:pinjol': 'Pinjol: uang cepat sekarang, bayar lebih mahal saat melewati Subuh. Gagal bayar = uang & Kartu Rekaman hilang.',
   'p:bongkar': 'Oknum merekayasa kasusmu! Kartu Rekaman 📹 bisa membongkarnya. Tanpa rekaman, kamu masuk Lapas.',
-  'p:pos': 'Pasang Pos Razia di petak yang akan dilewati Rakyat (mereka maju 1–6 petak). Rakyat yang kaya membayar "86" lebih mahal.',
+  'p:pos': 'Rakyat hanya kena razia kalau BERHENTI tepat di Pos. Mereka maju 1–6 petak, jadi pasang Pos di petak 1–6 di depan Rakyat yang kaya ("86"-nya lebih mahal).',
   'p:aksi': 'Satu aksi per giliran. Sowan menurunkan Sorotan, Rekayasa menjebloskan Rakyat (hindari yang pegang rekaman), Operasi resmi menaikkan Citra. Citra harus ≥ 7 di akhir.',
   'p:ott': 'OTT! Pilih cara lolos. Harta Aman di luar negeri tidak bisa disita. Hanya Rupiah di tangan yang terancam.',
   'e:kabar': 'Kabar Istana dibuka tiap putaran dan mengubah aturan sementara. Demo besar bisa membatalkan kabar berikutnya.',
@@ -409,28 +490,29 @@ function nextTip() {
 
 // ====== kartu peran & bantuan ======
 const ROLE = {
-  rakyat: `<h3>🧍 Kamu: RAKYAT</h3><p><b>🎯 Tujuan:</b> naik kelas <b>Jelata → Pedagang → Juragan → Pengusaha</b>, lalu <b>Transfer ke Luar</b>. Pemenang = <b>Harta Aman 🏦</b> terbanyak setelah 12 putaran.</p>
+  rakyat: `<h3>🧍 Kamu: RAKYAT</h3><p><b>🎯 Tujuan:</b> naik kelas <b>Jelata → Pedagang → Juragan → Pengusaha</b>, lalu <b>Transfer ke Luar</b>. Pemenang = <b>Harta Aman 🏦</b> terbanyak setelah 20 putaran.</p>
     <p><b>✅ Cara menang:</b></p><ul><li>Urus izin di 🏛️ Kantor Izin (gratis tapi lambat). Pakai calo hanya saat mendesak; uangnya menggemukkan Oknum.</li><li>Viralkan 📹 Oknum saat Sorotannya tinggi untuk memicu OTT.</li><li>Jadi Pengusaha secepatnya, lalu transfer (di 🏦 Bank potongannya lebih kecil).</li></ul>
-    <p><b>⚠️ Ancaman:</b> Pos Razia 🚨, Rekayasa Kasus, Pasal Karet.</p>`,
+    <p><b>⚠️ Ancaman:</b> berhenti tepat di Pos Razia 🚨 (lewat saja aman), Rekayasa Kasus, Pasal Karet.</p>`,
   oknum: `<h3>👮 Kamu: OKNUM APARAT</h3><p><b>🎯 Tujuan:</b> kumpulkan setoran ("86", pungli calo, uang keamanan), lalu <b>Transfer ke Luar</b>. Pemenang = <b>Harta Aman 🏦</b> terbanyak. <b>Citra harus ≥ 7</b> di akhir, kalau tidak hartamu ×0,7.</p>
-    <p><b>✅ Cara menang:</b></p><ul><li>Pasang Pos 🚨 tepat di depan Rakyat yang kaya.</li><li>Sowan ke atasan saat Sorotan ≥ 7.</li><li>Rekayasa kasus terhadap Rakyat yang tidak memegang Kartu Rekaman 📹.</li></ul>
+    <p><b>✅ Cara menang:</b></p><ul><li>Pasang Pos 🚨 di petak 1–6 di depan Rakyat yang kaya. Rakyat hanya kena razia kalau <b>berhenti tepat</b> di Pos.</li><li>Sowan ke atasan saat Sorotan ≥ 7.</li><li>Rekayasa kasus terhadap Rakyat yang tidak memegang Kartu Rekaman 📹.</li></ul>
     <p><b>⚠️ Ancaman:</b> Sorotan 10 = <b>OTT</b>. Viral dan laporan polisi menaikkan Sorotan.</p>`,
 };
 function showRole() {
   const role = mySeat === 0 ? 'oknum' : mySeat > 0 ? 'rakyat' : null;
   if (!role) return;
-  $('#role-card').innerHTML = ROLE[role] + '<button class="btn primary" style="text-align:center"><b>Siap!</b></button>';
+  const kartu = role === 'oknum' && S.o.hand.length ? `<p><b>🃏 Kartu awalmu:</b> ${S.o.hand.map((k) => `<b>${esc(JT.OKNUM[k][0])}</b> (${esc(JT.OKNUM[k][1])})`).join('; ')}</p>` : '';
+  $('#role-card').innerHTML = ROLE[role] + kartu + '<button class="btn primary" style="text-align:center"><b>Siap!</b></button>';
   $('#ov-role').hidden = false;
   $('#role-card button').onclick = () => { $('#ov-role').hidden = true; };
 }
 $('#help-card').innerHTML = `<h3>Aturan singkat Jalan Tikus</h3>
-  <p><b>Putaran:</b> Kabar Istana → Oknum pasang Pos & 1 aksi → tiap Rakyat: gaji, lempar dadu, jalan, efek petak, kelola.</p>
-  <p><b>Kelas & gaji:</b> Jelata 2 · Pedagang 3 (biaya 4, tanpa izin) · Juragan 5 (biaya 8 + izin) · Pengusaha 7 (biaya 12 + izin).</p>
+  <p><b>Putaran (20×):</b> Kabar Istana → Oknum pasang 4 Pos & 1 aksi → tiap Rakyat: gaji, lempar dadu, jalan, efek petak, kelola.</p>
+  <p><b>Kelas & gaji:</b> Jelata 2 · Pedagang 3 (biaya 6, tanpa izin) · Juragan 5 (biaya 14 + izin) · Pengusaha 7 (biaya 24 + izin).</p>
   <p><b>Izin:</b> 🏛️ Kantor Izin (lewat saja, jadi 2 putaran kemudian, gratis) atau calo (kapan saja, 3/5 Rupiah ke Oknum).</p>
-  <p><b>Razia 🚨:</b> 86 (ke Oknum, tetap jalan) · Tilang resmi (lebih mahal, berhenti) · Viral 📹 (Sorotan +3, dadu Pasal Karet 1–2 = Lapas).</p>
-  <p><b>Oknum:</b> Sorotan 10 = OTT (lolos pakai Backing/Tumbal atau tertangkap). Citra ≥ 7 di akhir.</p>
-  <p><b>Akhir:</b> setelah 12 putaran, Rupiah hangus. Hanya Harta Aman 🏦 yang dihitung. Rakyat yang belum Pengusaha = 0.</p>
-  <p class="small muted">Tap petak mana saja di papan untuk melihat efeknya.</p>
+  <p><b>Razia 🚨:</b> hanya kalau <b>berhenti tepat</b> di Pos. Pilihan: 86 (2/4/6/9 ke Oknum) · Tilang resmi (3/5/7/10 ke kas negara) · Viral 📹 (Sorotan +3, dadu Pasal Karet 1–2 = Lapas).</p>
+  <p><b>Oknum:</b> Sorotan 10 = OTT (lolos pakai Backing/Tumbal atau tertangkap). Citra ≥ 7 di akhir. Dapat 1 Kartu Oknum tiap 4 putaran.</p>
+  <p><b>Akhir:</b> setelah 20 putaran, Rupiah hangus. Hanya Harta Aman 🏦 yang dihitung. Rakyat yang belum Pengusaha = 0.</p>
+  <p><b>Ikon:</b> 💰 Rupiah · 🏦 Harta Aman · 📹 Kartu Rekaman · 📄 izin · 🔒 Lapas · 📱 utang Pinjol · 🛡️ Backing · ⚖️ token Rekayasa · 🚨 Pos · 🃏 Kartu Oknum. Arahkan kursor (atau tap) ikon untuk penjelasan.</p>
   <button class="btn primary" style="text-align:center"><b>Tutup</b></button>`;
 $('#btn-help').onclick = () => { $('#ov-help').hidden = false; };
 $('#help-card button').onclick = () => { $('#ov-help').hidden = true; };
@@ -466,7 +548,7 @@ function startLocal(players, broadcast) {
   S = null; lastEv = 0; sentFor = 0; lock = null; lockTiles = null;
   mySeat = players.findIndex((p) => p.pid === myId);
   game = JT.createGame(players, {
-    delay: 650,
+    delay: speed,
     onUpdate(st) { S = st; schedule(); if (broadcast) net.pushState(); },
   });
   S = game.S;
@@ -525,7 +607,7 @@ async function startTutorial() {
     if (tutorialAbort) break;
     tutorialChapter = ch; mySeat = ch.human; lastEv = 0; sentFor = 0;
     await TUT.runChapter(ch, JT, {
-      delay: 550,
+      delay: speed,
       onGame(g) { game = g; S = g.S; render(); },
       onUpdate(st) { S = st; if (tutorialAbort) { game.stop(); } schedule(); },
       step: async (step) => { if (tutorialAbort) return; render(); await new Promise((r) => setTimeout(r, 150)); await coach.info(step); },

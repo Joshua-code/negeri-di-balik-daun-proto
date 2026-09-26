@@ -1,19 +1,19 @@
-// node prototype/check.js — cek port engine: (1) match bot vs hasil simulasi Python, (2) semua kursi "manusia" acak tidak macet.
+// node prototype/check.js — cek engine: (1) keseimbangan match bot, (2) semua kursi "manusia" acak tidak macet, (3) 5 bab tutorial.
 const assert = require('assert');
 const JT = require('./engine.js');
 const tutorial = require('./tutorial.js');
 
 async function botGames(n) {
-  const wins = { oknum: 0, rakyat: 0 };
+  const wins = { oknum: 0, rakyat: 0 }, seat = [0, 0, 0, 0];
   let pengusaha = 0;
   for (let i = 0; i < n; i++) {
     const players = [0, 1, 2, 3].map((s) => ({ name: 'P' + s, bot: true }));
     const g = JT.createGame(players, { strict: true, rng: JT.mulberry32(i + 1) });
     const S = await g.run();
-    wins[S.result.winner === 0 ? 'oknum' : 'rakyat']++;
+    wins[S.result.winner === 0 ? 'oknum' : 'rakyat']++; seat[S.result.winner]++;
     pengusaha += S.rs.filter((r) => r.kelas === 3).length;
   }
-  return { oknum: wins.oknum / n, pengusaha: pengusaha / (3 * n) };
+  return { oknum: wins.oknum / n, pengusaha: pengusaha / (3 * n), seat: seat.map((x) => Math.round((100 * x) / n)) };
 }
 
 async function randomHumans(n) {
@@ -49,10 +49,13 @@ async function randomHumans(n) {
   return kinds;
 }
 
+let selesai = false;
+process.on('exit', () => { if (!selesai) { console.error('MACET: ada promise yang tidak pernah selesai'); process.exitCode = 1; } });
+
 (async () => {
   const b = await botGames(3000);
-  console.log(`3000 match bot: Oknum juara ${(b.oknum * 100).toFixed(0)}% (sim Python 36%), Rakyat jadi Pengusaha ${(b.pengusaha * 100).toFixed(0)}% (sim 70–76%)`);
-  assert(b.oknum >= 0.25 && b.oknum <= 0.5, 'Oknum juara di luar 25–50%');
+  console.log(`3000 match bot: juara per kursi Oknum/R1/R2/R3 = ${b.seat.join('/')}% (target ±25% masing-masing), Rakyat jadi Pengusaha ${(b.pengusaha * 100).toFixed(0)}%`);
+  assert(b.seat.every((x) => x >= 18 && x <= 32), 'Peluang juara tidak seimbang');
 
   const kinds = await randomHumans(300);
   console.log(`300 match semua kursi manusia (jawaban acak): selesai tanpa macet. Jenis prompt teruji: ${[...kinds].sort().join(', ')}`);
@@ -62,5 +65,6 @@ async function randomHumans(n) {
     console.log(`Tutorial ${ch.id}: prompt ${r.prompts.join(' → ')} | event ${r.events.join(',')}`);
     for (const need of ch.expect) assert(r.seen.has(need), `Tutorial ${ch.id} tidak memunculkan ${need}`);
   }
+  selesai = true;
   console.log('OK');
 })().catch((e) => { console.error(e); process.exit(1); });
