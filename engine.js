@@ -6,9 +6,9 @@
   'use strict';
 
   const C = {
-    PUTARAN: 20, GAJI: [2, 3, 5, 7], NAIK: [0, 6, 14, 24], PUNGLI: [0, 0, 3, 5], REKAYASA: 2, KARTU_TIAP: 4, RP_AWAL: 2, OKNUM_RP_AWAL: 3, N_POS: 4, GAJI_OKNUM: 0,
+    PUTARAN: 20, GAJI: [2, 3, 5, 7], NAIK: [0, 6, 14, 24], PUNGLI: [0, 0, 3, 5], REKAYASA: 2, KARTU_TIAP: 4, RP_AWAL: 2, OKNUM_RP_AWAL: 3, N_POS: 4, GAJI_OKNUM: 0, CITRA_MAX: 10, CITRA_VIRAL: 1, CITRA_BONGKAR: 2, CITRA_LAPOR: 1, CITRA_OTT: 1, MUTASI_KALI: 0.8,
     TARIF_86: [2, 4, 6, 9], TILANG: [3, 5, 7, 10], PROSES_RESMI: 2, FEE: 0.2, FEE_BANK: 0.1,
-    CITRA_MIN: 7, PINJOL_DAPAT: 5, PINJOL_BAYAR: 7, REMISI: 3, SEL_MEWAH: 2, LAPOR_MIN: 8,
+    CITRA_MIN: 9, PINJOL_DAPAT: 5, PINJOL_BAYAR: 7, REMISI: 3, SEL_MEWAH: 2, LAPOR_MIN: 8,
     BERSIH_BERSIH: 1, MUTASI: 1, TUMBAL_CITRA: 2,
   };
   const KELAS = ['Jelata', 'Pedagang', 'Juragan', 'Pengusaha'];
@@ -184,15 +184,15 @@
       await ev('ott', { seat: 0 });
       const c = await ask(0, { kind: 'ott', text: '🚨 OTT! Sorotan menyentuh 10. Bagaimana kamu lolos?', options }, options[0].id);
       if (c === 'tumbal_kartu') {
-        o.hand.splice(o.hand.indexOf(8), 1); o.sorotan = 6; o.citra -= C.TUMBAL_CITRA; st('ott_tumbal_kartu');
+        o.hand.splice(o.hand.indexOf(8), 1); o.sorotan = 6; citra(-C.TUMBAL_CITRA); st('ott_tumbal_kartu');
         log(`OTT! ${name(0)} mengorbankan bawahan (kartu Tumbal). Berita: "oknum bawahan dipecat".`);
       } else if (c === 'backing') {
-        o.backing--; o.sorotan = 7; st('ott_backing'); log(`OTT! ${name(0)} diselamatkan Backing.`);
+        o.backing--; o.sorotan = 7; citra(-C.CITRA_OTT); st('ott_backing'); log(`OTT! ${name(0)} diselamatkan Backing.`);
       } else if (c === 'tumbal_pos') {
-        o.nPos--; o.pos = o.pos.slice(0, o.nPos); o.sorotan = 6; o.citra -= 2; st('ott_tumbal_pos');
+        o.nPos--; o.pos = o.pos.slice(0, o.nPos); o.sorotan = 6; citra(-2); st('ott_tumbal_pos');
         log(`OTT! ${name(0)} menumbalkan bawahan: 1 Pos hilang permanen.`);
       } else {
-        st('ott_tertangkap'); const sita = Math.ceil(o.rp / 2); o.rp -= sita; o.bebasDi = S.t + 1; o.sorotan = 5;
+        st('ott_tertangkap'); citra(-C.CITRA_OTT); const sita = Math.ceil(o.rp / 2); o.rp -= sita; o.bebasDi = S.t + 1; o.sorotan = 5;
         log(`OTT! ${name(0)} TERTANGKAP. ${sita} Rupiah disita, masuk Lapas. Semua Pos kosong.`);
       }
     }
@@ -204,6 +204,8 @@
       log(`🔒 ${name(r.seat)} masuk Lapas ${n} putaran: ${why}.`);
       await ev('lapas', { seat: r.seat, sebab });
     }
+    // Citra 0–10: naik lewat tindakan "resmi", turun kalau Oknum dipermalukan di depan publik
+    const citra = (n) => { o.citra = Math.max(0, Math.min(C.CITRA_MAX, o.citra + n)); };
     function bayarOknum(r, n) { n = Math.min(n, r.rp); r.rp -= n; o.rp += n; return n; }
 
     // ---------- Kabar Istana ----------
@@ -300,12 +302,12 @@
             const balas = await ask(r.seat, { kind: 'balas_narasi', text: 'Oknum merilis Narasi Resmi. Balas dengan rekaman kedua?', options: [
               { id: 'ya', label: 'Buka rekaman kedua', sub: 'Buang 1 Kartu Rekaman lagi · Sorotan Oknum +5', disabled: !r.rekaman },
               { id: 'tidak', label: 'Diam', sub: 'Viral-mu tenggelam' }] }, r.rekaman ? 'ya' : 'tidak');
-            if (balas === 'ya') { r.rekaman--; st('narasi_resmi_bocor'); log('Narasi resmi terbantah rekaman kedua!'); await naikSorotan(5); }
+            if (balas === 'ya') { r.rekaman--; st('narasi_resmi_bocor'); citra(-C.CITRA_VIRAL); log('Narasi resmi terbantah rekaman kedua!'); await naikSorotan(5); }
             else st('narasi_resmi_berhasil');
             tembus = false;
           }
         }
-        if (tembus) await naikSorotan(3);
+        if (tembus) { citra(-C.CITRA_VIRAL); await naikSorotan(3); }
         const karet = o.buzzer || S.f.karet === 3 ? 3 : 2;
         const d = d6(script.karet);
         await ev('karet', { seat: r.seat, d, karet });
@@ -321,7 +323,7 @@
         await ev('razia_hasil', { seat: r.seat, c: '86' });
         return false;
       }
-      r.rp = Math.max(0, r.rp - tilang); o.citra += 1; st('tilang_resmi');
+      r.rp = Math.max(0, r.rp - tilang); citra(1); st('tilang_resmi');
       log(`${name(r.seat)} memilih tilang resmi (${tilang}) ke kas negara.`);
       await ev('razia_hasil', { seat: r.seat, c: 'tilang' });
       return true;
@@ -427,7 +429,7 @@
       } else if (tile === 'NASIB') await nasibKartu(r);
       else if (tile === 'VIRAL') { r.rekaman = Math.min(3, r.rekaman + 1); log(`📹 ${name(r.seat)} dapat Kartu Rekaman.`); await ev('rekaman', { seat: r.seat }); }
       else if (tile === 'LAPOR') {
-        if (o.sorotan >= C.LAPOR_MIN || f.laporBebas) { r.rp += 1; st('laporan_diproses'); log(`📝 Laporan ${name(r.seat)} DIPROSES!`); await naikSorotan(2); }
+        if (o.sorotan >= C.LAPOR_MIN || f.laporBebas) { r.rp += 1; citra(-C.CITRA_LAPOR); st('laporan_diproses'); log(`📝 Laporan ${name(r.seat)} DIPROSES!`); await naikSorotan(2); }
         else { st('laporan_diabaikan'); log(`📝 Laporan ${name(r.seat)} diabaikan. #PercumaLaporPolisi`); }
         await ev('lapor', { seat: r.seat });
       } else if (tile === 'PINJOL' && !r.utang && r.kelas < 3) {
@@ -450,9 +452,9 @@
         { id: 'bongkar', label: 'Bongkar pakai Kartu Rekaman', sub: 'Buang 1 Kartu Rekaman · batal · Sorotan Oknum +3', disabled: !target.rekaman },
         { id: 'terima', label: 'Tidak bisa melawan', sub: 'Masuk Lapas 2 putaran' }] }, target.rekaman ? 'bongkar' : 'terima');
       if (c === 'bongkar') {
-        target.rekaman--; st('rekayasa_dibongkar'); log(`📹 Rekayasa terhadap ${name(target.seat)} DIBONGKAR rekaman!`); await naikSorotan(3);
+        target.rekaman--; st('rekayasa_dibongkar'); citra(-C.CITRA_BONGKAR); log(`📹 Rekayasa terhadap ${name(target.seat)} DIBONGKAR rekaman! Citra Oknum −${C.CITRA_BONGKAR}.`); await naikSorotan(3);
       } else {
-        await masukLapas(target, 2, 'rekayasa'); o.citra += 2; await naikSorotan(sorotan);
+        await masukLapas(target, 2, 'rekayasa'); citra(2); await naikSorotan(sorotan);
       }
     }
 
@@ -479,7 +481,7 @@
         if (c === 'terima') { bayarOknum(r, 3); o.dilindungi.push(r.seat); st('uang_keamanan_diterima'); log(`${name(r.seat)} membayar uang keamanan.`); }
         else { o.tarifGanda.push(r.seat); log(`${name(r.seat)} menolak. Tarif 86-nya jadi ganda.`); }
       } else if (k === 7) o.tesUrine = true;
-      else if (k === 9) o.citra += 2;
+      else if (k === 9) citra(2);
       else if (k === 10) {
         const target = rs.filter((r) => !r.lapas);
         const tSeat = await ask(0, { kind: 'target', text: 'Operasi Senyap: rekayasa kasus siapa?', options: target.map((r) => ({ id: r.seat, label: name(r.seat), sub: `${KELAS[r.kelas]} · 📹×${r.rekaman}` })) }, botTarget(target).seat);
@@ -526,7 +528,10 @@
       const kaya = acak(rs.filter((r) => r.kelas >= 2 && !r.lapas)).sort((a, b) => ((a.rekaman > 0) - (b.rekaman > 0)) || (b.rp - a.rp));
       const botRek = kaya.length && S.t >= 3 && !f.noRek;
       let bot = 'opres', botKartu = null;
-      if (o.sorotan >= 7 && o.rp >= 3) bot = 'sowan';
+      const kurangCitra = C.CITRA_MIN - o.citra, sisa = S.putaran - S.t + 1;
+      if (o.sorotan >= 8 && o.rp >= 3) bot = 'sowan';
+      else if (kurangCitra > 0 && sisa <= kurangCitra + 2) bot = 'opres'; // kejar Citra sebelum game selesai
+      else if (o.sorotan >= 7 && o.rp >= 3) bot = 'sowan';
       else if (botRek && f.rekGratis) bot = 'rekayasa';
       else if (botRek && o.rekayasa && kaya[0].rekaman === 0) bot = 'rekayasa';
       else if (botRek && o.hand.includes(10) && o.sorotan <= 6 && kaya[0].rekaman === 0) { bot = 'kartu'; botKartu = 10; }
@@ -537,7 +542,7 @@
       }
       const c = await ask(0, { kind: 'aksi', text: 'Pilih 1 aksi Oknum.', options }, bot);
       if (c === 'sowan') { o.rp -= 3; st('sowan'); log(`${name(0)} sowan ke atasan (setor 3).`); await naikSorotan(-2); }
-      else if (c === 'opres') { o.citra += 1; log(`${name(0)} menggelar operasi resmi (pencitraan).`); await naikSorotan(-1); }
+      else if (c === 'opres') { citra(1); log(`${name(0)} menggelar operasi resmi (pencitraan).`); await naikSorotan(-1); }
       else if (c === 'rekayasa') {
         const pilih = S.players[0].bot ? kaya : target;
         const tSeat = await ask(0, { kind: 'target', text: 'Rekayasa kasus terhadap siapa?', options: target.map((r) => ({ id: r.seat, label: name(r.seat), sub: `${KELAS[r.kelas]} · ${r.rp} Rupiah · 📹×${r.rekaman}` })) }, botTarget(pilih).seat);
@@ -596,7 +601,7 @@
       if (stopped) { S.phase = 'stopped'; update(); return S; }
       // skor akhir
       if (o.citra < C.CITRA_MIN) st('oknum_dimutasi');
-      const skor = [{ seat: 0, role: 'Oknum', aman: o.aman, score: o.citra >= C.CITRA_MIN ? o.aman : Math.floor(o.aman * 0.7), mutasi: o.citra < C.CITRA_MIN }]
+      const skor = [{ seat: 0, role: 'Oknum', aman: o.aman, score: o.citra >= C.CITRA_MIN ? o.aman : Math.floor(o.aman * C.MUTASI_KALI), mutasi: o.citra < C.CITRA_MIN }]
         .concat(rs.map((r) => ({ seat: r.seat, role: 'Rakyat', kelas: r.kelas, aman: r.aman, score: r.kelas === 3 ? r.aman : 0, rp: r.rp })));
       skor.forEach((s) => { s.name = name(s.seat); s.tie = rng(); });
       skor.sort((a, b) => (b.score - a.score) || ((b.kelas || 0) - (a.kelas || 0)) || ((b.rp || 0) - (a.rp || 0)) || (b.tie - a.tie));

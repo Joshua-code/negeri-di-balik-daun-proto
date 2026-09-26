@@ -23,7 +23,7 @@
         { on: 'event:gaji', target: '#me', text: 'Di awal giliran kamu terima <b>gaji</b> sesuai kelas. Jelata: 2 Rupiah.' },
         { on: 'prompt:roll', target: '#prompt', text: 'Tekan <b>Lempar dadu</b> untuk berjalan.' },
         { on: 'prompt:razia', target: '#prompt', text: 'Kena razia! <b>Damai "86"</b>: murah dan tetap jalan, tapi uangnya masuk kantong Oknum. <b>Tilang resmi</b>: lebih mahal, tapi uangnya masuk kas negara, bukan ke Oknum. (Pilihan ketiga, <b>Viralkan</b>, kamu pelajari di Bab 3.) Pilih salah satu.' },
-        { on: 'end', target: '#oknum', text: 'Panel Oknum: <b>Sorotan</b> naik setiap kali ia memeras. Kalau menyentuh 10, terjadi <b>OTT</b>. <b>Citra</b> naik kalau ia bertindak "resmi". <br><br>Bab 1 selesai!' },
+        { on: 'end', target: '#oknum', text: 'Panel Oknum: <b>Sorotan</b> naik setiap kali ia memeras. Kalau menyentuh 10, terjadi <b>OTT</b>. <b>Citra</b> (0–10) naik kalau ia bertindak "resmi", dan turun kalau ia dipermalukan (diviralkan, OTT). <br><br>Bab 1 selesai!' },
       ],
     },
     {
@@ -95,7 +95,7 @@
         { on: 'prompt:pos', lockTiles: [1, 2, 3], target: '#board', text: 'Pasang <b>3 Pos Razia</b>. Rakyat maju 1–6 petak, dan hanya kena razia kalau <b>berhenti tepat</b> di Pos. Tap petak yang menyala (1–3), lalu tekan <b>Konfirmasi</b>.' },
         { on: 'prompt:aksi', target: '#prompt', text: 'Setiap giliran kamu punya 1 aksi:<br>• <b>Sowan</b>: setor ke atasan, Sorotan turun.<br>• <b>Rekayasa kasus</b>: jebloskan Rakyat ke Lapas (bisa dibongkar rekaman).<br>• <b>Operasi resmi</b>: pencitraan.<br>Sorotanmu sudah 9. Hati-hati!' },
         { on: 'prompt:ott', target: '#prompt', text: '<b>OTT!</b> Pilih cara lolos. Backing menyelamatkan. Tumbal mengorbankan 1 Pos selamanya. Pasrah = separuh Rupiah disita. Harta Aman yang sudah di luar negeri selalu aman.' },
-        { on: 'end', target: '#oknum', text: 'Satu hal lagi: di akhir, <b>Citra harus ≥ 7</b>. Kalau tidak, kamu dimutasi dan Harta Amanmu dikali 0,7.<br><br>🎉 <b>Tutorial selesai!</b> Coba <b>Latihan vs Bot</b> atau ajak teman di <b>Main Online</b>.' },
+        { on: 'end', target: '#oknum', text: 'Satu hal lagi: <b>Citra</b> (maks. 10) harus <b>≥ 9</b> di akhir. Kalau tidak, kamu dimutasi dan Harta Amanmu dikali 0,8. Citra turun setiap kali kamu diviralkan, rekayasamu dibongkar, laporan polisi diproses, atau kena OTT. Operasi resmi menaikkannya lagi.<br><br>🎉 <b>Tutorial selesai!</b> Coba <b>Latihan vs Bot</b> atau ajak teman di <b>Main Online</b>.' },
       ],
     },
   ];

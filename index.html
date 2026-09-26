@@ -311,7 +311,7 @@ function render() {
   okEl.innerHTML = `<div class="row" style="justify-content:space-between"><span class="name">👮 ${esc(S.players[0].name)}${mySeat === 0 ? ' (kamu)' : ''}</span>${okAktif ? '' : '<b style="color:var(--danger)" data-tip="Oknum di Lapas: semua Pos kosong, Rakyat bebas lewat.">🔒 Lapas</b>'}</div>
     <div class="small" ${tip('Sorotan publik 0–10. Naik saat Oknum memeras, transfer, atau diviralkan. Menyentuh 10 = OTT.')}>Sorotan <b>${o.sorotan}</b>/10 ${o.sorotan >= 8 ? '⚠️' : ''}</div><div class="meter"><i style="width:${o.sorotan * 10}%"></i></div>
     <div class="stats">
-      <span ${tip(`Citra institusi. Harus ≥ ${C.CITRA_MIN} di akhir, kalau tidak Oknum dimutasi (Harta Aman ×0,7).`)}>Citra <b>${o.citra}</b>/${C.CITRA_MIN}</span>
+      <span ${tip(`Citra institusi (0–${C.CITRA_MAX}). Harus ≥ ${C.CITRA_MIN} di akhir, kalau tidak Oknum dimutasi (Harta Aman ×${String(C.MUTASI_KALI).replace('.', ',')}). Turun kalau diviralkan, rekayasa dibongkar, laporan diproses, atau OTT.`)}>Citra <b>${o.citra}</b>/${C.CITRA_MIN}</span>
       <span ${tip('Backing: pelindung saat OTT. Sekali pakai, Sorotan turun ke 7.')}>🛡️${o.backing}</span>
       <span ${tip('Token Rekayasa Kasus yang tersisa.')}>⚖️${o.rekayasa}</span>
       <span ${tip('Jumlah Pos Razia. Berkurang permanen kalau bawahan ditumbalkan.')}>🚨${o.nPos}</span>
@@ -466,7 +466,7 @@ const TIPS = {
   'p:pinjol': 'Pinjol: uang cepat sekarang, bayar lebih mahal saat melewati Subuh. Gagal bayar = uang & Kartu Rekaman hilang.',
   'p:bongkar': 'Oknum merekayasa kasusmu! Kartu Rekaman 📹 bisa membongkarnya. Tanpa rekaman, kamu masuk Lapas.',
   'p:pos': 'Rakyat hanya kena razia kalau BERHENTI tepat di Pos. Mereka maju 1–6 petak, jadi pasang Pos di petak 1–6 di depan Rakyat yang kaya ("86"-nya lebih mahal).',
-  'p:aksi': 'Satu aksi per giliran. Sowan menurunkan Sorotan, Rekayasa menjebloskan Rakyat (hindari yang pegang rekaman), Operasi resmi menaikkan Citra. Citra harus ≥ 7 di akhir.',
+  'p:aksi': 'Satu aksi per giliran. Sowan menurunkan Sorotan, Rekayasa menjebloskan Rakyat (hindari yang pegang rekaman), Operasi resmi menaikkan Citra. Citra harus ≥ 9 di akhir.',
   'p:ott': 'OTT! Pilih cara lolos. Harta Aman di luar negeri tidak bisa disita. Hanya Rupiah di tangan yang terancam.',
   'e:kabar': 'Kabar Istana dibuka tiap putaran dan mengubah aturan sementara. Demo besar bisa membatalkan kabar berikutnya.',
   'e:demo': 'Demo berhasil! Kabar Istana putaran berikutnya dibatalkan. Tapi Oknum bisa menangkap satu pendemo dengan tuduhan penghasutan.',
@@ -493,8 +493,8 @@ const ROLE = {
   rakyat: `<h3>🧍 Kamu: RAKYAT</h3><p><b>🎯 Tujuan:</b> naik kelas <b>Jelata → Pedagang → Juragan → Pengusaha</b>, lalu <b>Transfer ke Luar</b>. Pemenang = <b>Harta Aman 🏦</b> terbanyak setelah 20 putaran.</p>
     <p><b>✅ Cara menang:</b></p><ul><li>Urus izin di 🏛️ Kantor Izin (gratis tapi lambat). Pakai calo hanya saat mendesak; uangnya menggemukkan Oknum.</li><li>Viralkan 📹 Oknum saat Sorotannya tinggi untuk memicu OTT.</li><li>Jadi Pengusaha secepatnya, lalu transfer (di 🏦 Bank potongannya lebih kecil).</li></ul>
     <p><b>⚠️ Ancaman:</b> berhenti tepat di Pos Razia 🚨 (lewat saja aman), Rekayasa Kasus, Pasal Karet.</p>`,
-  oknum: `<h3>👮 Kamu: OKNUM APARAT</h3><p><b>🎯 Tujuan:</b> kumpulkan setoran ("86", pungli calo, uang keamanan), lalu <b>Transfer ke Luar</b>. Pemenang = <b>Harta Aman 🏦</b> terbanyak. <b>Citra harus ≥ 7</b> di akhir, kalau tidak hartamu ×0,7.</p>
-    <p><b>✅ Cara menang:</b></p><ul><li>Pasang Pos 🚨 di petak 1–6 di depan Rakyat yang kaya. Rakyat hanya kena razia kalau <b>berhenti tepat</b> di Pos.</li><li>Sowan ke atasan saat Sorotan ≥ 7.</li><li>Rekayasa kasus terhadap Rakyat yang tidak memegang Kartu Rekaman 📹.</li></ul>
+  oknum: `<h3>👮 Kamu: OKNUM APARAT</h3><p><b>🎯 Tujuan:</b> kumpulkan setoran ("86", pungli calo, uang keamanan), lalu <b>Transfer ke Luar</b>. Pemenang = <b>Harta Aman 🏦</b> terbanyak. <b>Citra harus ≥ 9</b> (maks. 10) di akhir, kalau tidak hartamu ×0,8. Citra turun kalau kamu diviralkan, rekayasamu dibongkar, laporan polisi diproses, atau kena OTT.</p>
+    <p><b>✅ Cara menang:</b></p><ul><li>Pasang Pos 🚨 di petak 1–6 di depan Rakyat yang kaya. Rakyat hanya kena razia kalau <b>berhenti tepat</b> di Pos.</li><li>Sowan ke atasan saat Sorotan ≥ 7.</li><li>Rekayasa kasus terhadap Rakyat yang tidak memegang Kartu Rekaman 📹.</li><li>Sisakan beberapa putaran terakhir untuk Operasi resmi, supaya Citra kembali ≥ 9.</li></ul>
     <p><b>⚠️ Ancaman:</b> Sorotan 10 = <b>OTT</b>. Viral dan laporan polisi menaikkan Sorotan.</p>`,
 };
 function showRole() {
@@ -510,7 +510,7 @@ $('#help-card').innerHTML = `<h3>Aturan singkat Jalan Tikus</h3>
   <p><b>Kelas & gaji:</b> Jelata 2 · Pedagang 3 (biaya 6, tanpa izin) · Juragan 5 (biaya 14 + izin) · Pengusaha 7 (biaya 24 + izin).</p>
   <p><b>Izin:</b> 🏛️ Kantor Izin (lewat saja, jadi 2 putaran kemudian, gratis) atau calo (kapan saja, 3/5 Rupiah ke Oknum).</p>
   <p><b>Razia 🚨:</b> hanya kalau <b>berhenti tepat</b> di Pos. Pilihan: 86 (2/4/6/9 ke Oknum) · Tilang resmi (3/5/7/10 ke kas negara) · Viral 📹 (Sorotan +3, dadu Pasal Karet 1–2 = Lapas).</p>
-  <p><b>Oknum:</b> Sorotan 10 = OTT (lolos pakai Backing/Tumbal atau tertangkap). Citra ≥ 7 di akhir. Dapat 1 Kartu Oknum tiap 4 putaran.</p>
+  <p><b>Oknum:</b> Sorotan 10 = OTT (lolos pakai Backing/Tumbal atau tertangkap). Citra (0–10) harus ≥ 9 di akhir, kalau tidak Harta Aman ×0,8. Citra naik lewat operasi resmi, tilang resmi & rekayasa; turun kalau diviralkan, rekayasa dibongkar, laporan diproses, atau OTT. Dapat 1 Kartu Oknum tiap 4 putaran.</p>
   <p><b>Akhir:</b> setelah 20 putaran, Rupiah hangus. Hanya Harta Aman 🏦 yang dihitung. Rakyat yang belum Pengusaha = 0.</p>
   <p><b>Ikon:</b> 💰 Rupiah · 🏦 Harta Aman · 📹 Kartu Rekaman · 📄 izin · 🔒 Lapas · 📱 utang Pinjol · 🛡️ Backing · ⚖️ token Rekayasa · 🚨 Pos · 🃏 Kartu Oknum. Arahkan kursor (atau tap) ikon untuk penjelasan.</p>
   <button class="btn primary" style="text-align:center"><b>Tutup</b></button>`;
@@ -521,7 +521,7 @@ $('#help-card button').onclick = () => { $('#ov-help').hidden = true; };
 function showEnd() {
   if (!S || S.phase !== 'end' || !$('#scr-end').hidden) return;
   const R = S.result, st = S.stats, g = (k) => st[k] || 0;
-  $('#e-rank').innerHTML = R.ranking.map((x, i) => `<div><span>${['🥇', '🥈', '🥉', '4.'][i]} ${esc(x.name)}${x.seat === mySeat ? ' (kamu)' : ''} <span class="small muted">${x.role === 'Oknum' ? '👮 Oknum' : KELAS_EM[x.kelas] + ' ' + JT.KELAS[x.kelas]}${x.mutasi ? ' · dimutasi ×0,7' : ''}</span></span><b>🏦 ${x.score}</b></div>`).join('');
+  $('#e-rank').innerHTML = R.ranking.map((x, i) => `<div><span>${['🥇', '🥈', '🥉', '4.'][i]} ${esc(x.name)}${x.seat === mySeat ? ' (kamu)' : ''} <span class="small muted">${x.role === 'Oknum' ? '👮 Oknum' : KELAS_EM[x.kelas] + ' ' + JT.KELAS[x.kelas]}${x.mutasi ? ' · dimutasi ×0,8' : ''}</span></span><b>🏦 ${x.score}</b></div>`).join('');
   const setoran = g('uang_86') + g('pungli') + g('uang_keamanan');
   const gagal = S.rs.filter((r) => r.kelas < 3).length;
   $('#e-korban').innerHTML = [
