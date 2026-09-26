@@ -207,8 +207,8 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 'use strict';
 // ====== konfigurasi online (Supabase Realtime Broadcast; tanpa tabel) ======
 const SB_OVERRIDE = (() => { try { return JSON.parse(localStorage.getItem('ndbd_sb')); } catch (e) { return null; } })(); // hanya untuk tes lokal
-const SB_URL = (SB_OVERRIDE && SB_OVERRIDE.url) || '__SB_URL__';
-const SB_KEY = (SB_OVERRIDE && SB_OVERRIDE.key) || '__SB_KEY__';
+const SB_URL = (SB_OVERRIDE && SB_OVERRIDE.url) || 'https://axlmcglultvdxuwbspci.supabase.co';
+const SB_KEY = (SB_OVERRIDE && SB_OVERRIDE.key) || 'sb_publishable_lUOhxk6WVX8jskieKVFtfg_ZPx7Dk0z';
 
 const JT = window.JalanTikus, TUT = window.Tutorial;
 const $ = (s, el = document) => el.querySelector(s);
