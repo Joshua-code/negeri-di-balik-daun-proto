@@ -1,8 +1,11 @@
-// node prototype/gb-check.js — cek engine Gedung Bundar: (1) keseimbangan match bot, (2) semua kursi "manusia" acak tidak macet, (3) 5 bab tutorial.
+// node prototype/gb-check.js — cek engine Gedung Bundar: (1) keseimbangan match bot, (2) semua kursi "manusia" acak tidak macet, (3) 5 bab tutorial,
+// (4) uji fokus Perlindungan Korban (Jaksa selalu menjerat UMKM), (5) estimasi durasi 15–20 menit.
 const assert = require('assert');
 const GB = require('./gb-engine.js');
 const tutorial = require('./tutorial.js');
 const { CHAPTERS } = require('./gb-tutorial.js');
+const { estimasi } = require('./durasi.js');
+const NEGO_DETIK = 25;   // rata-rata pemakaian jendela negosiasi online per ronde (maks 30 detik)
 
 const ROLES = ['jaksa', 'kong', 'bumn', 'umkm'];
 const pemain = (bot) => ROLES.map((r, s) => ({ name: 'P' + s, bot, role: s ? r : undefined }));
@@ -49,16 +52,56 @@ async function randomHumans(n) {
   return kinds;
 }
 
+// Uji fokus: Jaksa (dikendalikan skrip) selalu menjerat UMKM kalau bisa. Bandingkan peluang juara UMKM dengan/tanpa Perlindungan Korban.
+async function fokusUmkm(n, lindung) {
+  const simpan = Object.assign({}, GB.C.LINDUNG);
+  if (!lindung) Object.keys(GB.C.LINDUNG).forEach((k) => { GB.C.LINDUNG[k] = false; });
+  let menang = 0;
+  for (let i = 0; i < n; i++) {
+    let g, answered = 0;
+    const players = ROLES.map((r, s) => ({ name: 'P' + s, bot: s !== 0, role: s ? r : undefined }));
+    g = GB.createGame(players, {
+      rng: GB.mulberry32(7000 + i),
+      onUpdate(S) {
+        const p = S.prompt;
+        if (!p || p.id === answered) return;
+        answered = p.id;
+        const umkm = S.ps.find((x) => x.role === 'umkm');
+        let c = p.bot;
+        if (p.kind === 'aksi_jaksa' && umkm.jejak >= 1 && p.options.some((o) => o.id === 'selidik' && !o.disabled)) c = 'selidik';
+        if (p.kind === 'target' && p.options.some((o) => o.id === umkm.seat && !o.disabled)) c = umkm.seat;
+        if (p.kind === 'kalkulator') c = p.options.filter((o) => !o.disabled).pop().id;
+        setImmediate(() => g.answer(p.seat, p.id, c));
+      },
+    });
+    const S = await g.run();
+    if (S.result.ranking[0].role === 'umkm') menang++;
+  }
+  Object.assign(GB.C.LINDUNG, simpan);
+  return Math.round((100 * menang) / n);
+}
+
 let selesai = false;
 process.on('exit', () => { if (!selesai) { console.error('MACET: ada promise yang tidak pernah selesai'); process.exitCode = 1; } });
 
 (async () => {
   const b = await botGames(3000);
-  console.log(`3000 match bot: juara Jaksa/Konglomerat/Direksi/UMKM = ${b.win.join('/')}% (sim: 23/29/20/28), UMKM jadi Pengusaha ${(b.umkmNaik * 100).toFixed(0)}%`);
+  console.log(`3000 match bot: juara Jaksa/Konglomerat/Direksi/UMKM = ${b.win.join('/')}% (target 15–35% tiap role), UMKM jadi Pengusaha ${(b.umkmNaik * 100).toFixed(0)}%`);
   assert(b.win.every((x) => x >= 15 && x <= 35), 'Peluang juara tidak seimbang');
 
   const kinds = await randomHumans(300);
   console.log(`300 match semua kursi manusia (jawaban acak): selesai tanpa macet. Jenis prompt teruji: ${[...kinds].sort().join(', ')}`);
+
+  const fOn = await fokusUmkm(1000, true), fOff = await fokusUmkm(1000, false);
+  console.log(`Uji fokus (Jaksa selalu menjerat UMKM): UMKM juara ${fOn}% dengan Perlindungan Korban, ${fOff}% tanpa (normal ${b.win[3]}%)`);
+  assert(fOn >= 0.7 * b.win[3], 'UMKM terlalu terhukum saat dikeroyok');
+
+  const kursi = (n, human) => ROLES.map((r, s) => ({ name: 'P' + s, bot: !human(s), role: s ? r : undefined }));
+  const d = await estimasi(GB, kursi, { negoDetik: NEGO_DETIK });
+  console.log(`Estimasi durasi 4 manusia online: ${d.menit} menit (${d.prompt} keputusan, jeda ${d.jedaMenit} menit, ${d.nego} jendela negosiasi)`);
+  assert(d.menit >= 15 && d.menit <= 20, 'durasi di luar 15–20 menit');
+  const solo = await estimasi(GB, kursi, { manusia: 3 });
+  console.log(`Estimasi durasi latihan 1 manusia vs bot (UMKM): ${solo.menit} menit`);
 
   for (const ch of CHAPTERS) {
     const r = await tutorial.autoplay(ch, GB);

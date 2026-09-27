@@ -8,17 +8,17 @@
   'use strict';
 
   const C = {
-    PERKARA: 5, BERKAS: 2, BERKAS_5P: 3, DANA_5P: 4, GAJI: { hakim: 1, anggota: 1, panitera: 1, pengacara: 1 },
+    PERKARA: 8, PERKARA_5P: 7, BERKAS: 2, BERKAS_5P: 2, DANA_5P: 8, GAJI: { hakim: 1, anggota: 1, panitera: 1, pengacara: 1 },
     GAJI_RAKYAT: [1, 2, 3], NAIK: [0, 5, 10], RP_AWAL: { hakim: 2, anggota: 2, panitera: 3, pengacara: 3, rakyat: 2 }, KERJA: 2,
     CITRA_AWAL: 5, CITRA_MIN: 6, MUTASI: 0.7, CITRA_ADIL: 1, CITRA_KECIL: 2, CITRA_JANGGAL: 1, CITRA_BEBAS_VIRAL: 2, CITRA_PERS: 2,
     SAKIT_SP: 1, TERCECER_SP: 1, TUNJANGAN: 2, FEE: 0.2,
     VIRAL_AWAL: 2, VIRAL_MAX: 3, VIRAL_PER_MAIN: 2, VIRAL_SP: 3, KAWAL_SP: 1, DAMAI_SP: -2, KARET: 2,
     LANGSUNG_SOR: 2, JANGGAL_SOR: 1, JANGGAL_SOR_VIRAL: 2, JANGGAL_SP_MIN: 5, MARAH: 2,
     KASASI_MIN: 7, KASASI_ANAK: 8, MAKELAR: 6, MAKELAR_KEBAL: 9, KASASI_SOR: 3, KASASI_CITRA: 2, BOCOR_SOR: 3,
-    KEADILAN_MENANG: 8, KEADILAN_5P: 10, KASASI_KEADILAN: 1, CEPU_PELUANG: 0.5, CEPU_BONUS: 2, CEPU_SOR: 5,
+    KEADILAN_MENANG: 13, KEADILAN_5P: 12, KASASI_KEADILAN: 1, CEPU_PELUANG: 0.5, CEPU_BONUS: 2, CEPU_SOR: 5,
     PRAPER: 5, PK: 4, PRAPER_SP: 5, SEL_MEWAH: 2, TUMBAL_SOR_HAKIM: 6, TUMBAL_SOR_PANITERA: 3,
     // strategi bot (bukan aturan; sama dengan tools/sim_meja_hijau.py)
-    ASK: { rakus: 0.4, ambang: 0.3 }, ASK_5P: 1.0, MARKUP: { tipis: 3, sedang: 5, rakus: 7 }, DAMAI_TAWAR: 0.3, CURIGA: 0.5,
+    ASK: { rakus: 0.4, ambang: 0.3 }, ASK_5P: 0.8, MARKUP: { tipis: 3, sedang: 5, rakus: 7 }, DAMAI_TAWAR: 0.3, CURIGA: 0.5,
     TERIMA: { rakus: 0.5, ambang: 0.8 },
   };
   const BEBAS = 0, RINGAN = 1, BERAT = 2;
@@ -34,15 +34,15 @@
   const ADIL = { konglo: BERAT, anak: BERAT, koruptor: BERAT, kecil: RINGAN };
   // tabel 7.1 docs/05: [nama, jenis, dana, sorotan awal, bukti kuat, nilai keadilan, rujukan]
   const PERKARA = [
-    ['Minyak Goreng Langka', 'konglo', 16, 3, true, 3, 'Suap vonis lepas CPO (tarif Rp60 M)'],
-    ['Tambang Timah Bolong', 'konglo', 18, 2, false, 3, 'Kasus timah'],
-    ['Impor Gula Kilat', 'konglo', 14, 2, false, 3, 'Importir gula'],
-    ['Anak Dewan Aniaya Pacar', 'anak', 12, 3, true, 2, 'Vonis bebas dibeli (Tannur)'],
-    ['Tabrak Lari Mobil Dinas', 'anak', 10, 2, true, 2, 'Impunitas keluarga pejabat'],
-    ['Pesta Narkoba Anak Jenderal', 'anak', 11, 1, false, 2, 'Impunitas keluarga aparat'],
-    ['Bansos Disunat', 'koruptor', 10, 2, true, 2, 'Rata-rata vonis koruptor 3 th 4 bln (ICW)'],
-    ['Proyek Jalan Fiktif', 'koruptor', 8, 1, false, 2, 'Vonis ringan koruptor'],
-    ['Dana Desa Raib', 'koruptor', 9, 1, true, 2, 'Vonis ringan koruptor'],
+    ['Minyak Goreng Langka', 'konglo', 18, 3, true, 3, 'Suap vonis lepas CPO (tarif Rp60 M)'],
+    ['Tambang Timah Bolong', 'konglo', 20, 2, false, 3, 'Kasus timah'],
+    ['Impor Gula Kilat', 'konglo', 15, 2, false, 3, 'Importir gula'],
+    ['Anak Dewan Aniaya Pacar', 'anak', 13, 3, true, 2, 'Vonis bebas dibeli (Tannur)'],
+    ['Tabrak Lari Mobil Dinas', 'anak', 11, 2, true, 2, 'Impunitas keluarga pejabat'],
+    ['Pesta Narkoba Anak Jenderal', 'anak', 12, 1, false, 2, 'Impunitas keluarga aparat'],
+    ['Bansos Disunat', 'koruptor', 11, 2, true, 2, 'Rata-rata vonis koruptor 3 th 4 bln (ICW)'],
+    ['Proyek Jalan Fiktif', 'koruptor', 9, 1, false, 2, 'Vonis ringan koruptor'],
+    ['Dana Desa Raib', 'koruptor', 10, 1, true, 2, 'Vonis ringan koruptor'],
     ['Nenek Pemungut Kakao', 'kecil', 0, 1, true, 0, 'Nenek Minah'],
     ['Nenek dan Kayu Jati', 'kecil', 0, 0, true, 0, 'Nenek Asyani'],
     ['Sandal Jepit Polisi', 'kecil', 0, 1, true, 0, 'Tajam ke bawah'],
@@ -89,7 +89,8 @@
   /**
    * players: [{name, bot, pid}] — kursi 0 Hakim, 1 Panitera, 2 Pengacara, 3 Keluarga Korban, 4 Hakim Anggota (opsional → varian 5 pemain).
    * opts: rng, delay, putaran (jumlah perkara), script {perkara:[id..], kabar:[..], karet:[..], strat:{seat:'..'}, cepu: seat|null},
-   *       setup(S), onUpdate(S), onEvent(ev), strict, stopAfterTurn(S, seat).
+   *       setup(S), onUpdate(S), onEvent(ev), strict, stopAfterTurn(S, seat),
+   *       onPace(k) (jeda k × delay, untuk estimasi durasi), onPhase('nego', S) → Promise (jendela negosiasi online).
    */
   function createGame(players, opts = {}) {
     const rng = opts.rng || Math.random;
@@ -100,14 +101,15 @@
     const n5 = players.length >= 5;
 
     const S = {
-      t: 0, putaran: opts.putaran || C.PERKARA, phase: 'play', turn: null, kabar: null, cur: null, n5,
+      t: 0, putaran: opts.putaran || (players.length >= 5 ? C.PERKARA_5P : C.PERKARA), phase: 'play', turn: null, kabar: null, cur: null, n5,
       log: [], events: [], evN: 0, logN: 0, prompt: null, stats: {}, result: null, f: {},
       players: players.map((p) => ({ name: p.name, bot: !!p.bot, pid: p.pid || null })),
       p: players.map((pl, seat) => {
         const role = ROLE_OF[seat];
         return { seat, role, rp: C.RP_AWAL[role], aman: 0, sor: role === 'rakyat' ? 0 : 1, backing: ['hakim', 'anggota', 'pengacara'].includes(role) ? 1 : 0,
           citra: C.CITRA_AWAL, lapas: 0, siasat: SIASAT_AWAL[role].slice(), jc: false, tumbal: role === 'hakim', makelar: false,
-          kelas: 0, keadilan: 0, viral: role === 'rakyat' ? C.VIRAL_AWAL : 0, hadir: true };
+          kelas: 0, keadilan: 0, viral: role === 'rakyat' ? C.VIRAL_AWAL : 0, hadir: true,
+          ottAt: -1, kebalAt: -1 };   // Perlindungan Korban: perkara OTT terakhir / perkara kebal Lapas
       }),
       priv: players.map(() => ({ log: [], rahasia: null, tahuOngkos: false })),
       cepu: null, beratKaya: [], danaLama: {},   // beratKaya: nomor perkara kaya yang divonis Berat (untuk PK Diskon)
@@ -132,9 +134,9 @@
     const update = () => opts.onUpdate && opts.onUpdate(S);
     const log = (msg) => { S.log.push({ n: ++S.logN, t: S.t, msg }); if (S.log.length > 60) S.log.shift(); update(); };
     const note = (seat, msg) => { const L = S.priv[seat].log; L.push({ n: ++S.logN, t: S.t, msg }); if (L.length > 40) L.shift(); update(); };
-    const PACE = { perkara_baru: 1, kabar: 2.5, perkara: 2.5, gaji: 0.4, amplop: 1.2, damai: 1.2, respons: 1.4, karet: 1.2, simpan: 1,
-      putusan: 2.5, kasasi: 2.5, makelar: 1.5, bocor: 1.5, ott: 1.5, lapas: 1.5, transfer: 1.2, cepu: 2.5, praper: 2, pk: 1.5, naik: 1.2, siasat: 1.2 };
-    const pace = async (k = 1) => { const d = delayMs(); if (d) await sleep(d * k); };
+    const PACE = { perkara_baru: 1, kabar: 2.5, perkara: 3.5, gaji: 0.4, amplop: 1.2, damai: 1.2, respons: 1.4, karet: 1.2, simpan: 1,
+      putusan: 3.5, kasasi: 3, makelar: 1.5, bocor: 1.5, ott: 1.5, lapas: 1.5, transfer: 1.2, cepu: 2.5, praper: 2, pk: 1.5, naik: 1.2, siasat: 1.2 };
+    const pace = async (k = 1) => { if (opts.onPace) opts.onPace(k); const d = delayMs(); if (d) await sleep(d * k); };
     async function ev(type, data = {}) {
       const e = Object.assign({}, data, { n: ++S.evN, type, t: S.t });
       S.events.push(e); if (S.events.length > 20) S.events.shift();
@@ -177,8 +179,10 @@
     // ---------- Sorotan & OTT ----------
     async function sorot(p, n) {
       if (p.role === 'rakyat') return;
+      if (n > 0 && p.ottAt === S.t) return;   // Perlindungan Korban: maks 1 OTT per pemain per perkara
       p.sor = Math.max(0, p.sor + n);
       if (p.sor < 10) return;
+      p.ottAt = S.t;
       st('ott');
       const bisaTumbal = p === H && p.tumbal && !PN.lapas;
       const options = [
@@ -197,9 +201,11 @@
         p.backing--; p.sor = 7; st('ott_backing'); log(`🚨 OTT! ${name(p.seat)} diselamatkan Backing.`);
       } else {
         st('ott_tertangkap'); st('disita', p.rp);
-        log(`🚨 OTT! ${name(p.seat)} TERTANGKAP. Semua Rupiah di tangan disita, masuk Lapas 1 perkara. Keluarga Korban Keadilan +1.`);
-        p.rp = 0; p.lapas = 1; p.sor = 5; R.keadilan += 1;
-        await ev('lapas', { seat: p.seat, sebab: 'ott' });
+        const kebal = p.kebalAt === S.t;
+        log(`🚨 OTT! ${name(p.seat)} TERTANGKAP. Semua Rupiah di tangan disita${kebal ? ' (baru keluar Lapas, jadi tidak masuk lagi)' : ', masuk Lapas 1 perkara'}. Keluarga Korban Keadilan +1.`);
+        p.rp = 0; p.sor = 5; R.keadilan += 1;
+        if (!p.backing) { p.backing = 1; log(`🛡️ Simpati Publik: jaringan lama ${name(p.seat)} turun tangan (+1 Backing).`); }
+        if (!kebal) { p.lapas = 1; await ev('lapas', { seat: p.seat, sebab: 'ott' }); }
       }
     }
     async function transfer(p) {
@@ -239,6 +245,7 @@
       p.hadir = true;
       if (!p.lapas) return;
       p.lapas = 0;
+      p.kebalAt = S.t + 1;   // Perlindungan Korban: kebal Lapas di perkara berikutnya
       const dompet = p.rp + (p.role !== 'rakyat' ? p.aman : 0);
       if (dompet >= C.SEL_MEWAH) {
         const c = await yesNo(p.seat, 'sel_mewah', `🔒 Kamu di Lapas. Beli Sel Mewah (${C.SEL_MEWAH}) supaya tetap bisa beraksi di perkara ini?`,
@@ -291,6 +298,7 @@
         votes: {}, vonis: null, kasasi: false, gugur: false, status: {}, x: { kas: 0, tarif: {}, quote: null, kirim: 0, terima: {}, potong: 0 } };
       log(`⚖️ Perkara ${t}: ${card.nama} — terdakwa ${TERDAKWA[card.jenis][1]}${dana ? `, Dana Klien ${dana}` : ''}.`);
       await ev('perkara', { id: card.id });
+      if (opts.onPhase && card.jenis !== 'kecil') await opts.onPhase('nego', S);   // jendela negosiasi (online)
       const hakims = hakimAll.filter(aktif);
 
       // --- Perkara Tanpa Pembela ---
@@ -491,8 +499,13 @@
             const dd = d6(script.karet);
             await ev('karet', { seat: R.seat, d: dd });
             if (dd <= S.f.karet) {
+              R.viral = Math.min(C.VIRAL_MAX, R.viral + 1);
+              if (R.kebalAt === S.t) {
+                log(`⚖️ Dadu Pasal Karet ${dd}: ${name(R.seat)} dilaporkan balik, tapi baru keluar Lapas, jadi laporannya mandek. Simpati Publik: +1 Kartu Viral.`);
+                break;
+              }
               R.lapas = 1; st('lapas_pasal_karet');
-              log(`⚖️ Dadu Pasal Karet ${dd}: ${name(R.seat)} dilaporkan balik (UU ITE). Absen perkara berikutnya.`);
+              log(`⚖️ Dadu Pasal Karet ${dd}: ${name(R.seat)} dilaporkan balik (UU ITE). Absen perkara berikutnya. Simpati Publik: +1 Kartu Viral.`);
               await ev('lapas', { seat: R.seat, sebab: 'pasal_karet' });
               break;
             }

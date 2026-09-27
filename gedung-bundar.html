@@ -85,9 +85,7 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 .chip.beku { background: var(--ice); border-color: var(--ice-line); }
 .warn { color: var(--danger); font-weight: 700; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 3px; }
-#log { font-size: 11px; color: var(--muted); padding: 0 2px 6px; min-height: 5.6em; }
-#log div:first-child { color: var(--ink); font-weight: 700; font-size: 12px; border-radius: 4px; }
-#log div:first-child.new { animation: flash 1.2s; }
+#kabar.flash { animation: flash 1.6s; }
 @keyframes flash { from { background: var(--gold-soft); } }
 #prompt { position: sticky; bottom: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px 16px 0 0; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 16px rgba(0,0,0,.12); max-height: 52dvh; overflow: auto; z-index: 4; margin: auto -8px 0; }
 #prompt .q { font-weight: 700; margin-bottom: 4px; }
@@ -142,9 +140,10 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 .banner { background: var(--danger-soft); color: var(--danger); border-radius: 10px; padding: 8px 10px; font-size: 13px; margin: 6px 0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
-<script src="gb-engine.js"></script>
-<script src="tutorial.js"></script>
-<script src="gb-tutorial.js"></script>
+<script src="ndbd-ui.js?v=2"></script>
+<script src="gb-engine.js?v=2"></script>
+<script src="tutorial.js?v=2"></script>
+<script src="gb-tutorial.js?v=2"></script>
 </head>
 <body>
 
@@ -206,6 +205,7 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
   </div>
   <div id="g-banner" class="banner" hidden></div>
   <div class="strip"><div id="kabar"></div><div id="loker"></div></div>
+  <div id="nego"></div>
   <div id="jaksa"></div>
   <div id="pasar"><div class="sec"><span>🛒 Pasar Usaha</span><span class="small" id="pasar-note"></span></div><div class="market" id="pasar-cards"></div></div>
   <div id="proyek"><div class="sec"><span>📜 Proyek Negara</span><span>untung = 👣 Jejak</span></div><div class="market p3" id="proyek-cards"></div></div>
@@ -294,7 +294,7 @@ function render() {
       <span ${tip('Rupiah di tangan. Bisa disita saat OTT, hangus di akhir.')}>💰${j.rp}</span>
       <span ${tip('Harta Aman di luar negeri = skor akhir.')}>🏦<b>${j.aman}</b></span>
       ${j.fantastis ? `<span ${tip('Vonis dengan angka Fantastis. Di akhir, tiap vonis dilempar dadu: 1–3 = dikoreksi MA, Citra −3.')}>🧮${j.fantastis}</span>` : ''}
-    </div>${hostSeatBtn(0)}`;
+    </div><div class="nd-last" ${tip('Aksi terakhir Jaksa di ronde ini')}>${esc(feed.lastAction(S.players[0].name, S.t)) || '—'}</div>${hostSeatBtn(0)}`;
   // pasar usaha
   $('#pasar-note').textContent = m ? 'harga untukmu' : '';
   $('#pasar-cards').innerHTML = S.pasar.map((c) => {
@@ -330,12 +330,13 @@ function render() {
         ${p.role === 'umkm' ? `<span ${tip('Kartu Viral: saat diselidiki, Sorotan Jaksa +3 dan +1 di sidang. Risiko Pasal Karet.')}>📹${p.viral}</span>` : ''}
         ${p.lapas ? `<span class="warn" ${tip(`Di Lapas: ${p.lapas} ronde lagi. Usaha tetap berproduksi.`)}>🔒${p.lapas}</span>` : ''}
         ${S.j.laci.some((k) => k.seat === p.seat) ? `<span ${tip(`Punya kasus di Laci Jaksa: bayar upeti ${C.UPETI}/ronde.`)}>🗄️</span>` : ''}</div>
-      <div class="chips">${chips}</div>${hostSeatBtn(p.seat)}</div>`;
+      <div class="chips">${chips}</div><div class="nd-last" ${tip('Aksi terakhir pemain ini di ronde sekarang')}>${esc(feed.lastAction(S.players[p.seat].name, S.t)) || '—'}</div>${hostSeatBtn(p.seat)}</div>`;
   }).join('');
-  // log
-  const top = S.log.length ? S.log[S.log.length - 1].msg : '';
-  $('#log').innerHTML = S.log.slice(-4).reverse().map((l, k) => `<div class="${k === 0 && top !== render.top ? 'new' : ''}">${esc(l.msg)}</div>`).join('');
-  render.top = top;
+  // aktivitas & negosiasi
+  feed.render({ log: S.log, t: S.t, players: S.players.map((x, i) => ({ name: x.name, color: SEAT_COLOR[i] })) });
+  $('#nego').innerHTML = NDBD.negoBanner(S, myId, 'Pakai 💬 chat: tawar setoran, Kemitraan, atau ancaman viral. Janji tidak mengikat.');
+  if (S.nego && !render.nego) chat.open();
+  render.nego = !!S.nego;
   renderPrompt();
   handleEvents();
   if (S.phase === 'end' && mode !== 'tutorial') setTimeout(showEnd, 1600);
@@ -352,7 +353,7 @@ function renderPrompt() {
   if (S.phase !== 'play') { el.innerHTML = `<div class="wait">${S.phase === 'end' ? '🏁 Permainan selesai…' : ''}</div>`; return; }
   if (p && p.seat === mySeat) {
     const sent = p.id === sentFor;
-    el.innerHTML = `<div class="q">${esc(p.text)}</div>` + p.options.map((x) => {
+    el.innerHTML = `<div class="q">${esc(p.text)}${NDBD.timerBadge(S)}</div>` + p.options.map((x) => {
       const dis = sent || x.disabled || (lock !== null && x.id !== lock);
       return `<button class="opt ${lock !== null && x.id === lock ? 'go' : ''}" data-c='${esc(JSON.stringify(x.id))}' ${dis ? 'disabled' : ''}><b>${esc(x.label)}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ''}</button>`;
     }).join('');
@@ -360,7 +361,8 @@ function renderPrompt() {
     return;
   }
   const who = p ? S.players[p.seat].name : S.turn !== null ? S.players[S.turn].name : '';
-  el.innerHTML = `<div class="wait">⏳ ${who ? (p ? `Menunggu <b>${esc(who)}</b> memilih…` : `<b>${esc(who)}</b> sedang beraksi…`) : '…'}</div>`;
+  el.innerHTML = S.nego ? '<div class="wait">🤝 Negosiasi sedang berlangsung… (lihat banner di atas)</div>'
+    : `<div class="wait">⏳ ${who ? (p ? `Menunggu <b>${esc(who)}</b> memilih…${NDBD.timerBadge(S)}` : `<b>${esc(who)}</b> sedang beraksi…`) : '…'}</div>`;
 }
 $('#prompt').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b || b.disabled || !S || !S.prompt) return;
@@ -381,7 +383,7 @@ function handleEvents() {
     if (e.n <= lastEv) continue;
     lastEv = e.n;
     if (e.type === 'transfer' && e.seat === mySeat) flyMoney(e.jumlah);
-    if (e.type === 'kabar') { tipFor('e:kabar'); showCard('', '📰 Kabar Istana', '🏛️', GB.KABAR[e.id][0], GB.KABAR[e.id][1]); }
+    if (e.type === 'kabar') { const k = $('#kabar'); k.classList.remove('flash'); void k.offsetWidth; k.classList.add('flash'); }
     if (e.type === 'perkara') {
       tipFor('e:perkara');
       showCard('jaksa', `🔍 ${e.laci ? 'Kasus Laci dibuka lagi' : 'Penyelidikan'} · ${nm(e.seat)}`, '⚖️', `Kalkulator ${GB.KALK[e.kalk]}: kerugian negara ${e.rugi}`,
@@ -397,21 +399,9 @@ function handleEvents() {
     if (e.type === 'lapas' && e.seat === mySeat) tipFor('e:lapas');
   }
 }
-const cardQueue = [];
-function showCard(kind, head, em, title, text) {
-  cardQueue.push({ kind, head, em, title, text });
-  if ($('#cardpop').hidden) nextCard();
-}
-function nextCard() {
-  const el = $('#cardpop'), c = cardQueue.shift();
-  if (!c) { el.hidden = true; return; }
-  el.className = 'cardpop ' + c.kind;
-  el.innerHTML = `<div class="kind">${esc(c.head)}</div><div class="big">${c.em}</div><h4>${esc(c.title)}</h4><p>${esc(c.text)}</p><div class="close">tap untuk tutup</div>`;
-  el.hidden = false;
-  clearTimeout(nextCard.t);
-  nextCard.t = setTimeout(nextCard, Math.max(2600, speed() * 2.6));
-}
-$('#cardpop').onclick = () => nextCard();
+const cards = NDBD.CardQueue($('#cardpop'), { speed: () => speed() });
+const showCard = (...a) => cards.show(...a);
+const feed = NDBD.Feed($('#log'), { label: 'Ronde' });
 
 // ====== tooltip ikon: hover (desktop) / tap (HP) ======
 const hoverTip = $('#hovertip');
@@ -472,14 +462,14 @@ const tipQueue = [];
 function tipFor(key) {
   if (mode === 'tutorial' || !TIPS[key]) return;
   const seen = store.get('gb_tips', {});
-  if (seen[key]) return;
+  if (seen[key] || !NDBD.tips.allow(key, S ? S.t : 0)) return;   // hanya prompt milikmu, maks 1 per ronde
   seen[key] = 1; store.set('gb_tips', seen);
   tipQueue.push(TIPS[key]); nextTip();
 }
 function nextTip() {
   const el = $('#tip'); if (!el.hidden || !tipQueue.length) return;
-  el.innerHTML = `💡 ${esc(tipQueue.shift())}<div class="row"><span class="small muted">Tips pertama kali</span><button>Oke</button></div>`;
-  el.hidden = false; el.querySelector('button').onclick = () => { el.hidden = true; nextTip(); };
+  el.innerHTML = `💡 ${esc(tipQueue.shift())}<div class="row"><span class="small muted">Tips pertama kali ${NDBD.tips.offButton()}</span><button class="ok">Oke</button></div>`;
+  el.hidden = false; el.querySelector('button.ok').onclick = () => { el.hidden = true; nextTip(); };
 }
 
 // ====== kartu peran & bantuan ======
@@ -540,12 +530,23 @@ $('#btn-again').onclick = () => {
 };
 
 // ====== game lokal (latihan / host) ======
+let timer = null, nego = null;
+const TURN_DETIK = 45, NEGO_DETIK = 30;   // online: batas waktu tiap giliran & jendela negosiasi tiap ronde
 function startLocal(players, broadcast) {
-  S = null; lastEv = 0; sentFor = 0; lock = null;
+  S = null; lastEv = 0; sentFor = 0; lock = null; feed.reset(); cards.clear();
   mySeat = players.findIndex((p) => p.pid === myId);
+  if (timer) timer.stop();
+  timer = broadcast ? NDBD.TurnTimer({ seconds: TURN_DETIK, answer: (seat, id, c) => !!game && game.answer(seat, id, c),
+    onTimeout: (seat) => toast(`⏱️ Waktu ${S.players[seat].name} habis: dipilihkan otomatis.`, 2500) }) : null;
+  nego = broadcast ? NDBD.Nego({ seconds: NEGO_DETIK, onChange: () => { schedule(); net.pushState(true); } }) : null;
   game = GB.createGame(players, {
     delay: speed,
-    onUpdate(st) { S = st; schedule(); if (broadcast) net.pushState(); },
+    onUpdate(st) { S = st; if (timer) timer.watch(st); schedule(); if (broadcast) net.pushState(); },
+    async onPhase(kind, st) {
+      if (kind !== 'nego' || !nego) return;
+      const humans = st.players.filter((p) => p.pid && !p.bot && (p.pid === myId || net.online.has(p.pid))).map((p) => p.pid);
+      await nego.phase(st, humans);
+    },
   });
   S = game.S;
   show('scr-game'); render(); showRole();
@@ -647,9 +648,12 @@ const net = {
       const pl = S.players[a.seat];
       if (pl && pl.pid === a.pid && !pl.bot) game.answer(a.seat, a.id, a.choice);
     });
+    ch.on('broadcast', { event: 'chat' }, ({ payload }) => chat.receive(payload));
+    ch.on('broadcast', { event: 'ready' }, ({ payload }) => { if (this.isHost && nego) nego.ready(payload.pid); });
     ch.on('broadcast', { event: 'lobby' }, ({ payload }) => { if (!this.isHost) { this.lobby = payload; if (!payload.started) { S = null; renderWait(); show('scr-wait'); } } });
     ch.on('broadcast', { event: 'state' }, ({ payload }) => {
       if (this.isHost) return;
+      NDBD.syncClock(payload.hostNow);
       S = payload; mySeat = S.players.findIndex((p) => p.pid === myId);
       if ($('#scr-game').hidden && S.phase !== 'end') { lastEv = S.evN; sentFor = 0; show('scr-game'); showRole(); }
       schedule();
@@ -683,12 +687,30 @@ const net = {
   pushLobby() { if (this.isHost) this.send('lobby', this.lobby); },
   pushState(now) {
     if (!this.isHost || !S) return;
-    const go = () => { this.pushT = 0; this.send('state', JSON.parse(JSON.stringify(S, (k, v) => (k === 'decks' ? undefined : v)))); };
+    const go = () => {
+      this.pushT = 0;
+      const pub = JSON.parse(JSON.stringify(S, (k, v) => (k === 'decks' ? undefined : v)));
+      pub.hostNow = Date.now();
+      this.send('state', pub);
+    };
     if (now) { clearTimeout(this.pushT); go(); } else if (!this.pushT) this.pushT = setTimeout(go, 120);
   },
   leave() { if (this.ch) { this.sb.removeChannel(this.ch); this.ch = null; } this.lobby = null; },
 };
-function leaveAll() { if (game && mode !== 'client') game.stop(); net.leave(); mode = null; S = null; game = null; $('#g-banner').hidden = true; }
+function leaveAll() {
+  if (timer) timer.stop();
+  if (nego) nego.cancel();
+  if (game && mode !== 'client') game.stop();
+  net.leave(); mode = null; S = null; game = null; $('#g-banner').hidden = true;
+  chat.setEnabled(false); chat.reset();
+}
+// ====== chat (online, kanal Umum) ======
+const chat = NDBD.Chat({ myId, myName, mySeat: () => mySeat, send: (m) => net.send('chat', m) });
+$('#nego').addEventListener('click', (e) => {
+  if (!e.target.closest('[data-nego-siap]')) return;
+  if (mode === 'host' && nego) nego.ready(myId); else net.send('ready', { pid: myId });
+  e.target.closest('button').disabled = true;
+});
 
 function renderWait() {
   const L = net.lobby; if (!L) return;
@@ -712,6 +734,7 @@ async function hostRoom() {
   store.set('ndbd_name', myName());
   mode = 'host';
   try { await net.open(newCode(), true); } catch (e) { toast('Gagal terhubung: ' + e.message); mode = null; return; }
+  chat.reset(); chat.setEnabled(true);
   renderWait(); show('scr-wait');
 }
 async function joinRoom(code) {
@@ -720,6 +743,7 @@ async function joinRoom(code) {
   store.set('ndbd_name', myName());
   mode = 'client'; S = null;
   try { await net.open(code, false); } catch (e) { toast('Gagal terhubung: ' + e.message); mode = null; return; }
+  chat.reset(); chat.setEnabled(true);
   net.lobby = { code, players: [], jaksaId: 'bot' }; renderWait(); show('scr-wait');
 }
 $('#btn-host').onclick = hostRoom;

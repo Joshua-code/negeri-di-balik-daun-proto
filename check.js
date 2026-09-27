@@ -1,7 +1,9 @@
-// node prototype/check.js — cek engine: (1) keseimbangan match bot, (2) semua kursi "manusia" acak tidak macet, (3) 5 bab tutorial.
+// node prototype/check.js — cek engine: (1) keseimbangan match bot, (2) semua kursi "manusia" acak tidak macet, (3) 5 bab tutorial,
+// (4) uji fokus Perlindungan Korban (Oknum selalu menarget Rakyat yang sama), (5) estimasi durasi 15–20 menit.
 const assert = require('assert');
 const JT = require('./engine.js');
 const tutorial = require('./tutorial.js');
+const { estimasi } = require('./durasi.js');
 
 async function botGames(n) {
   const wins = { oknum: 0, rakyat: 0 }, seat = [0, 0, 0, 0];
@@ -49,6 +51,32 @@ async function randomHumans(n) {
   return kinds;
 }
 
+// Uji fokus: Oknum (dikendalikan skrip) selalu menarget kursi 1 (Rekayasa, Operasi Senyap, Penghasutan) kalau bisa.
+async function fokus(n, lindung) {
+  const simpan = JT.C.LINDUNG; JT.C.LINDUNG = lindung;
+  let menang = 0;
+  for (let i = 0; i < n; i++) {
+    let g, answered = 0;
+    g = JT.createGame([0, 1, 2, 3].map((s) => ({ name: 'P' + s, bot: s !== 0 })), {
+      rng: JT.mulberry32(9000 + i),
+      onUpdate(S) {
+        const p = S.prompt;
+        if (!p || p.id === answered) return;
+        answered = p.id;
+        const ok = (id) => p.options.some((o) => o.id === id && !o.disabled);
+        let c = p.bot;
+        if (p.kind === 'aksi' && ok('rekayasa') && S.t >= 2) c = 'rekayasa';
+        if ((p.kind === 'target' || p.kind === 'penghasutan') && ok(1)) c = 1;
+        setImmediate(() => g.answer(p.seat, p.id, c));
+      },
+    });
+    const S = await g.run();
+    if (S.result.winner === 1) menang++;
+  }
+  JT.C.LINDUNG = simpan;
+  return Math.round((100 * menang) / n);
+}
+
 let selesai = false;
 process.on('exit', () => { if (!selesai) { console.error('MACET: ada promise yang tidak pernah selesai'); process.exitCode = 1; } });
 
@@ -59,6 +87,17 @@ process.on('exit', () => { if (!selesai) { console.error('MACET: ada promise yan
 
   const kinds = await randomHumans(300);
   console.log(`300 match semua kursi manusia (jawaban acak): selesai tanpa macet. Jenis prompt teruji: ${[...kinds].sort().join(', ')}`);
+
+  const fOn = await fokus(1000, true), fOff = await fokus(1000, false);
+  console.log(`Uji fokus (Oknum selalu menarget Rakyat kursi 1): kursi 1 juara ${fOn}% dengan Perlindungan Korban, ${fOff}% tanpa (normal ${b.seat[1]}%)`);
+  assert(fOn >= 0.7 * b.seat[1], 'Rakyat terlalu terhukum saat dikeroyok');
+
+  const kursi = (n, human) => [0, 1, 2, 3].map((s) => ({ name: 'P' + s, bot: !human(s) }));
+  const d = await estimasi(JT, kursi, { n: 10 });
+  console.log(`Estimasi durasi 4 manusia online: ${d.menit} menit (${d.prompt} keputusan, jeda ${d.jedaMenit} menit)`);
+  assert(d.menit >= 15 && d.menit <= 20, 'durasi di luar 15–20 menit');
+  const solo = await estimasi(JT, kursi, { n: 10, manusia: 1 });
+  console.log(`Estimasi durasi latihan 1 manusia vs bot (Rakyat): ${solo.menit} menit`);
 
   for (const ch of tutorial.CHAPTERS) {
     const r = await tutorial.autoplay(ch, JT);

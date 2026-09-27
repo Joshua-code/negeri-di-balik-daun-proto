@@ -35,7 +35,7 @@
       steps: [
         { on: 'start', target: '#me', text: 'Bab 2. Kelas menentukan gaji: <b>Jelata 2 → Pedagang 3 → Juragan 5 → Pengusaha 7</b>. Naik kelas butuh uang, dan mulai Juragan butuh <b>izin</b>.' },
         { on: 'prompt:roll', target: '#prompt', text: 'Lempar dadu.' },
-        { on: 'prompt:kelola', lock: 'naik', target: '#prompt', text: 'Uangmu cukup untuk jadi <b>Pedagang</b> (biaya 6). Jadi Pedagang tidak perlu izin. Tekan <b>Naik jadi Pedagang</b>.' },
+        { on: 'prompt:kelola', lock: 'naik', target: '#prompt', text: 'Uangmu cukup untuk jadi <b>Pedagang</b> (biaya 5). Jadi Pedagang tidak perlu izin. Tekan <b>Naik jadi Pedagang</b>.' },
         { on: 'prompt:kelola', lock: 'calo', target: '#prompt', text: 'Untuk jadi Juragan kamu butuh <b>izin</b>. Ada 2 jalan:<br>🏛️ <b>Kantor Izin</b>: gratis, tapi harus lewat kantornya dan baru jadi 2 putaran kemudian.<br>💰 <b>Calo</b>: langsung jadi di mana saja, tapi bayar pungli <b>ke Oknum</b>.<br>Coba lewat calo.' },
         { on: 'event:calo', target: '#oknum', text: 'Lihat: <b>Rupiah Oknum bertambah</b> dan Sorotannya naik. Calo mempercepatmu, tapi menggemukkan saingan terbesarmu. Menurut simulasi, rakyat yang <i>selalu</i> lewat calo justru paling jarang menang.' },
         { on: 'end', target: '[data-tile="6"]', text: 'Ini <b>Kantor Izin</b> (ada satu lagi di seberang papan). Lewati kantor ini saat masih Pedagang/Juragan untuk mengurus izin gratis.<br><br>Bab 2 selesai!' },
@@ -75,10 +75,10 @@
       steps: [
         { on: 'start', target: '#me', text: 'Bab 4. Kamu Juragan dan sudah punya izin. Saatnya menjadi <b>Pengusaha</b>.' },
         { on: 'prompt:roll', target: '#prompt', text: 'Lempar dadu.' },
-        { on: 'prompt:kelola', lock: 'naik', target: '#prompt', text: 'Naik jadi <b>Pengusaha</b> (biaya 24).' },
+        { on: 'prompt:kelola', lock: 'naik', target: '#prompt', text: 'Naik jadi <b>Pengusaha</b> (biaya 22).' },
         { on: 'prompt:kelola', lock: 'transfer', target: '#prompt', text: 'Hanya Pengusaha yang bisa <b>Transfer ke Luar</b>. Potongannya 20%, atau 10% kalau berhenti di 🏦 <b>Bank</b> seperti sekarang. Transfer!' },
         { on: 'event:transfer', target: '#me', text: 'Uangmu kini <b>Harta Aman</b> di luar negeri: tidak bisa disita, tidak kena razia. Inilah yang dilakukan oknum dan pengusaha di dunia nyata.' },
-        { on: 'end', text: 'Di akhir permainan (20 putaran), <b>Rupiah yang tersisa hangus</b>. Pemenangnya pemilik Harta Aman terbanyak. Rakyat yang tidak sempat jadi Pengusaha mendapat 0.<br><br>Bab 4 selesai!' },
+        { on: 'end', text: 'Di akhir permainan (18 putaran), <b>Rupiah yang tersisa hangus</b>. Pemenangnya pemilik Harta Aman terbanyak. Rakyat yang tidak sempat jadi Pengusaha mendapat 0.<br><br>Bab 4 selesai!' },
       ],
     },
     {

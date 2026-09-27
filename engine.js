@@ -6,10 +6,11 @@
   'use strict';
 
   const C = {
-    PUTARAN: 20, GAJI: [2, 3, 5, 7], NAIK: [0, 6, 14, 24], PUNGLI: [0, 0, 3, 5], REKAYASA: 2, KARTU_TIAP: 4, RP_AWAL: 2, OKNUM_RP_AWAL: 3, N_POS: 4, GAJI_OKNUM: 0, CITRA_MAX: 10, CITRA_VIRAL: 1, CITRA_BONGKAR: 2, CITRA_LAPOR: 1, CITRA_OTT: 1, MUTASI_KALI: 0.8,
+    PUTARAN: 18, GAJI: [2, 3, 5, 7], NAIK: [0, 5, 12, 22], PUNGLI: [0, 0, 3, 5], REKAYASA: 2, KARTU_TIAP: 4, RP_AWAL: 2, OKNUM_RP_AWAL: 5, N_POS: 4, GAJI_OKNUM: 0, CITRA_MAX: 10, CITRA_VIRAL: 1, CITRA_BONGKAR: 2, CITRA_LAPOR: 1, CITRA_OTT: 1, MUTASI_KALI: 0.8,
     TARIF_86: [2, 4, 6, 9], TILANG: [3, 5, 7, 10], PROSES_RESMI: 2, FEE: 0.2, FEE_BANK: 0.1,
     CITRA_MIN: 9, PINJOL_DAPAT: 5, PINJOL_BAYAR: 7, REMISI: 3, SEL_MEWAH: 2, LAPOR_MIN: 8,
     BERSIH_BERSIH: 1, MUTASI: 1, TUMBAL_CITRA: 2,
+    LINDUNG: true, KEBAL: 2, SIMPATI_MAKS: 1, LINDUNG_OTT: true, LINDUNG_ULANG: true, LINDUNG_SIMPATI: true,   // Perlindungan Korban (bisa dimatikan untuk uji) · KEBAL: putaran kebal target setelah keluar Lapas
   };
   const KELAS = ['Jelata', 'Pedagang', 'Juragan', 'Pengusaha'];
   const BOARD = ('SUBUH KERJA NASIB BANSOS KERJA GUSURAN IZIN PASAR NASIB LAPOR PASAR PINJOL ' +
@@ -103,7 +104,7 @@
 
     const S = {
       t: 0, putaran: opts.putaran || C.PUTARAN, phase: 'play', turn: null, dice: null, kabar: null,
-      log: [], events: [], evN: 0, prompt: null, stats: {}, result: null,
+      log: [], logN: 0, events: [], evN: 0, prompt: null, stats: {}, result: null,
       players: players.map((p) => ({ name: p.name, bot: !!p.bot, pid: p.pid || null })),
       o: { seat: 0, rp: C.OKNUM_RP_AWAL, aman: 0, citra: 5, sorotan: 2, backing: 1, rekayasa: C.REKAYASA, nPos: C.N_POS, pos: [],
         posTambahan: null, hand: [], bebasDi: 0, buzzer: false, tesUrine: false, dilindungi: [], tarifGanda: [] },
@@ -118,7 +119,7 @@
     const name = (seat) => S.players[seat].name;
     const st = (k, n = 1) => { S.stats[k] = (S.stats[k] || 0) + n; };
     const update = () => opts.onUpdate && opts.onUpdate(S);
-    const log = (msg) => { S.log.push({ t: S.t, msg }); if (S.log.length > 60) S.log.shift(); update(); };
+    const log = (msg) => { S.log.push({ n: ++S.logN, t: S.t, msg }); if (S.log.length > 60) S.log.shift(); update(); };
     async function ev(type, data = {}) {
       const e = Object.assign({}, data, { n: ++S.evN, type, t: S.t });
       S.events.push(e); if (S.events.length > 20) S.events.shift();
@@ -127,9 +128,9 @@
       if (PACE[type]) await pace(PACE[type]);
     }
     // jeda (× delay) setelah tiap jenis kejadian, supaya pemain bisa mengikuti apa yang terjadi
-    const PACE = { putaran: 1, kabar: 2.5, pos: 1.2, turn: 0.4, gaji: 0.6, dice: 1, razia_hasil: 1.4, karet: 1.2, petak: 1,
+    const PACE = { putaran: 1, kabar: 2.2, pos: 1, turn: 0.3, gaji: 0.3, dice: 0.7, razia_hasil: 1.2, karet: 1.2, petak: 0.6,
       nasib: 2.5, kartu_oknum: 2.5, naik: 1.2, calo: 1, transfer: 1.5, ott: 1.5, lapas: 1.5, demo: 2, rekaman: 0.8, lapor: 1, aksi: 1.2 };
-    const pace = async (k = 1) => { const d = delayMs(); if (d) await sleep(d * k); };
+    const pace = async (k = 1) => { if (opts.onPace) opts.onPace(k); const d = delayMs(); if (d) await sleep(d * k); };
 
     function resetFlags() {
       S.f = { tarifPlus: 0, karet: 2, laporBebas: false, noRek: false, rekGratis: false, gusurJuragan: false, feeRakyat: null, demoGanda: false };
@@ -174,8 +175,10 @@
 
     // ---------- Sorotan & OTT ----------
     async function naikSorotan(n) {
+      if (n > 0 && C.LINDUNG && C.LINDUNG_OTT && o.ottT === S.t) return;   // Perlindungan Korban: maks 1 OTT per putaran
       o.sorotan = Math.max(0, o.sorotan + n);
       if (o.sorotan < 10) return;
+      o.ottT = S.t;
       const options = [];
       if (o.hand.includes(8)) options.push({ id: 'tumbal_kartu', label: 'Kartu Tumbal Bawahan', sub: 'Sorotan → 6, Citra −' + C.TUMBAL_CITRA });
       if (o.backing) options.push({ id: 'backing', label: 'Pakai Backing', sub: 'Sorotan → 7, Backing −1' });
@@ -197,8 +200,16 @@
       }
     }
 
+    // Perlindungan Korban: yang baru keluar Lapas kebal target 2 putaran; target Rekayasa/Penghasutan tidak boleh sama 2× berturut-turut
+    const kebal = (r) => C.LINDUNG && r.kebalHingga >= S.t;
+    const bolehTarget = (r) => !r.lapas && !kebal(r) && !(C.LINDUNG && C.LINDUNG_ULANG && o.targetTerakhir === r.seat);
+    function simpati(r) {
+      if (!C.LINDUNG || !C.LINDUNG_SIMPATI || r.rekaman >= C.SIMPATI_MAKS) return;   // hanya kalau Kartu Rekaman-nya habis
+      r.rekaman++; log(`📹 Simpati Publik: warganet membela ${name(r.seat)} (+1 Kartu Rekaman).`);
+    }
     async function masukLapas(r, n, sebab) {
       r.lapas = Math.max(r.lapas, n); st('lapas_' + sebab);
+      r.kebalHingga = Math.max(r.kebalHingga || 0, S.t + r.lapas + C.KEBAL);
       const why = { pasal_karet: 'dilaporkan balik (pasal karet)', rekayasa: 'jadi korban rekayasa kasus', salah_tangkap: 'salah tangkap',
         kepepet: 'ketahuan mengambil barang karena kepepet', penghasutan: 'dituduh menghasut demo' }[sebab];
       log(`🔒 ${name(r.seat)} masuk Lapas ${n} putaran: ${why}.`);
@@ -263,8 +274,11 @@
       else if (k === 10) {
         const options = [{ id: 'bayar', label: 'Bayar 2 ke Oknum', sub: 'Uang "damai"', disabled: r.rp < 2 },
           { id: 'lapas', label: 'Masuk Lapas 1 putaran', sub: 'Tidak punya uang untuk damai' }];
-        const c = await ask(r.seat, { kind: 'nasib10', text: 'Salah Tangkap! Kamu dituduh pelaku.', options }, r.rp >= 2 ? 'bayar' : 'lapas');
-        if (c === 'bayar') bayarOknum(r, 2); else await masukLapas(r, 1, 'salah_tangkap');
+        if (kebal(r)) log(`${name(r.seat)} nyaris salah tangkap lagi, tapi baru saja bebas dari Lapas. Polisi mundur.`);
+        else {
+          const c = await ask(r.seat, { kind: 'nasib10', text: 'Salah Tangkap! Kamu dituduh pelaku.', options }, r.rp >= 2 ? 'bayar' : 'lapas');
+          if (c === 'bayar') bayarOknum(r, 2); else await masukLapas(r, 1, 'salah_tangkap');
+        }
       } else if (k === 11) r.rp += 1;
       else if (k === 12) {
         const c = await ask(r.seat, { kind: 'nasib12', text: 'Kepepet. Ambil barang orang?', options: [
@@ -448,13 +462,14 @@
 
     // ---------- Oknum ----------
     async function rekayasa(target, sorotan) {
+      o.targetTerakhir = target.seat;
       const c = await ask(target.seat, { kind: 'bongkar', text: `${name(0)} merekayasa kasus terhadapmu!`, options: [
         { id: 'bongkar', label: 'Bongkar pakai Kartu Rekaman', sub: 'Buang 1 Kartu Rekaman · batal · Sorotan Oknum +3', disabled: !target.rekaman },
         { id: 'terima', label: 'Tidak bisa melawan', sub: 'Masuk Lapas 2 putaran' }] }, target.rekaman ? 'bongkar' : 'terima');
       if (c === 'bongkar') {
         target.rekaman--; st('rekayasa_dibongkar'); citra(-C.CITRA_BONGKAR); log(`📹 Rekayasa terhadap ${name(target.seat)} DIBONGKAR rekaman! Citra Oknum −${C.CITRA_BONGKAR}.`); await naikSorotan(3);
       } else {
-        await masukLapas(target, 2, 'rekayasa'); citra(2); await naikSorotan(sorotan);
+        await masukLapas(target, 2, 'rekayasa'); simpati(target); citra(2); await naikSorotan(sorotan);
       }
     }
 
@@ -483,7 +498,7 @@
       } else if (k === 7) o.tesUrine = true;
       else if (k === 9) citra(2);
       else if (k === 10) {
-        const target = rs.filter((r) => !r.lapas);
+        const target = rs.filter(bolehTarget);
         const tSeat = await ask(0, { kind: 'target', text: 'Operasi Senyap: rekayasa kasus siapa?', options: target.map((r) => ({ id: r.seat, label: name(r.seat), sub: `${KELAS[r.kelas]} · 📹×${r.rekaman}` })) }, botTarget(target).seat);
         await rekayasa(rs.find((x) => x.seat === tSeat), 2);
       }
@@ -515,7 +530,7 @@
       await ev('pos', { seat: 0 });
 
       const f = S.f;
-      const target = rs.filter((r) => !r.lapas);
+      const target = rs.filter(bolehTarget);
       const bisaRek = target.length && !f.noRek && (f.rekGratis || o.rekayasa > 0);
       const kartu = o.hand.filter((k) => !REAKSI.has(k) && (k !== 6 || rs.some((r) => r.kelas >= 2 && !r.lapas)) && (k !== 10 || (!f.noRek && target.length)));
       const options = [
@@ -525,7 +540,7 @@
         { id: 'kartu', label: 'Mainkan kartu', sub: kartu.map((k) => OKNUM[k][0]).join(', ') || 'Tidak ada kartu yang bisa dimainkan', disabled: !kartu.length },
       ];
       // heuristik bot = simulasi
-      const kaya = acak(rs.filter((r) => r.kelas >= 2 && !r.lapas)).sort((a, b) => ((a.rekaman > 0) - (b.rekaman > 0)) || (b.rp - a.rp));
+      const kaya = acak(rs.filter((r) => r.kelas >= 2 && bolehTarget(r))).sort((a, b) => ((a.rekaman > 0) - (b.rekaman > 0)) || (b.rp - a.rp));
       const botRek = kaya.length && S.t >= 3 && !f.noRek;
       let bot = 'opres', botKartu = null;
       const kurangCitra = C.CITRA_MIN - o.citra, sisa = S.putaran - S.t + 1;
@@ -588,11 +603,16 @@
           log(`📢 Demo besar! Kabar Istana putaran berikutnya akan dibatalkan.`);
           await ev('demo', {});
           if (aktif()) {
-            const opt = demo.map((r) => ({ id: r.seat, label: name(r.seat), sub: 'Lapas 2 putaran · Sorotan +2' }));
+            const opt = demo.map((r) => ({ id: r.seat, label: name(r.seat), sub: bolehTarget(r) ? 'Lapas 2 putaran · Sorotan +2' : 'Tidak bisa: baru saja jadi target / baru bebas', disabled: !bolehTarget(r) }));
             opt.push({ id: 'tidak', label: 'Biarkan', sub: '' });
-            const botPick = o.sorotan <= 7 ? acak(demo).sort((a, b) => b.kelas - a.kelas)[0].seat : 'tidak';
+            const bisa = demo.filter(bolehTarget);
+            const botPick = o.sorotan <= 7 && bisa.length ? acak(bisa).sort((a, b) => b.kelas - a.kelas)[0].seat : 'tidak';
             const c = await ask(0, { kind: 'penghasutan', text: 'Tangkap salah satu pendemo dengan tuduhan penghasutan?', options: opt }, botPick);
-            if (c !== 'tidak') { await masukLapas(rs.find((x) => x.seat === c), 2, 'penghasutan'); await naikSorotan(2); }
+            if (c !== 'tidak') {
+              const r = rs.find((x) => x.seat === c);
+              o.targetTerakhir = r.seat;
+              await masukLapas(r, 2, 'penghasutan'); simpati(r); await naikSorotan(2);
+            }
           }
         }
         rs.forEach((r) => { r.demo = false; });
