@@ -7,8 +7,9 @@
 
   const C = {
     PUTARAN: 18, GAJI: [2, 3, 5, 7], NAIK: [0, 5, 12, 22], PUNGLI: [0, 0, 3, 5], REKAYASA: 2, KARTU_TIAP: 4, RP_AWAL: 2, OKNUM_RP_AWAL: 5, N_POS: 4, GAJI_OKNUM: 0, CITRA_MAX: 10, CITRA_VIRAL: 1, CITRA_BONGKAR: 2, CITRA_LAPOR: 1, CITRA_OTT: 1, MUTASI_KALI: 0.8,
-    TARIF_86: [2, 4, 6, 9], TILANG: [3, 5, 7, 10], PROSES_RESMI: 2, FEE: 0.2, FEE_BANK: 0.1,
-    CITRA_MIN: 9, PINJOL_DAPAT: 5, PINJOL_BAYAR: 7, REMISI: 3, SEL_MEWAH: 2, LAPOR_MIN: 8,
+    TARIF_86: [2, 4, 6, 9], TILANG: [3, 5, 7, 10], PROSES_RESMI: 2, FEE: 0.2,
+    NILAI_USAHA: [0, 2, 5, 10], KUR_DAPAT: 5, KUR_BAYAR: 6, KURS: 10, UANG: 'Receh',   // Kekayaan Rakyat = Receh + Nilai Usaha kelas; KURS: Kekayaan → Dana Offshore (docs/06)
+    CITRA_MIN: 9, PINJOL_DAPAT: 5, PINJOL_BAYAR: 7, ASET_BOT_RP: 6, ASET_BOT_SOR: 8, REMISI: 3, SEL_MEWAH: 2, LAPOR_MIN: 8,
     BERSIH_BERSIH: 1, MUTASI: 1, TUMBAL_CITRA: 2,
     LINDUNG: true, KEBAL: 2, SIMPATI_MAKS: 1, LINDUNG_OTT: true, LINDUNG_ULANG: true, LINDUNG_SIMPATI: true,   // Perlindungan Korban (bisa dimatikan untuk uji) · KEBAL: putaran kebal target setelah keluar Lapas
   };
@@ -18,7 +19,7 @@
   const POS_OK = new Set(['KERJA', 'NASIB', 'BANSOS', 'GUSURAN', 'PASAR', 'PINJOL', 'VIRAL', 'DEMO', 'PROYEK']);
   const TILE = {
     SUBUH: ['🌅', 'Subuh', 'Start. Setiap melewati Subuh, utang Pinjol ditagih.'],
-    KERJA: ['🛠️', 'Kerja', '+2 Rupiah.'],
+    KERJA: ['🛠️', 'Kerja', '+2 Receh.'],
     NASIB: ['🎲', 'Nasib', 'Ambil 1 kartu Nasib.'],
     BANSOS: ['🍚', 'Bansos', 'Jelata +3. Juragan & Pengusaha +2 (salah sasaran). Pedagang tidak dapat.'],
     GUSURAN: ['🚜', 'Gusuran', 'Jelata & Pedagang: bayar 1 "uang keamanan" ke Oknum, atau lapak digusur (−3).'],
@@ -30,7 +31,7 @@
     VIRAL: ['📹', 'Viral', 'Dapat 1 Kartu Rekaman (maks. 3).'],
     DEMO: ['📢', 'Demo', 'Lewat/berhenti: taruh token Demo. ≥ 2 pendemo dalam satu putaran membatalkan Kabar Istana berikutnya.'],
     PROYEK: ['🏗️', 'Proyek', 'Juragan & Pengusaha +4.'],
-    BANK: ['🏦', 'Bank', 'Pengusaha yang berhenti di sini transfer ke luar dengan potongan hanya 10%.'],
+    BANK: ['🏦', 'Bank (KUR)', 'Kredit Usaha Rakyat: Pedagang ke atas boleh pinjam +5, bayar 6 saat melewati Subuh. Jelata ditolak (tidak punya agunan).'],
   };
   const KABAR = {
     1: ['Operasi Zebra', 'Tarif 86 semua kelas +1 putaran ini.'],
@@ -42,31 +43,31 @@
     7: ['Tunjangan Dewan Naik', 'Semua Rakyat −1. Token Demo putaran ini dihitung ganda.'],
     8: ['Penertiban PKL', 'Gusuran juga berlaku untuk Juragan putaran ini.'],
     9: ['Skandal Jenderal Viral', 'Sorotan Oknum +1. Oknum tidak boleh Rekayasa putaran ini.'],
-    10: ['Pengampunan Pajak', 'Transfer ke Luar Rakyat hanya dipotong 5% putaran ini.'],
+    10: ['Pengampunan Pajak', 'Rakyat Pengusaha +2. Oknum boleh Beli Aset tanpa Sorotan putaran ini.'],
     11: ['RUU Perampasan Aset Ditunda Lagi', 'Tidak terjadi apa-apa. Kartu dikocok kembali ke deck.'],
     12: ['KUHAP Baru Berlaku', 'Rekayasa Kasus putaran ini tidak memakai token.'],
     13: ['Harga Beras Naik', 'Semua Rakyat −1.'],
     14: ['Mutasi Serentak', 'Sorotan Oknum −1. Masalahnya dipindah, bukan diselesaikan.'],
   };
   const NASIB = {
-    1: ['Anak Sakit, BPJS Ditolak', '−2 Rupiah.'],
-    2: ['Orderan Ramai', '+3 Rupiah.'],
+    1: ['Anak Sakit, BPJS Ditolak', '−2 Receh.'],
+    2: ['Orderan Ramai', '+3 Receh.'],
     3: ['Ditilang di Jalan Sepi', 'Bayar 1 ke Oknum (Sorotan Oknum +1).'],
     4: ['Berkas Izin "Hilang"', 'Berkas jalur resmi milikmu dibuang.'],
-    5: ['Arisan Cair', '+2 Rupiah.'],
-    6: ['Dipalak Ormas', '−1 Rupiah.'],
-    7: ['Kenal Orang Dalam', '+4 Rupiah, atau calo izin berikutnya gratis.'],
-    8: ['Konten Kamu Viral', '+2 Rupiah dan 1 Kartu Rekaman.'],
+    5: ['Arisan Cair', '+2 Receh.'],
+    6: ['Dipalak Ormas', '−1 Receh.'],
+    7: ['Kenal Orang Dalam', '+4 Receh, atau calo izin berikutnya gratis.'],
+    8: ['Konten Kamu Viral', '+2 Receh dan 1 Kartu Rekaman.'],
     9: ['Pabrik Tutup', 'Jelata & Pedagang −2.'],
     10: ['Salah Tangkap', 'Bayar 2 ke Oknum, atau Lapas 1 putaran.'],
-    11: ['Uang Kerohiman', '+1 Rupiah.'],
-    12: ['Kepepet', 'Boleh ambil +1 Rupiah, lalu dadu 1–3 = Lapas 2 putaran.'],
+    11: ['Uang Kerohiman', '+1 Receh.'],
+    12: ['Kepepet', 'Boleh ambil +1 Receh, lalu dadu 1–3 = Lapas 2 putaran.'],
   };
   const OKNUM = {
     1: ['Buzzer', 'Sampai giliranmu berikutnya, Pasal Karet kena di angka 1–3.'],
     2: ['Razia Gabungan', 'Pasang 1 Pos tambahan sampai giliranmu berikutnya.'],
     3: ['Backing Atasan', '+1 Backing.'],
-    4: ['Tukar Barang Bukti', '+4 Rupiah, Sorotan +2.'],
+    4: ['Tukar Barang Bukti', '+4 Receh, Sorotan +2.'],
     5: ['Narasi Resmi', 'Reaksi: batalkan 1 Viral terhadapmu. Kalau dibalas Kartu Rekaman kedua: Sorotan +5.'],
     6: ['Uang Keamanan', 'Tawarkan ke 1 Juragan/Pengusaha: bayar 3 agar kebal Pos-mu. Kalau menolak: tarif 86-nya ganda.'],
     7: ['Tes Urine Dadakan', 'Rakyat berikutnya yang kena Razia bayar 86 ganda.'],
@@ -78,6 +79,7 @@
   const JT_TILE_EM = (t) => TILE[t][0];
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const Dompet = () => root.NDBDDompet || require('./ndbd-dompet.js');   // konversi Kekayaan → Dana Offshore
 
   function mulberry32(seed) {
     return function () {
@@ -106,10 +108,10 @@
       t: 0, putaran: opts.putaran || C.PUTARAN, phase: 'play', turn: null, dice: null, kabar: null,
       log: [], logN: 0, events: [], evN: 0, prompt: null, stats: {}, result: null,
       players: players.map((p) => ({ name: p.name, bot: !!p.bot, pid: p.pid || null })),
-      o: { seat: 0, rp: C.OKNUM_RP_AWAL, aman: 0, citra: 5, sorotan: 2, backing: 1, rekayasa: C.REKAYASA, nPos: C.N_POS, pos: [],
+      o: { seat: 0, rp: C.OKNUM_RP_AWAL, aset: 0, citra: 5, sorotan: 2, backing: 1, rekayasa: C.REKAYASA, nPos: C.N_POS, pos: [],
         posTambahan: null, hand: [], bebasDi: 0, buzzer: false, tesUrine: false, dilindungi: [], tarifGanda: [] },
-      rs: players.slice(1).map((p, i) => ({ seat: i + 1, pos: 0, kelas: 0, rp: C.RP_AWAL, aman: 0, izin: false, caloGratis: false,
-        berkas: null, lapas: 0, rekaman: 1, utang: 0, demo: false, naikAt: null, strat: 'campur' })),
+      rs: players.slice(1).map((p, i) => ({ seat: i + 1, pos: 0, kelas: 0, rp: C.RP_AWAL, izin: false, caloGratis: false,
+        berkas: null, lapas: 0, rekaman: 1, utang: 0, kur: false, demo: false, naikAt: null, strat: 'campur' })),
       f: {}, batalKabar: false,
       decks: { kabar: script.kabar ? script.kabar.slice() : shuffle(Object.keys(KABAR).map(Number)), nasib: [],
         oknum: script.oknum ? script.oknum.slice() : shuffle(Object.keys(OKNUM).map(Number)) },
@@ -129,11 +131,11 @@
     }
     // jeda (× delay) setelah tiap jenis kejadian, supaya pemain bisa mengikuti apa yang terjadi
     const PACE = { putaran: 1, kabar: 2.2, pos: 1, turn: 0.3, gaji: 0.3, dice: 0.7, razia_hasil: 1.2, karet: 1.2, petak: 0.6,
-      nasib: 2.5, kartu_oknum: 2.5, naik: 1.2, calo: 1, transfer: 1.5, ott: 1.5, lapas: 1.5, demo: 2, rekaman: 0.8, lapor: 1, aksi: 1.2 };
+      nasib: 2.5, kartu_oknum: 2.5, naik: 1.2, calo: 1, aset: 1.5, kur: 0.8, ott: 1.5, lapas: 1.5, demo: 2, rekaman: 0.8, lapor: 1, aksi: 1.2 };
     const pace = async (k = 1) => { if (opts.onPace) opts.onPace(k); const d = delayMs(); if (d) await sleep(d * k); };
 
     function resetFlags() {
-      S.f = { tarifPlus: 0, karet: 2, laporBebas: false, noRek: false, rekGratis: false, gusurJuragan: false, feeRakyat: null, demoGanda: false };
+      S.f = { tarifPlus: 0, karet: 2, laporBebas: false, noRek: false, rekGratis: false, gusurJuragan: false, asetBebas: false, demoGanda: false };
     }
     resetFlags();
 
@@ -183,7 +185,7 @@
       if (o.hand.includes(8)) options.push({ id: 'tumbal_kartu', label: 'Kartu Tumbal Bawahan', sub: 'Sorotan → 6, Citra −' + C.TUMBAL_CITRA });
       if (o.backing) options.push({ id: 'backing', label: 'Pakai Backing', sub: 'Sorotan → 7, Backing −1' });
       if (o.nPos > 1) options.push({ id: 'tumbal_pos', label: 'Korbankan bawahan (Tumbal)', sub: '1 Pos hilang permanen, Sorotan → 6, Citra −2' });
-      options.push({ id: 'tertangkap', label: 'Pasrah tertangkap', sub: 'Separuh Rupiah disita, Lapas 1 putaran' });
+      options.push({ id: 'tertangkap', label: 'Pasrah tertangkap', sub: 'Separuh Receh disita, Lapas 1 putaran' });
       await ev('ott', { seat: 0 });
       const c = await ask(0, { kind: 'ott', text: '🚨 OTT! Sorotan menyentuh 10. Bagaimana kamu lolos?', options }, options[0].id);
       if (c === 'tumbal_kartu') {
@@ -196,7 +198,7 @@
         log(`OTT! ${name(0)} menumbalkan bawahan: 1 Pos hilang permanen.`);
       } else {
         st('ott_tertangkap'); citra(-C.CITRA_OTT); const sita = Math.ceil(o.rp / 2); o.rp -= sita; o.bebasDi = S.t + 1; o.sorotan = 5;
-        log(`OTT! ${name(0)} TERTANGKAP. ${sita} Rupiah disita, masuk Lapas. Semua Pos kosong.`);
+        log(`OTT! ${name(0)} TERTANGKAP. ${sita} Receh disita, masuk Lapas. Semua Pos kosong.`);
       }
     }
 
@@ -243,7 +245,7 @@
       else if (k === 7) { rs.forEach((r) => { r.rp = Math.max(0, r.rp - 1); }); f.demoGanda = true; }
       else if (k === 8) f.gusurJuragan = true;
       else if (k === 9) { await naikSorotan(1); f.noRek = true; }
-      else if (k === 10) f.feeRakyat = 0.05;
+      else if (k === 10) { f.asetBebas = true; rs.forEach((r) => { if (r.kelas === 3) r.rp += 2; }); }
       else if (k === 12) f.rekGratis = true;
       else if (k === 13) rs.forEach((r) => { r.rp = Math.max(0, r.rp - 1); });
       else if (k === 14) o.sorotan = Math.max(0, o.sorotan - C.MUTASI);
@@ -266,7 +268,7 @@
       else if (k === 7) {
         const bot = r.strat !== 'resmi' && (r.kelas === 1 || r.kelas === 2) && !r.izin ? 'calo' : 'uang';
         const c = await ask(r.seat, { kind: 'nasib7', text: 'Kenal Orang Dalam! Pilih satu:', options: [
-          { id: 'uang', label: '+4 Rupiah', sub: 'Uang tunai sekarang' },
+          { id: 'uang', label: '+4 Receh', sub: 'Uang tunai sekarang' },
           { id: 'calo', label: 'Calo gratis', sub: 'Izin berikutnya lewat calo tanpa bayar pungli' }] }, bot);
         if (c === 'calo') r.caloGratis = true; else r.rp += 4;
       } else if (k === 8) { r.rp += 2; r.rekaman = Math.min(3, r.rekaman + 1); }
@@ -349,17 +351,14 @@
       return (r.kelas === 1 || r.kelas === 2) && !r.izin && (r.caloGratis || r.rp >= C.PUNGLI[nxt]);
     }
     async function kelola(r, tile) {
-      // loop pilihan setelah jalan: calo, naik kelas, transfer
+      // loop pilihan setelah jalan: calo, naik kelas
       for (;;) {
         const nxt = r.kelas + 1;
         const bisaNaik = r.kelas < 3 && r.izin && r.rp >= C.NAIK[nxt];
-        const fee = S.f.feeRakyat !== null ? S.f.feeRakyat : (tile === 'BANK' ? C.FEE_BANK : C.FEE);
         const options = [];
-        if (bisaNaik) options.push({ id: 'naik', label: `Naik jadi ${KELAS[nxt]} (${C.NAIK[nxt]})`, sub: `Gaji jadi ${C.GAJI[nxt]}/giliran` });
+        if (bisaNaik) options.push({ id: 'naik', label: `Naik jadi ${KELAS[nxt]} (${C.NAIK[nxt]})`, sub: `Gaji jadi ${C.GAJI[nxt]}/giliran · Nilai Usaha ${C.NILAI_USAHA[nxt]}` });
         if (caloBisa(r)) options.push({ id: 'calo', label: `Izin lewat calo (${r.caloGratis ? 'gratis' : C.PUNGLI[nxt]})`,
           sub: `Izin ${KELAS[nxt]} langsung jadi · uangnya ke Oknum · Sorotan Oknum +1` });
-        if (r.kelas === 3 && r.rp > 0) options.push({ id: 'transfer', label: `Transfer ke luar (−${Math.round(fee * 100)}%)`,
-          sub: `${r.rp} Rupiah → ${Math.floor(r.rp * (1 - fee))} Harta Aman. Tidak bisa disita.` });
         if (!options.length) return;
         options.push({ id: 'selesai', label: 'Selesai giliran', sub: '' });
         // heuristik bot (sama dengan simulasi)
@@ -367,7 +366,6 @@
         const caloBot = r.caloGratis || r.strat === 'belakang' || (r.strat === 'campur' && r.kelas >= 2);
         if (caloBisa(r) && r.berkas === null && caloBot && (r.caloGratis || r.rp >= C.PUNGLI[nxt] + C.NAIK[nxt])) bot = 'calo';
         else if (bisaNaik) bot = 'naik';
-        else if (r.kelas === 3 && r.rp > 0 && (tile === 'BANK' || r.rp >= 6)) bot = 'transfer';
         const c = await ask(r.seat, { kind: 'kelola', text: 'Mau apa sebelum giliran selesai?', options }, bot);
         if (c === 'selesai') return;
         if (c === 'calo') {
@@ -380,10 +378,6 @@
           if (nxt === 3) r.naikAt = S.t;
           log(`⬆️ ${name(r.seat)} naik kelas jadi ${KELAS[nxt]}!`);
           await ev('naik', { seat: r.seat, kelas: nxt });
-        } else if (c === 'transfer') {
-          const masuk = Math.floor(r.rp * (1 - fee));
-          r.aman += masuk; log(`💸 ${name(r.seat)} transfer ${r.rp} Rupiah ke luar negeri → +${masuk} Harta Aman.`);
-          r.rp = 0; await ev('transfer', { seat: r.seat, jumlah: masuk });
         }
       }
     }
@@ -415,9 +409,11 @@
         r.pos = (r.pos + 1) % 24; update();
         const tile = BOARD[r.pos];
         if (tile === 'SUBUH' && r.utang) {
-          if (r.rp >= r.utang) { r.rp -= r.utang; log(`${name(r.seat)} melunasi Pinjol ${r.utang}.`); }
+          const jenis = r.kur ? 'KUR' : 'Pinjol';
+          if (r.rp >= r.utang) { r.rp -= r.utang; log(`${name(r.seat)} melunasi ${jenis} ${r.utang}.`); }
+          else if (r.kur) { r.rp = 0; st('kur_gagal_bayar'); log(`🏦 ${name(r.seat)} gagal bayar KUR: uang habis disita bank.`); }
           else { r.rp = 0; r.rekaman = 0; st('pinjol_gagal_bayar'); log(`📱 ${name(r.seat)} gagal bayar Pinjol: uang habis, diteror debt collector.`); }
-          r.utang = 0;
+          r.utang = 0; r.kur = false;
         }
         if (tile === 'IZIN' && !r.izin && (r.kelas === 1 || r.kelas === 2) && r.berkas === null) {
           r.berkas = S.t + C.PROSES_RESMI; log(`🏛️ ${name(r.seat)} mengajukan berkas izin resmi (jadi putaran ${r.berkas}).`);
@@ -432,12 +428,12 @@
       const dapat = { KERJA: 2, PASAR: r.kelas >= 1 ? 3 : 1, PROYEK: r.kelas >= 2 ? 4 : 0, BANSOS: ({ 0: 3, 1: 0 })[r.kelas] ?? 2 }[tile];
       if (dapat !== undefined) {
         r.rp += dapat;
-        log(dapat ? `${JT_TILE_EM(tile)} ${name(r.seat)} di ${TILE[tile][1]}: +${dapat} Rupiah.` : `${JT_TILE_EM(tile)} ${name(r.seat)} di ${TILE[tile][1]}: tidak dapat apa-apa.`);
+        log(dapat ? `${JT_TILE_EM(tile)} ${name(r.seat)} di ${TILE[tile][1]}: +${dapat} Receh.` : `${JT_TILE_EM(tile)} ${name(r.seat)} di ${TILE[tile][1]}: tidak dapat apa-apa.`);
         await ev('petak', { seat: r.seat, tile });
       } else if (tile === 'GUSURAN' && (r.kelas <= 1 || (r.kelas === 2 && f.gusurJuragan))) {
         const c = await ask(r.seat, { kind: 'gusuran', text: '🚜 Satpol datang menggusur lapak.', options: [
           { id: 'bayar', label: 'Bayar uang keamanan (1)', sub: 'Ke Oknum. Lapak aman.', disabled: r.rp < 1 },
-          { id: 'gusur', label: 'Biarkan digusur', sub: 'Kehilangan 3 Rupiah' }] }, r.rp >= 1 ? 'bayar' : 'gusur');
+          { id: 'gusur', label: 'Biarkan digusur', sub: 'Kehilangan 3 Receh' }] }, r.rp >= 1 ? 'bayar' : 'gusur');
         if (c === 'bayar') st('uang_keamanan', bayarOknum(r, 1));
         else { r.rp = Math.max(0, r.rp - 3); st('lapak_digusur'); log(`🚜 Lapak ${name(r.seat)} digusur.`); }
       } else if (tile === 'NASIB') await nasibKartu(r);
@@ -453,6 +449,16 @@
           { id: 'pinjam', label: `Pinjam +${C.PINJOL_DAPAT}`, sub: `Wajib bayar ${C.PINJOL_BAYAR} saat melewati Subuh. Gagal bayar: uang & Kartu Rekaman habis.` },
           { id: 'tidak', label: 'Tidak', sub: '' }] }, bot);
         if (c === 'pinjam') { r.rp += C.PINJOL_DAPAT; r.utang = C.PINJOL_BAYAR; st('pinjol'); log(`📱 ${name(r.seat)} mengambil Pinjol.`); }
+      } else if (tile === 'BANK' && !r.utang) {
+        if (r.kelas === 0) { st('kur_ditolak'); log(`🏦 ${name(r.seat)} mengajukan KUR. Ditolak: Jelata tidak punya agunan.`); await ev('kur', { seat: r.seat, ok: false }); }
+        else {
+          const nxt = r.kelas + 1;
+          const bot = r.kelas < 3 && r.izin && r.rp < C.NAIK[nxt] && C.NAIK[nxt] <= r.rp + C.KUR_DAPAT ? 'pinjam' : 'tidak';
+          const c = await ask(r.seat, { kind: 'kur', text: '🏦 Bank menawarkan Kredit Usaha Rakyat (KUR).', options: [
+            { id: 'pinjam', label: `Pinjam +${C.KUR_DAPAT}`, sub: `Bayar ${C.KUR_BAYAR} saat melewati Subuh (lebih murah dari Pinjol). Gagal bayar: Receh disita bank.` },
+            { id: 'tidak', label: 'Tidak', sub: '' }] }, bot);
+          if (c === 'pinjam') { r.rp += C.KUR_DAPAT; r.utang = C.KUR_BAYAR; r.kur = true; st('kur'); log(`🏦 ${name(r.seat)} mengambil KUR.`); await ev('kur', { seat: r.seat, ok: true }); }
+        }
       }
       if (r.lapas) return;
       if (r.berkas !== null && S.t >= r.berkas) { r.izin = true; r.berkas = null; log(`🏛️ Izin resmi ${name(r.seat)} sudah jadi.`); }
@@ -488,9 +494,9 @@
       else if (k === 4) { o.rp += 4; await naikSorotan(2); }
       else if (k === 6) {
         const target = acak(kaya).sort((a, b) => b.rp - a.rp);
-        const tSeat = await ask(0, { kind: 'target', text: 'Tawarkan "uang keamanan" ke siapa?', options: target.map((r) => ({ id: r.seat, label: name(r.seat), sub: `${KELAS[r.kelas]} · ${r.rp} Rupiah` })) }, target[0].seat);
+        const tSeat = await ask(0, { kind: 'target', text: 'Tawarkan "uang keamanan" ke siapa?', options: target.map((r) => ({ id: r.seat, label: name(r.seat), sub: `${KELAS[r.kelas]} · ${r.rp} Receh` })) }, target[0].seat);
         const r = rs.find((x) => x.seat === tSeat);
-        const c = await ask(r.seat, { kind: 'uang_keamanan', text: `${name(0)} menawarkan "uang keamanan" 3 Rupiah.`, options: [
+        const c = await ask(r.seat, { kind: 'uang_keamanan', text: `${name(0)} menawarkan "uang keamanan" 3 Receh.`, options: [
           { id: 'terima', label: 'Bayar 3', sub: 'Kebal semua Pos sampai giliran Oknum berikutnya', disabled: r.rp < 3 },
           { id: 'tolak', label: 'Tolak', sub: 'Tarif 86 kamu jadi ganda' }] }, r.rp >= 5 ? 'terima' : 'tolak');
         if (c === 'terima') { bayarOknum(r, 3); o.dilindungi.push(r.seat); st('uang_keamanan_diterima'); log(`${name(r.seat)} membayar uang keamanan.`); }
@@ -534,7 +540,7 @@
       const bisaRek = target.length && !f.noRek && (f.rekGratis || o.rekayasa > 0);
       const kartu = o.hand.filter((k) => !REAKSI.has(k) && (k !== 6 || rs.some((r) => r.kelas >= 2 && !r.lapas)) && (k !== 10 || (!f.noRek && target.length)));
       const options = [
-        { id: 'sowan', label: 'Sowan ke atasan (3)', sub: 'Bayar 3 Rupiah → Sorotan −2', disabled: o.rp < 3 },
+        { id: 'sowan', label: 'Sowan ke atasan (3)', sub: 'Bayar 3 Receh → Sorotan −2', disabled: o.rp < 3 },
         { id: 'rekayasa', label: `Rekayasa kasus${f.rekGratis ? ' (gratis)' : ` (token ${o.rekayasa})`}`, sub: 'Target masuk Lapas 2 putaran · Citra +2 · Sorotan +1 · bisa dibongkar rekaman', disabled: !bisaRek },
         { id: 'opres', label: 'Operasi resmi', sub: 'Citra +1 · Sorotan −1 (pencitraan)' },
         { id: 'kartu', label: 'Mainkan kartu', sub: kartu.map((k) => OKNUM[k][0]).join(', ') || 'Tidak ada kartu yang bisa dimainkan', disabled: !kartu.length },
@@ -560,7 +566,7 @@
       else if (c === 'opres') { citra(1); log(`${name(0)} menggelar operasi resmi (pencitraan).`); await naikSorotan(-1); }
       else if (c === 'rekayasa') {
         const pilih = S.players[0].bot ? kaya : target;
-        const tSeat = await ask(0, { kind: 'target', text: 'Rekayasa kasus terhadap siapa?', options: target.map((r) => ({ id: r.seat, label: name(r.seat), sub: `${KELAS[r.kelas]} · ${r.rp} Rupiah · 📹×${r.rekaman}` })) }, botTarget(pilih).seat);
+        const tSeat = await ask(0, { kind: 'target', text: 'Rekayasa kasus terhadap siapa?', options: target.map((r) => ({ id: r.seat, label: name(r.seat), sub: `${KELAS[r.kelas]} · ${r.rp} Receh · 📹×${r.rekaman}` })) }, botTarget(pilih).seat);
         if (!f.rekGratis) o.rekayasa--;
         log(`⚖️ ${name(0)} merekayasa kasus terhadap ${name(tSeat)}.`);
         await rekayasa(rs.find((x) => x.seat === tSeat), 1);
@@ -570,16 +576,23 @@
       }
       if (c === 'sowan' || c === 'opres') await ev('aksi', { seat: 0, c });
       if (o.rp > 0 && aktif()) {
-        const t = await ask(0, { kind: 'transfer_oknum', text: 'Pindahkan uang ke luar negeri?', options: [
-          { id: 'transfer', label: `Transfer (−20%)`, sub: `${o.rp} Rupiah → ${Math.floor(o.rp * (1 - C.FEE))} Harta Aman · Sorotan +1` },
-          { id: 'tidak', label: 'Simpan dulu', sub: 'Rupiah bisa disita kalau kena OTT' }] }, o.rp >= 6 ? 'transfer' : 'tidak');
-        if (t === 'transfer') {
-          const masuk = Math.floor(o.rp * (1 - C.FEE)); o.aman += masuk;
-          log(`💸 ${name(0)} transfer ${o.rp} Rupiah ke luar negeri → +${masuk} Harta Aman.`); o.rp = 0;
-          await ev('transfer', { seat: 0, jumlah: masuk });
-          await naikSorotan(1);
+        const pamer = !S.f.asetBebas;
+        const t = await ask(0, { kind: 'aset_oknum', text: 'Belikan Receh jadi Aset (rumah atas nama ipar, moge, tas mewah)?', options: [
+          { id: 'aset', label: `Beli Aset (−${Math.round(C.FEE * 100)}%)`, sub: `${o.rp} Receh → Aset ${Math.floor(o.rp * (1 - C.FEE))} · tidak bisa disita OTT${pamer ? ' · Pamer harta: Sorotan +1' : ' · Pengampunan Pajak: tanpa Sorotan'}` },
+          { id: 'tidak', label: 'Simpan Receh', sub: 'Utuh di akhir, tapi separuhnya disita kalau tertangkap OTT' }] }, botAset(pamer));
+        if (t === 'aset') {
+          const masuk = Math.floor(o.rp * (1 - C.FEE)); o.aset += masuk; st('aset_dibeli', masuk);
+          log(`🏠 ${name(0)} membelanjakan ${o.rp} Receh jadi Aset (+${masuk}).${pamer ? ' Warganet mulai menyorot gaya hidupnya.' : ''}`); o.rp = 0;
+          await ev('aset', { seat: 0, jumlah: masuk });
+          if (pamer) await naikSorotan(1);
         }
       }
+    }
+    // Bot: Aset mengorbankan 20% demi aman dari OTT. Worth it kalau Sorotan sudah tinggi dan Receh banyak.
+    function botAset(pamer) {
+      if (!pamer) return o.rp >= 4 ? 'aset' : 'tidak';
+      if (o.sorotan >= 9) return 'tidak';   // Sorotan +1 akan memicu OTT
+      return o.rp >= C.ASET_BOT_RP && o.sorotan >= C.ASET_BOT_SOR ? 'aset' : 'tidak';
     }
 
     // ---------- loop utama ----------
@@ -621,12 +634,16 @@
       if (stopped) { S.phase = 'stopped'; update(); return S; }
       // skor akhir
       if (o.citra < C.CITRA_MIN) st('oknum_dimutasi');
-      const skor = [{ seat: 0, role: 'Oknum', aman: o.aman, score: o.citra >= C.CITRA_MIN ? o.aman : Math.floor(o.aman * C.MUTASI_KALI), mutasi: o.citra < C.CITRA_MIN }]
-        .concat(rs.map((r) => ({ seat: r.seat, role: 'Rakyat', kelas: r.kelas, aman: r.aman, score: r.kelas === 3 ? r.aman : 0, rp: r.rp })));
+      // Kekayaan = Receh di tangan + Aset (Oknum) / Nilai Usaha kelas (Rakyat). Utang yang belum lunas dipotong.
+      const mutasi = o.citra < C.CITRA_MIN, kotorO = o.rp + o.aset;
+      const skor = [{ seat: 0, role: 'Oknum', rp: o.rp, aset: o.aset, mutasi, kekayaan: mutasi ? Math.floor(kotorO * C.MUTASI_KALI) : kotorO }]
+        .concat(rs.map((r) => ({ seat: r.seat, role: 'Rakyat', kelas: r.kelas, rp: r.rp, usaha: C.NILAI_USAHA[r.kelas], utang: r.utang,
+          kekayaan: Math.max(0, r.rp + C.NILAI_USAHA[r.kelas] - r.utang) })));
       skor.forEach((s) => { s.name = name(s.seat); s.tie = rng(); });
-      skor.sort((a, b) => (b.score - a.score) || ((b.kelas || 0) - (a.kelas || 0)) || ((b.rp || 0) - (a.rp || 0)) || (b.tie - a.tie));
+      skor.sort((a, b) => (b.kekayaan - a.kekayaan) || ((b.kelas || 0) - (a.kelas || 0)) || (b.tie - a.tie));
       st('tetap_jelata', rs.filter((r) => r.kelas === 0).length);
-      S.result = { ranking: skor, winner: skor[0].seat };
+      Dompet().konversi(skor, C.KURS);
+      S.result = { ranking: skor, winner: skor[0].seat, uang: C.UANG, kurs: C.KURS };
       S.phase = 'end'; S.turn = null;
       log(`🏁 Permainan selesai. Juara: ${skor[0].name} (${skor[0].role}).`);
       await ev('end', {});

@@ -11,15 +11,19 @@ const ROLES = ['jaksa', 'kong', 'bumn', 'umkm'];
 const pemain = (bot) => ROLES.map((r, s) => ({ name: 'P' + s, bot, role: s ? r : undefined }));
 
 async function botGames(n) {
-  const win = Object.fromEntries(ROLES.map((r) => [r, 0]));
+  const win = Object.fromEntries(ROLES.map((r) => [r, 0])), dana = Object.fromEntries(ROLES.map((r) => [r, 0]));
   let umkmNaik = 0;
   for (let i = 0; i < n; i++) {
     const g = GB.createGame(pemain(true), { strict: true, rng: GB.mulberry32(i + 1) });
     const S = await g.run();
     win[S.result.ranking[0].role]++;
     umkmNaik += S.ps.find((p) => p.role === 'umkm').pengusaha;
+    for (const x of S.result.ranking) {
+      assert(Number.isInteger(x.kekayaan) && x.kekayaan >= 0 && x.dana >= 0, 'Kekayaan/Dana tidak valid');
+      dana[x.role] += x.dana;
+    }
   }
-  return { win: ROLES.map((r) => Math.round((100 * win[r]) / n)), umkmNaik: umkmNaik / n };
+  return { win: ROLES.map((r) => Math.round((100 * win[r]) / n)), umkmNaik: umkmNaik / n, dana: ROLES.map((r) => Math.round(dana[r] / n)) };
 }
 
 async function randomHumans(n) {
@@ -47,7 +51,7 @@ async function randomHumans(n) {
     });
     const S = await g.run();
     assert.strictEqual(S.phase, 'end');
-    assert(S.ps.every((p) => p.rp >= 0) && S.j.rp >= 0, 'Rupiah negatif');
+    assert(S.ps.every((p) => p.rp >= 0 && p.aset >= 0) && S.j.rp >= 0 && S.j.aset >= 0, 'Cuan/Aset negatif');
   }
   return kinds;
 }
@@ -88,6 +92,10 @@ process.on('exit', () => { if (!selesai) { console.error('MACET: ada promise yan
   const b = await botGames(3000);
   console.log(`3000 match bot: juara Jaksa/Konglomerat/Direksi/UMKM = ${b.win.join('/')}% (target 15–35% tiap role), UMKM jadi Pengusaha ${(b.umkmNaik * 100).toFixed(0)}%`);
   assert(b.win.every((x) => x >= 15 && x <= 35), 'Peluang juara tidak seimbang');
+  const rataDana = b.dana.reduce((s, x) => s + x, 0) / 4;
+  console.log(`Dana Offshore rata-rata Jaksa/Konglomerat/Direksi/UMKM (Online, kurs ${GB.C.KURS}): ${b.dana.join('/')} (rata-rata ${Math.round(rataDana)}, target ±100)`);
+  assert(b.dana.every((x) => Math.abs(x - rataDana) <= 0.2 * rataDana), 'Dana per role timpang > ±20%');
+  assert(rataDana >= 80 && rataDana <= 120, 'Kurs perlu dikalibrasi ulang (rata-rata Dana di luar 80–120)');
 
   const kinds = await randomHumans(300);
   console.log(`300 match semua kursi manusia (jawaban acak): selesai tanpa macet. Jenis prompt teruji: ${[...kinds].sort().join(', ')}`);

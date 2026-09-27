@@ -5,33 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#14532d">
-<title>Gedung Bundar — Negeri di Balik Daun</title>
+<title>Jalan Tikus — Negeri di Balik Daun</title>
 <style>
 :root {
   --bg: #f4f1ea; --panel: #ffffff; --ink: #1c1917; --muted: #78716c; --line: #e7e2d8;
   --leaf: #166534; --leaf-soft: #dcfce7; --danger: #b91c1c; --danger-soft: #fee2e2; --gold: #b45309; --gold-soft: #fef3c7;
-  --ice: #dbeafe; --ice-line: #60a5fa; --shadow: 0 2px 10px rgba(0,0,0,.08);
+  --tile: #fbfaf7; --tile-hi: #fff7d6; --shadow: 0 2px 10px rgba(0,0,0,.08);
   --s0: #b91c1c; --s1: #2563eb; --s2: #16a34a; --s3: #d97706;
-  --k0: #65a30d; --k1: #78716c; --k2: #ea580c; --k3: #2563eb; --kx: #a855f7;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #12140f; --panel: #1c1f18; --ink: #ecebe6; --muted: #a8a29e; --line: #2e332a;
     --leaf: #4ade80; --leaf-soft: #14301f; --danger: #f87171; --danger-soft: #3b1515; --gold: #fbbf24; --gold-soft: #3a2c0c;
-    --ice: #172a45; --ice-line: #3b82f6; --shadow: 0 2px 10px rgba(0,0,0,.4);
+    --tile: #1f231b; --tile-hi: #3a3413; --shadow: 0 2px 10px rgba(0,0,0,.4);
   }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
 button { font: inherit; color: inherit; cursor: pointer; }
-a { color: var(--leaf); }
 [hidden] { display: none !important; }
 .screen { max-width: 540px; margin: 0 auto; padding: 12px 12px 24px; min-height: 100dvh; }
 h1 { font-size: 26px; margin: 18px 0 2px; }
 h2 { font-size: 19px; margin: 16px 0 8px; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
-.btn { display: block; width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); text-align: left; margin: 8px 0; box-shadow: var(--shadow); text-decoration: none; color: var(--ink); }
+.btn { display: block; width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); text-align: left; margin: 8px 0; box-shadow: var(--shadow); }
 .btn b { display: block; }
 .btn span { display: block; font-size: 12.5px; color: var(--muted); }
 .btn.primary { background: var(--leaf); border-color: var(--leaf); color: #fff; }
@@ -40,8 +38,6 @@ h2 { font-size: 19px; margin: 16px 0 8px; }
 .btn:disabled { opacity: .45; cursor: default; }
 .row { display: flex; gap: 8px; align-items: center; }
 .row > .btn { margin: 8px 0; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
-.grid2 .btn { margin: 4px 0; }
 input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); width: 100%; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: var(--shadow); }
 .hero { text-align: center; padding: 8px 0 4px; }
@@ -53,40 +49,36 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 .topbar { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; align-items: center; gap: 8px; padding: 8px 2px; }
 .topbar .title { flex: 1; font-weight: 700; font-size: 14px; }
 .topbar button { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 6px 10px; font-size: 13px; }
-.strip { display: flex; gap: 6px; }
-#kabar { flex: 1; background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 9px; padding: 5px 7px; font-size: 11px; min-width: 0; }
+.board { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(7, 1fr); gap: 2px; width: 100%; aspect-ratio: 1; }
+.tile { position: relative; background: var(--tile); border: 1px solid var(--line); border-radius: 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9.5px; line-height: 1.05; text-align: center; overflow: hidden; padding: 1px; }
+.tile .em { font-size: 17px; line-height: 1.1; }
+.tile.pos { border: 2px solid var(--danger); background: var(--danger-soft); }
+.tile.pos::after { content: "🚨"; position: absolute; top: -1px; right: 0; font-size: 11px; }
+.tile.pos.off { opacity: .55; border-style: dashed; }
+.tile.pick { outline: 2px dashed var(--gold); outline-offset: -3px; background: var(--tile-hi); }
+.tile.picked { border: 3px solid var(--gold); background: var(--gold-soft); }
+.tile.locked { opacity: .35; }
+.tile .pawns { position: absolute; bottom: 1px; left: 0; right: 0; display: flex; justify-content: center; gap: 1px; }
+.pawn { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid #fff; font-size: 8px; line-height: 10px; color: #fff; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.pawn.me { width: 16px; height: 16px; line-height: 13px; font-size: 9px; }
+.center { grid-row: 2 / 7; grid-column: 2 / 7; display: flex; flex-direction: column; gap: 4px; padding: 3px; min-width: 0; min-height: 0; }
+#kabar { background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 9px; padding: 5px 7px; font-size: 11px; }
 #kabar b { font-size: 11.5px; }
-#loker { width: 104px; flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 5px 7px; font-size: 11px; }
+#kabar.batal b { text-decoration: line-through; }
+#oknum { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 5px 7px; font-size: 11px; }
+#oknum.turn, .pcard.turn { box-shadow: 0 0 0 2px var(--leaf); }
+#oknum .name { font-weight: 700; color: var(--s0); }
 .meter { height: 8px; background: var(--line); border-radius: 5px; overflow: hidden; margin: 2px 0; }
 .meter > i { display: block; height: 100%; background: linear-gradient(90deg, #eab308, #dc2626); }
-#loker .meter > i { background: var(--leaf); }
-#loker.low .meter > i { background: var(--danger); }
-#jaksa { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; font-size: 11.5px; margin-top: 6px; }
-#jaksa .name { font-weight: 700; color: var(--s0); }
-.turn { box-shadow: 0 0 0 2px var(--leaf); }
-.stats { display: flex; flex-wrap: wrap; gap: 3px 9px; align-items: center; }
-.sec { font-size: 10.5px; font-weight: 800; color: var(--muted); margin: 8px 2px 3px; text-transform: uppercase; letter-spacing: .05em; display: flex; justify-content: space-between; }
-.market { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-.market.p3 { grid-template-columns: repeat(3, 1fr); }
-.mcard { background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--k); border-radius: 9px; padding: 4px 5px 5px; font-size: 10.5px; line-height: 1.25; min-width: 0; }
-.mcard .em { font-size: 15px; }
-.mcard .nm { font-weight: 700; font-size: 11px; min-height: 2.5em; }
-.mcard .val { display: flex; justify-content: space-between; gap: 2px; margin-top: 2px; font-weight: 700; }
-.mcard.ok { box-shadow: 0 0 0 2px var(--leaf); }
-.mcard.no { opacity: .55; }
-.mcard.empty { border-style: dashed; border-top-width: 1px; opacity: .5; display: flex; align-items: center; justify-content: center; }
-.players { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 8px 0 6px; }
+.stats { display: flex; flex-wrap: wrap; gap: 3px 8px; }
+#dice { font-size: 12px; font-weight: 700; }
+.players { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 6px 0; }
 .pcard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 5px 6px; font-size: 11px; min-width: 0; }
 .pcard .nm { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pcard.mine, #jaksa.mine { border: 2px solid var(--leaf); }
-.pcard button, #jaksa button { font-size: 10px; padding: 2px 5px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); margin-top: 2px; }
-.chips { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 3px; }
-.chip { font-size: 10px; padding: 0 3px; border-radius: 5px; background: var(--bg); border: 1px solid var(--line); border-bottom: 2px solid var(--k); white-space: nowrap; }
-.chip.beku { background: var(--ice); border-color: var(--ice-line); }
-.warn { color: var(--danger); font-weight: 700; }
+.pcard.mine { border: 2px solid var(--leaf); }
+.pcard .kl { font-size: 11.5px; }
+.pcard button { font-size: 10px; padding: 2px 5px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); margin-top: 2px; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 3px; }
-#kabar.flash { animation: flash 1.6s; }
-@keyframes flash { from { background: var(--gold-soft); } }
 #prompt { position: sticky; bottom: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px 16px 0 0; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 16px rgba(0,0,0,.12); max-height: 52dvh; overflow: auto; z-index: 4; margin: auto -8px 0; }
 #prompt .q { font-weight: 700; margin-bottom: 4px; }
 #prompt .opt { display: block; width: 100%; text-align: left; padding: 10px 12px; margin: 6px 0; border-radius: 11px; border: 1px solid var(--line); background: var(--bg); }
@@ -132,19 +124,21 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 .cardpop h4 { margin: 4px 0 6px; font-size: 18px; }
 .cardpop p { margin: 0; font-size: 14px; }
 .cardpop .close { margin-top: 10px; font-size: 11px; color: var(--muted); }
-.cardpop.jaksa { border-color: var(--danger); } .cardpop.jaksa .kind { color: var(--danger); }
-.cardpop.baik { border-color: var(--leaf); } .cardpop.baik .kind { color: var(--leaf); }
+.cardpop.nasib { border-color: var(--s1); } .cardpop.nasib .kind { color: var(--s1); }
+.cardpop.oknum { border-color: var(--danger); } .cardpop.oknum .kind { color: var(--danger); }
 @keyframes pop { from { transform: translate(-50%, -50%) scale(.6) rotate(-6deg); opacity: 0; } }
 #hovertip { position: fixed; z-index: 60; max-width: 240px; background: var(--ink); color: var(--bg); font-size: 12px; line-height: 1.35; padding: 6px 9px; border-radius: 8px; pointer-events: none; box-shadow: var(--shadow); }
 [data-tip] { cursor: help; }
+@keyframes flash { from { background: var(--gold-soft); } }
+.pawn.now { animation: bob .8s infinite; }
+@keyframes bob { 50% { transform: translateY(-3px); } }
 .banner { background: var(--danger-soft); color: var(--danger); border-radius: 10px; padding: 8px 10px; font-size: 13px; margin: 6px 0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
 <script src="ndbd-ui.js?v=3"></script>
 <script src="ndbd-dompet.js?v=3"></script>
-<script src="gb-engine.js?v=3"></script>
+<script src="engine.js?v=3"></script>
 <script src="tutorial.js?v=3"></script>
-<script src="gb-tutorial.js?v=3"></script>
 </head>
 <body>
 
@@ -152,14 +146,14 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 <section id="scr-lobby" class="screen">
   <a class="small muted" href="index.html" style="color:inherit">← 🍃 Negeri di Balik Daun</a>
   <div class="hero">
-    <div class="leaf">🏛️</div>
-    <h1>Gedung Bundar</h1>
-    <div class="muted">Game 2 · pengusaha membangun bisnis, jaksa menghitung "kerugian negara". Currency: <b>💹 Cuan</b>.</div>
+    <div class="leaf">🛵</div>
+    <h1>Jalan Tikus</h1>
+    <div class="muted">Game 1 · rakyat mencoba naik kelas, oknum memeras di jalan. Currency: <b>🪙 Receh</b>.</div>
   </div>
   <div class="spacer"></div>
   <label class="small muted" for="in-name">Namamu</label>
   <input id="in-name" maxlength="14" placeholder="mis. Joshua">
-  <button class="btn primary" id="btn-tutorial"><b>▶ Tutorial (5 bab, ±6 menit)</b><span>Belajar sambil main. Disarankan sebelum main bareng.</span></button>
+  <button class="btn primary" id="btn-tutorial"><b>▶ Tutorial (5 bab, ±5 menit)</b><span>Belajar sambil main. Disarankan sebelum main bareng.</span></button>
   <h2>Main online bareng teman</h2>
   <button class="btn" id="btn-host"><b>🏠 Buat Room</b><span>Kamu jadi host. Bagikan kode/link ke teman. Kursi kosong diisi bot.</span></button>
   <div class="row">
@@ -168,19 +162,17 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
   </div>
   <div id="online-note" class="small muted"></div>
   <h2>Latihan sendiri vs bot</h2>
-  <div class="grid2">
-    <button class="btn" data-prac="umkm"><b>🧺 UMKM</b><span>Modal kecil, jalur rakyat</span></button>
-    <button class="btn" data-prac="jaksa"><b>⚖️ Jaksa</b><span>Setoran vs Citra</span></button>
-    <button class="btn" data-prac="kong"><b>🎩 Konglomerat</b><span>Modal besar, pengacara top</span></button>
-    <button class="btn" data-prac="bumn"><b>🏢 Direksi BUMN</b><span>Uang negara, Kemitraan</span></button>
+  <div class="row" style="align-items:stretch">
+    <button class="btn" id="btn-prac-r"><b>🧍 Jadi Rakyat</b><span>vs 1 Oknum + 2 Rakyat bot</span></button>
+    <button class="btn" id="btn-prac-o"><b>👮 Jadi Oknum</b><span>vs 3 Rakyat bot</span></button>
   </div>
-  <a class="btn" href="index.html"><b>🍃 Kembali ke Negeri di Balik Daun</b><span>Dompet Dana Offshore & game lainnya.</span></a>
+  <a class="btn" href="index.html" style="text-decoration:none;color:inherit"><b>🍃 Kembali ke Negeri di Balik Daun</b><span>Dompet Dana Offshore & game lainnya.</span></a>
   <p class="small muted">Satir fiksi. Semua tokoh & kejadian di dalam game rekaan, terinspirasi pola penyimpangan hukum yang diberitakan media.</p>
 </section>
 
 <!-- WAITING ROOM -->
 <section id="scr-wait" class="screen" hidden>
-  <h2>Ruang tunggu · Gedung Bundar</h2>
+  <h2>Ruang tunggu</h2>
   <div class="card">
     <div class="muted small" style="text-align:center">Kode room</div>
     <div class="code" id="w-code">----</div>
@@ -189,7 +181,7 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
   <h2>Pemain</h2>
   <div class="card plist" id="w-players"></div>
   <div id="w-host" hidden>
-    <p class="small muted">Tap <b>Jadikan Jaksa</b> pada salah satu pemain, atau biarkan Jaksa dimainkan bot. Pemain lain mendapat role pelaku usaha secara acak. Maks. 4 manusia; sisanya bot.</p>
+    <p class="small muted">Tap <b>Jadikan Oknum</b> pada salah satu pemain, atau biarkan Oknum dimainkan bot. Maks. 4 manusia; sisanya bot.</p>
     <button class="btn primary" id="btn-start" style="text-align:center"><b>Mulai permainan</b></button>
   </div>
   <p id="w-guest" class="muted" hidden>Menunggu host memulai permainan…</p>
@@ -199,17 +191,13 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 <!-- GAME -->
 <section id="scr-game" class="screen" hidden>
   <div class="topbar">
-    <div class="title" id="g-title">Ronde 1/8</div>
+    <div class="title" id="g-title">Putaran 1/12</div>
     <button id="btn-skip" hidden>Lewati tutorial</button>
     <button id="btn-speed" data-tip="Kecepatan jalannya bot & animasi">▶ Normal</button>
     <button id="btn-help">? Aturan</button>
   </div>
   <div id="g-banner" class="banner" hidden></div>
-  <div class="strip"><div id="kabar"></div><div id="loker"></div></div>
-  <div id="nego"></div>
-  <div id="jaksa"></div>
-  <div id="pasar"><div class="sec"><span>🛒 Pasar Usaha</span><span class="small" id="pasar-note"></span></div><div class="market" id="pasar-cards"></div></div>
-  <div id="proyek"><div class="sec"><span>📜 Proyek Negara</span><span>untung = 👣 Jejak</span></div><div class="market p3" id="proyek-cards"></div></div>
+  <div class="board" id="board"></div>
   <div class="players" id="players"></div>
   <div id="log"></div>
   <div id="prompt"></div>
@@ -238,12 +226,12 @@ input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var
 
 <script>
 'use strict';
-// ====== konfigurasi online (Supabase Realtime Broadcast; sama dengan jalan-tikus.html) ======
+// ====== konfigurasi online (Supabase Realtime Broadcast; tanpa tabel) ======
 const SB_OVERRIDE = (() => { try { return JSON.parse(localStorage.getItem('ndbd_sb')); } catch (e) { return null; } })(); // hanya untuk tes lokal
 const SB_URL = (SB_OVERRIDE && SB_OVERRIDE.url) || 'https://axlmcglultvdxuwbspci.supabase.co';
 const SB_KEY = (SB_OVERRIDE && SB_OVERRIDE.key) || 'sb_publishable_lUOhxk6WVX8jskieKVFtfg_ZPx7Dk0z';
 
-const GB = window.GedungBundar, TUT = window.Tutorial, GBT = window.GBTutorial, C = GB.C;
+const JT = window.JalanTikus, TUT = window.Tutorial;
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const store = {
@@ -252,94 +240,106 @@ const store = {
 };
 const myId = (store.get('ndbd_id', null) || (() => { const id = Math.random().toString(36).slice(2, 10); store.set('ndbd_id', id); return id; })()) + (new URLSearchParams(location.search).get('as') || ''); // ?as= untuk tes 2 tab
 const SEAT_COLOR = ['var(--s0)', 'var(--s1)', 'var(--s2)', 'var(--s3)'];
-const SEK = (s) => (s === null || s === undefined ? 'var(--kx)' : `var(--k${s})`);
-const UK = ['K', 'M', 'B'];
-const BOTS = { jaksa: 'Pak Jaksa 🤖', kong: 'Tuan Konglo 🤖', bumn: 'Bu Direksi 🤖', umkm: 'Mbak UMKM 🤖' };
+const KELAS_EM = ['🧍', '🧺', '🏪', '🏢'];
 
 let mode = null;          // 'tutorial' | 'practice' | 'host' | 'client'
 let S = null, game = null, mySeat = -1;
-let lock = null, sentFor = 0, lastEv = 0;
+let lock = null, lockTiles = null, pick = [], pickFor = 0, sentFor = 0, lastEv = 0;
 let tutorialAnswer = null, tutorialChapter = null, tutorialAbort = false;
-let practiceRole = 'umkm';
+let practiceRole = 'rakyat';
 
 function show(id) { document.querySelectorAll('.screen').forEach((s) => { s.hidden = s.id !== id; }); window.scrollTo(0, 0); if (id === 'scr-game') renderSpeed(); }
 function toast(msg, ms = 2200) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => { t.hidden = true; }, ms); }
 function myName() { return ($('#in-name').value.trim() || 'Pemain').slice(0, 14); }
+
+// ====== papan ======
+function cell(i) {
+  if (i <= 6) return [7, 7 - i];
+  if (i <= 12) return [7 - (i - 6), 1];
+  if (i <= 18) return [1, 1 + (i - 12)];
+  return [1 + (i - 18), 7];
+}
 function tip(t) { return `data-tip="${esc(t)}"`; }
-const me = () => (S ? S.ps.find((p) => p.seat === mySeat) : null);
-const harga = (p, c) => Math.max(1, C.HARGA[c.ukuran] - p.usaha.filter((u) => u.sektor === c.sektor).length);
-const bisaProyek = (p, x) => x.sektor === null || p.usaha.filter((u) => u.sektor === x.sektor).length >= x.syarat;
+function buildBoard() {
+  const b = $('#board');
+  b.innerHTML = JT.BOARD.map((t, i) => {
+    const [r, c] = cell(i), [em, nm] = JT.TILE[t];
+    return `<div class="tile" data-tile="${i}" ${tip(`${nm}: ${JT.TILE[t][2]}`)} style="grid-row:${r};grid-column:${c}"><div class="em">${em}</div><div>${nm}</div><div class="pawns"></div></div>`;
+  }).join('') + `<div class="center"><div id="kabar"></div><div id="oknum"></div><div id="dice"></div></div>`;
+  b.onclick = (e) => {
+    const t = e.target.closest('.tile'); if (!t) return;
+    const i = +t.dataset.tile, p = S && S.prompt;
+    if (p && p.kind === 'pos' && p.seat === mySeat && p.id !== sentFor && p.tiles.includes(i) && (!lockTiles || lockTiles.includes(i))) {
+      const need = Math.min(p.pick, p.tiles.length);
+      if (pick.includes(i)) pick = pick.filter((x) => x !== i); else if (pick.length < need) pick.push(i); else { pick.shift(); pick.push(i); }
+      render(); return;
+    }
+    const [em, nm, desc] = JT.TILE[JT.BOARD[i]];
+    toast(`${em} ${nm}: ${desc}`, 3200);
+  };
+}
 
 // ====== render ======
 let raf = 0;
 function schedule() { if (!raf) raf = setTimeout(() => { raf = 0; render(); }, 30); }
 function render() {
   if (!S) return;
-  const j = S.j, m = me();
-  $('#g-title').textContent = mode === 'tutorial' && tutorialChapter ? `Tutorial ${tutorialChapter.id}/5 · ${tutorialChapter.title}` : `Ronde ${S.t}/${S.ronde}`;
-  // kabar & lapangan kerja
+  const o = S.o, t = S.t;
+  $('#g-title').textContent = mode === 'tutorial' && tutorialChapter ? `Tutorial ${tutorialChapter.id}/5 · ${tutorialChapter.title}` : `Putaran ${t}/${S.putaran}`;
+  // tiles
+  const p = S.prompt, picking = p && p.kind === 'pos' && p.seat === mySeat && p.id !== sentFor;
+  if (p && p.id !== pickFor) { pickFor = p.id; pick = []; }
+  const okAktif = t === 0 || t > o.bebasDi;
+  document.querySelectorAll('.tile').forEach((el) => {
+    const i = +el.dataset.tile;
+    const isPos = !picking && (o.pos.includes(i) || o.posTambahan === i);
+    el.classList.toggle('pos', isPos); el.classList.toggle('off', isPos && !okAktif);
+    const allowed = picking && p.tiles.includes(i) && (!lockTiles || lockTiles.includes(i));
+    el.classList.toggle('pick', allowed && !pick.includes(i));
+    el.classList.toggle('picked', picking && pick.includes(i));
+    el.classList.toggle('locked', picking && !allowed);
+    const pawns = S.rs.filter((r) => r.pos === i).map((r) =>
+      `<div class="pawn ${r.seat === mySeat ? 'me' : ''} ${S.turn === r.seat ? 'now' : ''}" style="background:${SEAT_COLOR[r.seat]}" data-tip="${esc(S.players[r.seat].name)} · ${JT.KELAS[r.kelas]}">${esc(S.players[r.seat].name[0] || '?')}</div>`).join('');
+    el.querySelector('.pawns').innerHTML = pawns;
+  });
+  // kabar
   const kb = $('#kabar');
-  kb.innerHTML = S.kabar ? `<span ${tip('Kabar Istana: kebijakan/skandal yang berlaku selama ronde ini.')}>📰</span> <b>${esc(GB.KABAR[S.kabar.id][0])}</b><br>${esc(GB.KABAR[S.kabar.id][1])}`
-    : '📰 <b>Kabar Istana</b><br>Dibuka tiap awal ronde.';
-  const lk = $('#loker');
-  lk.classList.toggle('low', S.loker <= 2);
-  lk.innerHTML = `<div ${tip(`Lapangan Kerja (0–${C.LOKER_MAX}). +1 tiap Usaha dibeli, −1 tiap Usaha dibekukan (tidak kembali). Kalau 0 di akhir ronde: KRISIS, semua pemain kehilangan 20% Cuan.`)}>👷 Lapangan Kerja <b>${S.loker}</b></div><div class="meter"><i style="width:${Math.max(0, S.loker) * 10}%"></i></div>`;
-  // jaksa
-  const jk = $('#jaksa');
-  jk.classList.toggle('turn', S.turn === 0); jk.classList.toggle('mine', mySeat === 0);
-  const laci = j.laci.length ? j.laci.map((k) => esc(S.players[k.seat].name)).join(', ') : 'kosong';
-  jk.innerHTML = `<div class="row" style="justify-content:space-between"><span class="name">⚖️ ${esc(S.players[0].name)}${mySeat === 0 && S.players[0].name !== 'Kamu' ? ' (kamu)' : ''} · Jaksa</span>${j.lapas ? '<b class="warn" data-tip="Jaksa di Lapas: tidak ada aksi, gaji, atau upeti.">🔒 Lapas</b>' : ''}</div>
-    <div class="small" ${tip('Sorotan publik 0–10. Naik saat Jaksa menerima setoran, pamer harta (Beli Aset), memakai angka Fantastis, atau diviralkan. Menyentuh 10 = OTT.')}>Sorotan <b>${j.sorotan}</b>/10 ${j.sorotan >= 8 ? '⚠️' : ''}</div><div class="meter"><i style="width:${Math.min(10, j.sorotan) * 10}%"></i></div>
+  if (S.kabar) { const [nm, tx] = JT.KABAR[S.kabar.id]; kb.className = S.kabar.batal ? 'batal' : ''; kb.innerHTML = `<span data-tip="Kabar Istana: kebijakan/skandal yang berlaku selama putaran ini.">📰</span> <b>${esc(nm)}</b>${S.kabar.batal ? ' — <b style="text-decoration:none">DIBATALKAN demo</b>' : '<br>' + esc(tx)}`; }
+  else kb.innerHTML = '📰 <b>Kabar Istana</b><br>Dibuka tiap awal putaran.';
+  // oknum
+  const okEl = $('#oknum');
+  okEl.classList.toggle('turn', S.turn === 0);
+  okEl.classList.toggle('mine', mySeat === 0);
+  const hand = mySeat === 0 ? o.hand.map((k) => JT.OKNUM[k][0]).join(', ') || '-' : `${o.hand.length}`;
+  const C = JT.C;
+  okEl.innerHTML = `<div class="row" style="justify-content:space-between"><span class="name">👮 ${esc(S.players[0].name)}${mySeat === 0 ? ' (kamu)' : ''}</span>${okAktif ? '' : '<b style="color:var(--danger)" data-tip="Oknum di Lapas: semua Pos kosong, Rakyat bebas lewat.">🔒 Lapas</b>'}</div>
+    <div class="small" ${tip('Sorotan publik 0–10. Naik saat Oknum memeras, pamer harta (Beli Aset), atau diviralkan. Menyentuh 10 = OTT.')}>Sorotan <b>${o.sorotan}</b>/10 ${o.sorotan >= 8 ? '⚠️' : ''}</div><div class="meter"><i style="width:${o.sorotan * 10}%"></i></div>
     <div class="stats">
-      <span ${tip(`Citra. Harus ≥ ${C.CITRA_MIN} di akhir, kalau tidak Jaksa dimutasi (Kekayaan ×0,7). Naik dari vonis & konferensi pers; turun kalau kalah sidang, tersangka dilepas, atau Koreksi MA.`)}>Citra <b class="${j.citra < C.CITRA_MIN ? 'warn' : ''}">${j.citra}</b>/${C.CITRA_MIN}</span>
-      <span ${tip(`Laci: kasus yang "diamankan" lewat Setor. Tiap ronde pemiliknya bayar upeti ${C.UPETI}; kalau tidak mampu, kasus dibuka lagi.`)}>🗄️ Laci ${j.laci.length} <span class="muted">(${laci})</span></span>
-      <span ${tip('Backing: pelindung saat OTT.')}>🛡️${j.backing}</span>
-      <span ${tip('Cuan di tangan. Dihitung di akhir, tapi separuhnya disita kalau tertangkap OTT.')}>💹${j.rp}</span>
-      <span ${tip('Aset (rumah atas nama ipar, moge). Dihitung di akhir dan tidak bisa disita OTT.')}>🏠<b>${j.aset}</b></span>
-      ${j.fantastis ? `<span ${tip('Vonis dengan angka Fantastis. Di akhir, tiap vonis dilempar dadu: 1–3 = dikoreksi MA, Citra −3.')}>🧮${j.fantastis}</span>` : ''}
-    </div><div class="nd-last" ${tip('Aksi terakhir Jaksa di ronde ini')}>${esc(feed.lastAction(S.players[0].name, S.t)) || '—'}</div>${hostSeatBtn(0)}`;
-  // pasar usaha
-  $('#pasar-note').textContent = m ? 'harga untukmu' : '';
-  $('#pasar-cards').innerHTML = S.pasar.map((c) => {
-    const h = m ? harga(m, c) : C.HARGA[c.ukuran];
-    const prod = C.PROD[c.ukuran] + (m && m.role === 'umkm' && c.ukuran === 0 ? C.UMKM_KECIL : 0);
-    const cls = m ? (h <= m.rp ? 'ok' : 'no') : '';
-    return `<div class="mcard ${cls}" style="--k:${SEK(c.sektor)}" ${tip(`${c.nama} — ${GB.SEKTOR[c.sektor][1]}, ${GB.UKURAN[c.ukuran]}. Produksi +${C.PROD[c.ukuran]} Cuan/ronde${c.ukuran === 0 ? ` (UMKM: +${C.PROD[0] + C.UMKM_KECIL})` : ''}. Harga dasar ${C.HARGA[c.ukuran]}, −1 untuk tiap Usaha ${GB.SEKTOR[c.sektor][1]} yang sudah dimiliki.`)}>
-      <div class="em">${GB.SEKTOR[c.sektor][0]}</div><div class="nm">${esc(c.nama)}</div>
-      <div class="val"><span>💹${h}</span><span>+${prod}/r</span></div></div>`;
-  }).join('') + '<div class="mcard empty">—</div>'.repeat(Math.max(0, 4 - S.pasar.length));
-  // proyek
-  $('#proyek-cards').innerHTML = S.proyekBuka.map((id) => {
-    const x = GB.PROYEK[id];
-    const cls = m ? (bisaProyek(m, x) ? 'ok' : 'no') : '';
-    const syarat = x.syarat ? `butuh ${x.syarat} ${GB.SEKTOR[x.sektor][0]}` : 'tanpa syarat';
-    return `<div class="mcard ${cls}" style="--k:${SEK(x.sektor)}" ${tip(`${x.nama}: untung ${x.untung} Cuan sekali ambil, Jejak +${x.jejak} (UMKM: −${C.UMKM_JEJAK}, min 1). Syarat: ${syarat}.`)}>
-      <div class="em">${x.sektor === null ? '🏘️' : GB.SEKTOR[x.sektor][0]} <span class="small muted">${syarat}</span></div><div class="nm">${esc(x.nama)}</div>
-      <div class="val"><span>+${x.untung}</span><span>👣${x.jejak}</span></div></div>`;
-  }).join('') + '<div class="mcard empty">—</div>'.repeat(Math.max(0, 3 - S.proyekBuka.length));
-  // pelaku usaha (milikku di depan)
-  const urut = S.ps.slice().sort((a, b) => (b.seat === mySeat) - (a.seat === mySeat));
-  $('#players').innerHTML = urut.map((p) => {
-    const mine = p.seat === mySeat, R = GB.ROLES[p.role];
-    const status = p.role === 'umkm' ? (p.pengusaha ? `<span ${tip('Sudah Pengusaha: boleh Beli Aset.')}>✅ Pengusaha</span>`
-      : `<span class="warn" ${tip(`UMKM naik kelas jadi Pengusaha setelah punya ${C.UMKM_PENGUSAHA} Usaha, lalu boleh Beli Aset.`)}>${p.usaha.length}/${C.UMKM_PENGUSAHA} Usaha</span>`) : '';
-    const chips = p.usaha.map((u) => `<span class="chip ${u.beku ? 'beku' : ''}" style="--k:${SEK(u.sektor)}" ${tip(`${u.nama} (${GB.UKURAN[u.ukuran]}, +${C.PROD[u.ukuran] + (p.role === 'umkm' && u.ukuran === 0 ? C.UMKM_KECIL : 0)}/ronde)${u.beku ? ' — DIBEKUKAN Jaksa, tidak berproduksi' : ''}`)}>${GB.SEKTOR[u.sektor][0]}${UK[u.ukuran]}${u.beku ? '❄️' : ''}</span>`).join('');
-    return `<div class="pcard ${mine ? 'mine' : ''} ${S.turn === p.seat ? 'turn' : ''}" ${mine ? 'id="me"' : ''}>
-      <div class="nm"><span class="dot" style="background:${SEAT_COLOR[p.seat]}"></span>${esc(S.players[p.seat].name)}${mine && S.players[p.seat].name !== 'Kamu' ? ' (kamu)' : ''}</div>
-      <div>${R[0]} ${R[1]} ${status}</div>
-      <div><span ${tip('Cuan di tangan. Dihitung di akhir, tapi bisa terpakai untuk uang pengganti atau hilang 20% saat krisis.')}>💹${p.rp}</span> · <span ${tip('Aset: aman dari vonis & krisis.')}>🏠<b>${p.aset}</b></span> · <span ${tip(`Nilai Usaha yang tidak dibekukan (harga dasar × ${C.NILAI_USAHA}). Ikut dihitung di akhir.`)}>🏭${p.usaha.filter((u) => !u.beku).reduce((s, u) => s + Math.floor(C.HARGA[u.ukuran] * C.NILAI_USAHA), 0)}</span></div>
-      <div class="stats"><span ${tip('Jejak: bekas untung dari Proyek Negara. Jaksa hanya bisa menjerat pemain yang punya Jejak. Kerugian = Jejak × pengali Kalkulator.')} class="${p.jejak ? 'warn' : ''}">👣${p.jejak}</span>
-        <span ${tip(`Backing: ${C.ISTANA_BACKING} Backing = Minta Istana (kasus batal).`)}>🛡️${p.backing}</span>
-        ${p.role === 'umkm' ? `<span ${tip('Kartu Viral: saat diselidiki, Sorotan Jaksa +3 dan +1 di sidang. Risiko Pasal Karet.')}>📹${p.viral}</span>` : ''}
-        ${p.lapas ? `<span class="warn" ${tip(`Di Lapas: ${p.lapas} ronde lagi. Usaha tetap berproduksi.`)}>🔒${p.lapas}</span>` : ''}
-        ${S.j.laci.some((k) => k.seat === p.seat) ? `<span ${tip(`Punya kasus di Laci Jaksa: bayar upeti ${C.UPETI}/ronde.`)}>🗄️</span>` : ''}</div>
-      <div class="chips">${chips}</div><div class="nd-last" ${tip('Aksi terakhir pemain ini di ronde sekarang')}>${esc(feed.lastAction(S.players[p.seat].name, S.t)) || '—'}</div>${hostSeatBtn(p.seat)}</div>`;
-  }).join('');
-  // aktivitas & negosiasi
+      <span ${tip(`Citra institusi (0–${C.CITRA_MAX}). Harus ≥ ${C.CITRA_MIN} di akhir, kalau tidak Oknum dimutasi (Kekayaan ×${String(C.MUTASI_KALI).replace('.', ',')}). Turun kalau diviralkan, rekayasa dibongkar, laporan diproses, atau OTT.`)}>Citra <b>${o.citra}</b>/${C.CITRA_MIN}</span>
+      <span ${tip('Backing: pelindung saat OTT. Sekali pakai, Sorotan turun ke 7.')}>🛡️${o.backing}</span>
+      <span ${tip('Token Rekayasa Kasus yang tersisa.')}>⚖️${o.rekayasa}</span>
+      <span ${tip('Jumlah Pos Razia. Berkurang permanen kalau bawahan ditumbalkan.')}>🚨${o.nPos}</span>
+      <span ${tip('Receh di tangan Oknum. Dihitung di akhir, tapi separuhnya disita kalau tertangkap OTT.')}>🪙${o.rp}</span>
+      <span ${tip('Aset (rumah atas nama ipar, moge, tas mewah). Dihitung di akhir dan tidak bisa disita OTT.')}>🏠<b>${o.aset}</b></span>
+      <span ${tip(`Kartu Oknum di tangan (maks. 3). Dapat 1 kartu tiap ${C.KARTU_TIAP} putaran.`)}>🃏${esc(hand)}</span></div>
+    <div class="nd-last" ${tip('Aksi terakhir Oknum di putaran ini')}>${esc(feed.lastAction(S.players[0].name, S.t)) || '—'}</div>${hostSeatBtn(0)}`;
+  $('#dice').textContent = S.dice ? `🎲 ${S.players[S.turn] ? S.players[S.turn].name : ''}: ${S.dice}` : '';
   feed.render({ log: S.log, t: S.t, players: S.players.map((x, i) => ({ name: x.name, color: SEAT_COLOR[i] })) });
-  $('#nego').innerHTML = NDBD.negoBanner(S, myId, 'Pakai 💬 chat: tawar setoran, Kemitraan, atau ancaman viral. Janji tidak mengikat.');
-  if (S.nego && !render.nego) chat.open();
-  render.nego = !!S.nego;
+  // players
+  $('#players').innerHTML = S.rs.map((r) => {
+    const mine = r.seat === mySeat, nx = r.kelas + 1;
+    const izin = r.kelas === 0 || r.kelas === 3 ? ''
+      : r.izin ? `<span ${tip(`Izin untuk jadi ${JT.KELAS[nx]} sudah ada.`)}>📄✅</span>`
+      : r.berkas !== null ? `<span ${tip(`Berkas izin resmi sedang diproses, jadi di putaran ${r.berkas}.`)}>📄⏳${r.berkas}</span>`
+      : `<span ${tip(`Belum punya izin untuk jadi ${JT.KELAS[nx]}. Lewat 🏛️ Kantor Izin (gratis, 2 putaran) atau pakai calo.`)}>📄–</span>`;
+    const kelasTip = r.kelas < 3 ? `Kelas ${JT.KELAS[r.kelas]}: gaji ${C.GAJI[r.kelas]}/giliran. Naik ke ${JT.KELAS[nx]}: biaya ${C.NAIK[nx]}${nx >= 2 ? ' + izin' : ''}.`
+      : `Pengusaha: gaji ${C.GAJI[3]}/giliran, kelas tertinggi.`;
+    return `<div class="pcard ${mine ? 'mine' : ''} ${S.turn === r.seat ? 'turn' : ''}" ${mine ? 'id="me"' : ''}>
+      <div class="nm"><span class="dot" style="background:${SEAT_COLOR[r.seat]}"></span>${esc(S.players[r.seat].name)}${mine ? ' (kamu)' : ''}</div>
+      <div class="kl"><span ${tip(kelasTip)}>${KELAS_EM[r.kelas]} ${JT.KELAS[r.kelas]}</span> ${izin}</div>
+      <div><span ${tip('Receh di tangan. Untuk bayar & naik kelas, dan dihitung sebagai Kekayaan di akhir.')}>🪙${r.rp}</span> · <span ${tip(`Nilai Usaha kelas ${JT.KELAS[r.kelas]}, ikut dihitung di akhir. Kekayaan = Receh + Nilai Usaha.`)}>🏭<b>${C.NILAI_USAHA[r.kelas]}</b></span> · <span ${tip('Kartu Rekaman: untuk Viralkan saat razia (Sorotan Oknum +3) atau membongkar rekayasa kasus. Maks. 3.')}>📹${r.rekaman}</span></div>
+      <div>${r.lapas ? `<span ${tip(`Di Lapas: melewatkan ${r.lapas} putaran lagi.`)}>🔒${r.lapas}</span> ` : ''}${r.utang ? `<span ${tip(`Utang ${r.kur ? 'KUR' : 'Pinjol'}: bayar ${r.utang} saat melewati 🌅 Subuh.`)}>${r.kur ? '🏦' : '📱'}−${r.utang}</span> ` : ''}</div><div class="nd-last" ${tip('Aksi terakhir pemain ini di putaran sekarang')}>${esc(feed.lastAction(S.players[r.seat].name, S.t)) || '—'}</div>${hostSeatBtn(r.seat)}</div>`;
+  }).join('');
   renderPrompt();
   handleEvents();
   if (S.phase === 'end' && mode !== 'tutorial') setTimeout(showEnd, 1600);
@@ -356,6 +356,12 @@ function renderPrompt() {
   if (S.phase !== 'play') { el.innerHTML = `<div class="wait">${S.phase === 'end' ? '🏁 Permainan selesai…' : ''}</div>`; return; }
   if (p && p.seat === mySeat) {
     const sent = p.id === sentFor;
+    if (p.kind === 'pos') {
+      const need = Math.min(p.pick, p.tiles.length);
+      el.innerHTML = `<div class="q">🚨 ${esc(p.text)}${NDBD.timerBadge(S)}</div><div class="small muted">Petak berbingkai kuning bisa dipilih. Dipilih: <b>${pick.length}/${need}</b></div>
+        <button class="opt go" data-pos="1" ${pick.length === need && !sent ? '' : 'disabled'}><b>Konfirmasi Pos</b><span>${pick.map((i) => JT.TILE[JT.BOARD[i]][1] + ' #' + i).join(', ') || 'tap petak di papan'}</span></button>`;
+      return;
+    }
     el.innerHTML = `<div class="q">${esc(p.text)}${NDBD.timerBadge(S)}</div>` + p.options.map((x) => {
       const dis = sent || x.disabled || (lock !== null && x.id !== lock);
       return `<button class="opt ${lock !== null && x.id === lock ? 'go' : ''}" data-c='${esc(JSON.stringify(x.id))}' ${dis ? 'disabled' : ''}><b>${esc(x.label)}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ''}</button>`;
@@ -364,47 +370,45 @@ function renderPrompt() {
     return;
   }
   const who = p ? S.players[p.seat].name : S.turn !== null ? S.players[S.turn].name : '';
-  el.innerHTML = S.nego ? '<div class="wait">🤝 Negosiasi sedang berlangsung… (lihat banner di atas)</div>'
-    : `<div class="wait">⏳ ${who ? (p ? `Menunggu <b>${esc(who)}</b> memilih…${NDBD.timerBadge(S)}` : `<b>${esc(who)}</b> sedang beraksi…`) : '…'}</div>`;
+  el.innerHTML = `<div class="wait">⏳ ${who ? (p ? `Menunggu <b>${esc(who)}</b> memilih…${NDBD.timerBadge(S)}` : `<b>${esc(who)}</b> sedang jalan…`) : '…'}</div>`;
 }
 $('#prompt').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b || b.disabled || !S || !S.prompt) return;
-  submit(JSON.parse(b.dataset.c));
+  if (b.dataset.pos) submit(pick.slice()); else submit(JSON.parse(b.dataset.c));
 });
 function submit(choice) {
   const p = S.prompt; if (!p || p.seat !== mySeat || p.id === sentFor) return;
   sentFor = p.id;
-  if (mode === 'tutorial') { const r = tutorialAnswer; tutorialAnswer = null; lock = null; coach.hide(); render(); if (r) r(choice); }
+  if (mode === 'tutorial') { const r = tutorialAnswer; tutorialAnswer = null; lock = null; lockTiles = null; coach.hide(); render(); if (r) r(choice); }
   else if (mode === 'client') { net.send('action', { pid: myId, seat: mySeat, id: p.id, choice }); render(); }
   else { game.answer(mySeat, p.id, choice); }
 }
 
-// ====== event: animasi & kartu besar ======
+// ====== event: animasi & tips ======
 function handleEvents() {
-  const nm = (seat) => (seat === mySeat ? 'Kamu' : S.players[seat].name);
   for (const e of S.events) {
     if (e.n <= lastEv) continue;
     lastEv = e.n;
     if (e.type === 'aset' && e.seat === mySeat) flyMoney(e.jumlah);
-    if (e.type === 'kabar') { const k = $('#kabar'); k.classList.remove('flash'); void k.offsetWidth; k.classList.add('flash'); }
-    if (e.type === 'perkara') {
-      tipFor('e:perkara');
-      showCard('jaksa', `🔍 ${e.laci ? 'Kasus Laci dibuka lagi' : 'Penyelidikan'} · ${nm(e.seat)}`, '⚖️', `Kalkulator ${GB.KALK[e.kalk]}: kerugian negara ${e.rugi}`,
-        (e.konpers ? '🎤 Tersangka dipamerkan di konferensi pers. ' : '') + 'Usaha dibekukan sampai kasusnya selesai.');
-    }
-    if (e.type === 'sidang') showCard(e.menang ? 'baik' : 'jaksa', `🧑‍⚖️ Sidang · ${nm(e.seat)}`, '🎲', `Dadu ${e.d}${e.mod ? ` +${e.mod}` : ''} vs ${e.ambang}: ${e.menang ? 'MENANG' : 'KALAH'}`,
-      e.menang ? 'Ganti rugi dari negara: 1 Cuan. Jejak tetap tercatat, jadi bisa dijerat lagi dengan "kasus lain".' : 'Divonis: uang pengganti dibayar, Usaha beku disita, masuk Lapas.');
-    if (e.type === 'ott') { tipFor('e:ott'); showCard('jaksa', '🚨 OTT', '🚨', 'Operasi Tangkap Tangan!', 'Sorotan Jaksa menyentuh 10.'); }
-    if (e.type === 'krisis') showCard('jaksa', '📉 Krisis', '📉', 'Lapangan kerja habis', 'Dunia usaha takut bergerak. Semua pemain kehilangan 20% Cuan (Aset aman).');
-    if (e.type === 'naik' && e.seat === mySeat) showCard('baik', '⬆️ Naik kelas', '🏢', 'Kamu jadi Pengusaha!', 'Sekarang kamu boleh Beli Aset.');
-    if (e.type === 'kemitraan') toast(`🤝 Kemitraan: ${nm(e.from)} → ${nm(e.seat)} (${GB.PROYEK[e.id].nama})`, 3000);
-    if (e.type === 'upeti') tipFor('e:upeti');
+    if (e.type === 'kabar') tipFor('e:kabar');
+    if (e.type === 'demo') tipFor('e:demo');
+    if (e.type === 'ott') tipFor('e:ott');
     if (e.type === 'lapas' && e.seat === mySeat) tipFor('e:lapas');
+    if (e.type === 'nasib' && e.seat === mySeat) tipFor('e:nasib');
+    const nm = (seat) => (seat === mySeat ? 'Kamu' : S.players[seat].name);
+    if (e.type === 'kabar') showCard('kabar', '📰 Kabar Istana' + (e.batal ? ' · DIBATALKAN DEMO' : ''), '🏛️', JT.KABAR[e.id][0], e.batal ? 'Rakyat turun ke jalan. Kabar ini tidak berlaku.' : JT.KABAR[e.id][1]);
+    if (e.type === 'nasib' && e.seat === mySeat) showCard('nasib', `🎲 Kartu Nasib · ${nm(e.seat)}`, '🎲', JT.NASIB[e.id][0], JT.NASIB[e.id][1]);
+    if (e.type === 'kartu_oknum') showCard('oknum', `🃏 Kartu Oknum · ${nm(0)}`, '👮', JT.OKNUM[e.id][0], JT.OKNUM[e.id][1]);
+    if (e.type === 'ambil_oknum') {
+      if (mySeat === 0) showCard('oknum', '🃏 Kamu dapat Kartu Oknum', '👮', JT.OKNUM[e.id][0], JT.OKNUM[e.id][1]);
+      else toast(`🃏 ${S.players[0].name} mengambil 1 Kartu Oknum (rahasia).`);
+    }
   }
 }
+// ====== kartu besar di tengah layar ======
 const cards = NDBD.CardQueue($('#cardpop'), { speed: () => speed() });
 const showCard = (...a) => cards.show(...a);
-const feed = NDBD.Feed($('#log'), { label: 'Ronde' });
+const feed = NDBD.Feed($('#log'), { label: 'Putaran' });
 
 // ====== tooltip ikon: hover (desktop) / tap (HP) ======
 const hoverTip = $('#hovertip');
@@ -419,24 +423,24 @@ document.addEventListener('mouseover', (e) => {
 });
 document.addEventListener('click', (e) => {
   const t = e.target.closest('[data-tip]');
-  if (!t || t.closest('button') || !isTouch()) return;
+  if (!t || t.closest('.tile') || t.closest('button') || !isTouch()) return;
   toast(t.dataset.tip, 3500);
 });
 
-// ====== kecepatan & animasi uang ======
+// ====== kecepatan ======
 const SPEEDS = [['🐢 Lambat', 1600], ['▶ Normal', 1000], ['⏩ Cepat', 450]];
 let speedIdx = store.get('ndbd_speed', 1);
 const speed = () => SPEEDS[speedIdx][1];
 function renderSpeed() { $('#btn-speed').textContent = SPEEDS[speedIdx][0]; $('#btn-speed').hidden = mode === 'client'; }
 $('#btn-speed').onclick = () => { speedIdx = (speedIdx + 1) % SPEEDS.length; store.set('ndbd_speed', speedIdx); renderSpeed(); };
 function flyMoney(n) {
-  const from = ($('#me') || $('#jaksa')).getBoundingClientRect();
+  const from = ($('#me') || $('#oknum')).getBoundingClientRect();
   let badge = $('#aset-badge');
   if (!badge) { badge = document.createElement('div'); badge.id = 'aset-badge'; document.body.appendChild(badge); }
   badge.textContent = `🏠 Aset +${n}`; badge.hidden = false;
   const to = badge.getBoundingClientRect();
   for (let k = 0; k < 6; k++) {
-    const f = document.createElement('div'); f.className = 'fly'; f.textContent = '💹';
+    const f = document.createElement('div'); f.className = 'fly'; f.textContent = '🪙';
     f.style.left = (from.left + from.width / 2 + (k - 3) * 8) + 'px'; f.style.top = (from.top + 10) + 'px';
     f.style.setProperty('--dx', (to.left - from.left - from.width / 2 + 20) + 'px'); f.style.setProperty('--dy', (to.top - from.top) + 'px');
     f.style.animationDelay = (k * 90) + 'ms';
@@ -445,29 +449,29 @@ function flyMoney(n) {
   setTimeout(() => { badge.hidden = true; }, 2600);
 }
 
-// ====== tips pertama kali ======
 const TIPS = {
-  'p:aksi': 'Satu aksi per giliran. Usaha = penghasilan tiap ronde (sektor sama lebih murah). Proyek = untung besar sekarang, tapi untung = Jejak, dan Jejak bisa dijerat Jaksa. Di akhir, Kekayaan = Cuan + Aset + nilai Usaha aktif.',
-  'p:respons': 'Setor = murah sekarang, tapi kasus masuk Laci dan kamu bayar upeti tiap ronde. Lawan = bisa menang (ganti rugi 1 Cuan) atau divonis. Minta Istana = batal, tapi butuh 2 Backing.',
-  'p:viral': 'Viral menaikkan Sorotan Jaksa +3 (bisa memicu OTT) dan memberimu +1 di sidang. Risikonya Pasal Karet: dadu 1–2 → Lapas.',
-  'p:kalkulator': 'Angka kerugian kamu yang tentukan. Besar = setoran besar, tapi lebih mudah dibantah di sidang dan bisa dikoreksi MA di akhir.',
-  'p:aksi_jaksa': 'Uang Jaksa datang dari setoran & upeti Laci. Citra datang dari vonis & konferensi pers. Citra harus ≥ 6 di akhir.',
-  'p:kemitraan': 'Kemitraan: kamu memberi proyek ke pemain lain dan dapat fee 3. Tapi kalian BERDUA kena Jejak penuh, walau kamu hampir tidak menikmati untungnya.',
-  'p:lapas': 'Di Lapas kamu melewatkan aksi, tapi Usahamu tetap berproduksi. Yang punya uang bisa beli remisi atau sel mewah.',
-  'p:ott': 'OTT! Pilih cara lolos. Aset 🏠 tidak bisa disita.',
-  'p:aset_jaksa': 'Beli Aset: Cuan jadi Aset (potong 20%). Aman dari sitaan OTT, tapi pamer harta membuat Sorotan +1. Cuan yang disimpan tetap dihitung di akhir.',
-  'e:kabar': 'Kabar Istana dibuka tiap ronde dan mengubah aturan sementara.',
-  'e:perkara': 'Penyelidikan: Jaksa mengalikan Jejak target dengan Kalkulator (×1/×2/×3). Usaha target langsung dibekukan dan lapangan kerja hilang.',
-  'e:upeti': 'Upeti Laci: setiap kasus di Laci Jaksa ditagih 2 Cuan per ronde. Tidak mampu bayar = kasus dibuka lagi.',
-  'e:ott': 'OTT terjadi saat Sorotan Jaksa menyentuh 10. Biasanya Jaksa lolos lewat Backing atau menumbalkan Kajari.',
-  'e:lapas': 'Kamu masuk Lapas. Usahamu tetap berjalan, tapi kamu tidak bisa beraksi kecuali beli remisi atau sel mewah.',
+  'p:razia': 'Kamu berhenti tepat di Pos Razia 🚨. "86" = lebih murah, tapi uangnya ke Oknum. Tilang resmi = lebih mahal, masuk kas negara. Viral = gratis & Sorotan Oknum +3, tapi ada risiko Pasal Karet (dadu 1–2 → Lapas).',
+  'p:kelola': 'Setelah jalan, kamu bisa naik kelas atau urus izin lewat calo. Di akhir, Kekayaan = Receh 🪙 + Nilai Usaha 🏭 kelasmu.',
+  'p:kur': 'KUR: pinjaman bank untuk Pedagang ke atas. Bayar 6 saat melewati Subuh, lebih murah dari Pinjol (7). Jelata ditolak karena tidak punya agunan.',
+  'p:aset_oknum': 'Beli Aset: Receh jadi Aset (potong 20%). Aset aman dari sitaan OTT, tapi pamer harta membuat Sorotan +1. Receh yang disimpan tetap dihitung di akhir.',
+  'p:lapas': 'Di Lapas kamu melewatkan giliran tanpa gaji. Yang punya uang bisa beli remisi (langsung bebas) atau sel mewah (tetap gajian).',
+  'p:pinjol': 'Pinjol: uang cepat sekarang, bayar lebih mahal saat melewati Subuh. Gagal bayar = uang & Kartu Rekaman hilang.',
+  'p:bongkar': 'Oknum merekayasa kasusmu! Kartu Rekaman 📹 bisa membongkarnya. Tanpa rekaman, kamu masuk Lapas.',
+  'p:pos': 'Rakyat hanya kena razia kalau BERHENTI tepat di Pos. Mereka maju 1–6 petak, jadi pasang Pos di petak 1–6 di depan Rakyat yang kaya ("86"-nya lebih mahal).',
+  'p:aksi': 'Satu aksi per giliran. Sowan menurunkan Sorotan, Rekayasa menjebloskan Rakyat (hindari yang pegang rekaman), Operasi resmi menaikkan Citra. Citra harus ≥ 9 di akhir.',
+  'p:ott': 'OTT! Pilih cara lolos. Aset 🏠 tidak bisa disita. Hanya Receh di tangan yang terancam.',
+  'e:kabar': 'Kabar Istana dibuka tiap putaran dan mengubah aturan sementara. Demo besar bisa membatalkan kabar berikutnya.',
+  'e:demo': 'Demo berhasil! Kabar Istana putaran berikutnya dibatalkan. Tapi Oknum bisa menangkap satu pendemo dengan tuduhan penghasutan.',
+  'e:ott': 'OTT terjadi saat Sorotan Oknum menyentuh 10. Biasanya Oknum lolos lewat Backing atau Tumbal, tapi kehilangan sesuatu.',
+  'e:lapas': 'Kamu masuk Lapas. Tajam ke bawah: rakyat miskin biasanya tidak mampu membeli remisi.',
+  'e:nasib': 'Kartu Nasib: hidup tidak bisa ditebak. Anak sakit, orderan ramai, atau salah tangkap.',
 };
 const tipQueue = [];
 function tipFor(key) {
   if (mode === 'tutorial' || !TIPS[key]) return;
-  const seen = store.get('gb_tips', {});
-  if (seen[key] || !NDBD.tips.allow(key, S ? S.t : 0)) return;   // hanya prompt milikmu, maks 1 per ronde
-  seen[key] = 1; store.set('gb_tips', seen);
+  const seen = store.get('ndbd_tips', {});
+  if (seen[key] || !NDBD.tips.allow(key, S ? S.t : 0)) return;   // hanya prompt milikmu, maks 1 per putaran
+  seen[key] = 1; store.set('ndbd_tips', seen);
   tipQueue.push(TIPS[key]); nextTip();
 }
 function nextTip() {
@@ -477,34 +481,30 @@ function nextTip() {
 }
 
 // ====== kartu peran & bantuan ======
-const ROLE_TXT = {
-  jaksa: `<h3>⚖️ Kamu: JAKSA</h3><p><b>🎯 Tujuan:</b> Kekayaan (Cuan 💹 + Aset 🏠) terbanyak setelah ${GB.C.RONDE} ronde, <b>dan Citra ≥ ${C.CITRA_MIN}</b> (kalau tidak, dimutasi: Kekayaan ×0,7).</p>
-    <ul><li><b>Penyelidikan:</b> pilih pemain ber-Jejak 👣, lalu Kalkulator Kerugian (×1/×2/×3).</li><li>Kalau target <b>Setor</b>, uangnya milikmu dan kasusnya masuk <b>Laci</b>: upeti ${C.UPETI}/ronde. Laci adalah mesin uangmu.</li><li>Kalau target <b>kalah sidang</b>, kamu dapat <b>Citra</b>, bukan uang.</li><li>🎤 Konferensi Pers: Citra +2, tapi −3 kalau tersangka akhirnya dilepas.</li><li>🏠 <b>Beli Aset</b> di akhir giliran: aman dari OTT, tapi pamer harta = Sorotan +1.</li></ul>
-    <p><b>⚠️ Ancaman:</b> Sorotan 10 = OTT. Angka Fantastis bisa dikoreksi MA di akhir (Citra −3).</p>`,
-  kong: `<h3>🎩 Kamu: KONGLOMERAT</h3><p><b>🎯 Tujuan:</b> kerajaan bisnis paling bernilai setelah ${GB.C.RONDE} ronde. Kekayaan = Cuan 💹 + Aset 🏠 + nilai Usaha yang tidak dibekukan.</p>
-    <ul><li>Modal terbesar, 2 Backing (cukup untuk sekali <b>Minta Istana</b>), dan <b>Pengacara Top</b> (+1 di sidang).</li><li>Beli Usaha untuk penghasilan tiap ronde; sektor yang sama makin murah.</li><li>Proyek Negara untungnya besar, tapi untung = Jejak.</li></ul>`,
-  bumn: `<h3>🏢 Kamu: DIREKSI BUMN</h3><p><b>🎯 Tujuan:</b> Kekayaan (Cuan + Aset + nilai Usaha) terbanyak setelah ${GB.C.RONDE} ronde. Gajimu ${C.GAJI_DIREKSI}/ronde.</p>
-    <ul><li><b>Aksi Korporasi:</b> ambil Usaha gratis pakai uang negara, tapi Jejak + ½ harga.</li><li><b>Kemitraan</b> (bebas, 1×/ronde): beri proyek ke pemain lain, dapat fee ${C.KEMITRAAN_FEE}. Kalian berdua kena Jejak.</li><li><b>BJR:</b> ambang sidangmu tidak pernah lebih dari 5.</li></ul>`,
-  umkm: `<h3>🧺 Kamu: UMKM</h3><p><b>🎯 Tujuan:</b> Kekayaan (Cuan + Aset + nilai Usaha) terbanyak setelah ${GB.C.RONDE} ronde. Punya <b>${C.UMKM_PENGUSAHA} Usaha</b> = naik kelas jadi Pengusaha, lalu boleh Beli Aset.</p>
-    <ul><li><b>Usaha Rakyat:</b> Usaha Kecil milikmu menghasilkan ${C.PROD[0] + C.UMKM_KECIL}.</li><li><b>Subkontraktor:</b> Jejak dari Proyek −${C.UMKM_JEJAK} (min 1).</li><li><b>📹 Viral:</b> saat diselidiki, Sorotan Jaksa +3 dan +1 di sidang, tapi awas Pasal Karet.</li></ul>
-    <p>Kalau UMKM juara, poin ranked ×1,5.</p>`,
+const ROLE = {
+  rakyat: `<h3>🧍 Kamu: RAKYAT</h3><p><b>🎯 Tujuan:</b> jadi yang paling <b>kaya</b> setelah ${JT.C.PUTARAN} putaran. Kekayaan = <b>Receh 🪙</b> + <b>Nilai Usaha 🏭</b> kelasmu (Jelata ${JT.C.NILAI_USAHA[0]} · Pedagang ${JT.C.NILAI_USAHA[1]} · Juragan ${JT.C.NILAI_USAHA[2]} · Pengusaha ${JT.C.NILAI_USAHA[3]}).</p>
+    <p><b>✅ Cara menang:</b></p><ul><li>Urus izin di 🏛️ Kantor Izin (gratis tapi lambat). Pakai calo hanya saat mendesak; uangnya menggemukkan Oknum.</li><li>Viralkan 📹 Oknum saat Sorotannya tinggi untuk memicu OTT.</li><li>Naik kelas secepatnya: gaji lebih besar dan Nilai Usaha ikut dihitung. 🏦 Bank memberi KUR yang lebih murah dari Pinjol.</li></ul>
+    <p><b>⚠️ Ancaman:</b> berhenti tepat di Pos Razia 🚨 (lewat saja aman), Rekayasa Kasus, Pasal Karet.</p>`,
+  oknum: `<h3>👮 Kamu: OKNUM APARAT</h3><p><b>🎯 Tujuan:</b> kumpulkan setoran ("86", pungli calo, uang keamanan). Pemenang = <b>Kekayaan</b> (Receh 🪙 + Aset 🏠) terbanyak. <b>Citra harus ≥ 9</b> (maks. 10) di akhir, kalau tidak Kekayaanmu ×0,8. Citra turun kalau kamu diviralkan, rekayasamu dibongkar, laporan polisi diproses, atau kena OTT.</p>
+    <p><b>✅ Cara menang:</b></p><ul><li>Pasang Pos 🚨 di petak 1–6 di depan Rakyat yang kaya. Rakyat hanya kena razia kalau <b>berhenti tepat</b> di Pos.</li><li>Sowan ke atasan saat Sorotan ≥ 7.</li><li><b>Beli Aset</b> supaya Receh aman dari sitaan OTT. Tapi setiap pembelian = pamer harta, Sorotan +1.</li><li>Rekayasa kasus terhadap Rakyat yang tidak memegang Kartu Rekaman 📹.</li><li>Sisakan beberapa putaran terakhir untuk Operasi resmi, supaya Citra kembali ≥ 9.</li></ul>
+    <p><b>⚠️ Ancaman:</b> Sorotan 10 = <b>OTT</b>. Viral dan laporan polisi menaikkan Sorotan.</p>`,
 };
 function showRole() {
-  const role = mySeat === 0 ? 'jaksa' : me() ? me().role : null;
+  const role = mySeat === 0 ? 'oknum' : mySeat > 0 ? 'rakyat' : null;
   if (!role) return;
-  $('#role-card').innerHTML = ROLE_TXT[role] + '<button class="btn primary" style="text-align:center"><b>Siap!</b></button>';
+  const kartu = role === 'oknum' && S.o.hand.length ? `<p><b>🃏 Kartu awalmu:</b> ${S.o.hand.map((k) => `<b>${esc(JT.OKNUM[k][0])}</b> (${esc(JT.OKNUM[k][1])})`).join('; ')}</p>` : '';
+  $('#role-card').innerHTML = ROLE[role] + kartu + '<button class="btn primary" style="text-align:center"><b>Siap!</b></button>';
   $('#ov-role').hidden = false;
   $('#role-card button').onclick = () => { $('#ov-role').hidden = true; };
 }
-$('#help-card').innerHTML = `<h3>Aturan singkat Gedung Bundar</h3>
-  <p><b>Ronde (8×):</b> Kabar Istana → Produksi & gaji → Upeti Laci → tiap pelaku usaha 1 aksi → Jaksa 1 aksi → cek Krisis.</p>
-  <p><b>Usaha:</b> Kecil 3/+1 · Menengah 6/+2 · Besar 10/+4 (harga/produksi). Tiap Usaha sektor sama memotong harga 1.</p>
-  <p><b>Proyek Negara:</b> untung sekali ambil, tapi <b>untung = Jejak 👣</b> (Pasal 2/3).</p>
-  <p><b>Jaksa:</b> Kerugian = Jejak × Rendah 1 / Tinggi 2 / Fantastis 3. Target menang sidang di dadu ≥ 6 / 5 / 4 (+1 kalau ada konferensi pers). Target: <b>Setor</b> ½ kerugian (masuk Laci, upeti ${C.UPETI}/ronde) · <b>Lawan</b> (kalah: bayar kerugian, Usaha beku disita, Lapas) · <b>Minta Istana</b> (2 Backing).</p>
-  <p><b>Sorotan</b> 10 = OTT Jaksa. <b>Lapangan Kerja</b> 0 = Krisis (−20% Cuan semua; Aset aman).</p>
-  <p><b>Beli Aset:</b> Pengusaha & Jaksa boleh mengubah Cuan jadi Aset (−20%). Aset tidak bisa disita. Jaksa: Sorotan +1 (pamer harta).</p>
-  <p><b>Akhir:</b> peringkat ditentukan <b>Kekayaan</b> = Cuan + Aset + nilai Usaha aktif (Jaksa: Cuan + Aset; Citra < ${C.CITRA_MIN}: ×0,7). Lalu Kekayaan dikonversi jadi <b>🏝️ Dana Offshore</b> (juara 40%, ke-2 30%, ke-3 25%, ke-4 20%) untuk dompetmu di Negeri di Balik Daun.</p>
-  <p><b>Ikon:</b> 💹 Cuan · 🏠 Aset · 🏭 nilai Usaha · 👣 Jejak · 🛡️ Backing · 📹 Viral · 🔒 Lapas · 🗄️ Laci · ❄️ Usaha dibekukan. Arahkan kursor (atau tap) ikon untuk penjelasan.</p>
+$('#help-card').innerHTML = `<h3>Aturan singkat Jalan Tikus</h3>
+  <p><b>Putaran (${JT.C.PUTARAN}×):</b> Kabar Istana → Oknum pasang 4 Pos & 1 aksi → tiap Rakyat: gaji, lempar dadu, jalan, efek petak, kelola.</p>
+  <p><b>Kelas & gaji:</b> Jelata 2 · Pedagang 3 (biaya ${JT.C.NAIK[1]}, tanpa izin) · Juragan 5 (biaya ${JT.C.NAIK[2]} + izin) · Pengusaha 7 (biaya ${JT.C.NAIK[3]} + izin).</p>
+  <p><b>Izin:</b> 🏛️ Kantor Izin (lewat saja, jadi 2 putaran kemudian, gratis) atau calo (kapan saja, 3/5 Receh ke Oknum). Pinjaman: 📱 Pinjol (+5, bayar 7) atau 🏦 KUR di Bank (Pedagang ke atas, +5, bayar 6).</p>
+  <p><b>Razia 🚨:</b> hanya kalau <b>berhenti tepat</b> di Pos. Pilihan: 86 (2/4/6/9 ke Oknum) · Tilang resmi (3/5/7/10 ke kas negara) · Viral 📹 (Sorotan +3, dadu Pasal Karet 1–2 = Lapas).</p>
+  <p><b>Oknum:</b> Sorotan 10 = OTT (lolos pakai Backing/Tumbal atau tertangkap). Citra (0–10) harus ≥ 9 di akhir, kalau tidak Kekayaan ×0,8. Beli Aset: Receh → Aset (−20%, aman dari OTT, Sorotan +1). Citra naik lewat operasi resmi, tilang resmi & rekayasa; turun kalau diviralkan, rekayasa dibongkar, laporan diproses, atau OTT. Dapat 1 Kartu Oknum tiap 4 putaran.</p>
+  <p><b>Akhir:</b> setelah ${JT.C.PUTARAN} putaran, peringkat ditentukan <b>Kekayaan</b>: Rakyat = Receh + Nilai Usaha kelas (${JT.C.NILAI_USAHA.join('/')}) − utang; Oknum = Receh + Aset. Lalu Kekayaan dikonversi jadi <b>🏝️ Dana Offshore</b> (juara 40%, ke-2 30%, ke-3 25%, ke-4 20%) untuk dompetmu di Negeri di Balik Daun.</p>
+  <p><b>Ikon:</b> 🪙 Receh · 🏭 Nilai Usaha · 🏠 Aset · 📹 Kartu Rekaman · 📄 izin · 🔒 Lapas · 📱 utang Pinjol · 🏦 utang KUR · 🛡️ Backing · ⚖️ token Rekayasa · 🚨 Pos · 🃏 Kartu Oknum. Arahkan kursor (atau tap) ikon untuk penjelasan.</p>
   <button class="btn primary" style="text-align:center"><b>Tutup</b></button>`;
 $('#btn-help').onclick = () => { $('#ov-help').hidden = false; };
 $('#help-card button').onclick = () => { $('#ov-help').hidden = true; };
@@ -512,20 +512,21 @@ $('#help-card button').onclick = () => { $('#ov-help').hidden = true; };
 // ====== layar akhir ======
 function showEnd() {
   if (!S || S.phase !== 'end' || !$('#scr-end').hidden) return;
-  const R = S.result, g = (k) => S.stats[k] || 0;
-  const akhir = NDBDDompet.layarAkhir({ game: 'gb', result: R, mySeat, mode: mode === 'practice' ? 'latihan' : 'online', matchId: S.matchId || 'gb-' + S.evN,
-    label: (x) => GB.ROLES[x.role].slice(0, 2).join(' ') + (x.mutasi ? ' · dimutasi ×0,7' : '') + (x.gagal ? ' · belum Pengusaha' : '') });
+  const R = S.result, st = S.stats, g = (k) => st[k] || 0;
+  const akhir = NDBDDompet.layarAkhir({ game: 'jt', result: R, mySeat, mode: mode === 'practice' ? 'latihan' : 'online', matchId: S.matchId || 'jt-' + S.evN,
+    label: (x) => (x.role === 'Oknum' ? '👮 Oknum' : KELAS_EM[x.kelas] + ' ' + JT.KELAS[x.kelas]) + (x.mutasi ? ' · dimutasi ×0,8' : '') });
   $('#e-rank').innerHTML = akhir.rank; $('#e-konversi').innerHTML = akhir.konversi;
-  const setoran = g('setoran_pengamanan') + g('setoran_pengamanan_bebas') + g('upeti');
+  const setoran = g('uang_86') + g('pungli') + g('uang_keamanan');
+  const gagal = S.rs.filter((r) => r.kelas < 3).length;
   $('#e-korban').innerHTML = [
-    `🔍 <b>${g('perkara')}</b> perkara dibuka; <b>${g('kalkulator_fantastis')}</b> di antaranya dengan angka kerugian Fantastis.`,
-    `❄️ <b>${g('usaha_dibekukan')}</b> Usaha dibekukan, <b>${g('usaha_disita')}</b> disita. <b>${g('lapangan_kerja_hilang')}</b> lapangan kerja hilang${g('krisis') ? `, memicu <b>${g('krisis')}</b> krisis` : ''}.`,
-    `🤫 Total setoran "pengamanan perkara" & upeti Laci: <b>${setoran}</b> Cuan, setara ${Math.round(setoran / C.GAJI_DIREKSI)} kali gaji Direksi.`,
-    `⛓️ <b>${g('vonis')}</b> vonis${g('vonis_tanpa_menikmati') ? `, <b>${g('vonis_tanpa_menikmati')}</b> di antaranya pada pemain yang Jejaknya dari Kemitraan (dihukum tanpa menikmati hasil)` : ''}. Uang pengganti dibayar: <b>${g('uang_pengganti')}</b>.`,
-    `✅ <b>${g('target_menang_sidang')}</b> kali target menang sidang, dengan ganti rugi total <b>${g('target_menang_sidang')}</b> Cuan.${g('kasus_estafet') ? ` <b>${g('kasus_estafet')}</b> kali dijerat lagi dengan "kasus lain".` : ''}`,
-    `🧮 Koreksi MA: <b>${g('koreksi_ma')}</b> dari ${S.j.fantastis} vonis Fantastis dikoreksi.`,
-    `📹 <b>${g('lapas_pasal_karet')}</b> kali pemain dilaporkan balik (pasal karet) setelah memviralkan.`,
-    `🚨 Jaksa kena OTT <b>${g('ott')}</b> kali, benar-benar tertangkap <b>${g('ott_tertangkap')}</b> kali.`,
+    `💸 Rakyat membayar <b>${setoran}</b> Receh "86", pungli & uang keamanan, setara ${Math.round(setoran / 2)} hari gaji Jelata.`,
+    `⚖️ <b>${g('lapas_rekayasa')}</b> warga dipenjara karena rekayasa kasus${g('rekayasa_dibongkar') ? ` (${g('rekayasa_dibongkar')} dibongkar rekaman)` : ''}.`,
+    `📹 <b>${g('lapas_pasal_karet')}</b> warga dilaporkan balik (pasal karet) setelah memviralkan.`,
+    `📢 <b>${g('lapas_penghasutan')}</b> pendemo ditangkap karena "penghasutan".`,
+    `📝 <b>${g('laporan_diabaikan')}</b> laporan polisi diabaikan, <b>${g('laporan_diproses')}</b> diproses.`,
+    `🚜 <b>${g('lapak_digusur')}</b> lapak digusur · 📄 <b>${g('berkas_hilang')}</b> berkas izin "hilang".`,
+    `🚨 Oknum kena OTT <b>${g('ott_backing') + g('ott_tumbal_pos') + g('ott_tumbal_kartu') + g('ott_tertangkap')}</b> kali, benar-benar tertangkap <b>${g('ott_tertangkap')}</b> kali.`,
+    `🧍 <b>${gagal}</b> dari ${S.rs.length} rakyat tidak pernah sampai jadi Pengusaha.`,
   ].map((x) => `<li>${x}</li>`).join('');
   $('#btn-again').hidden = mode === 'client';
   show('scr-end');
@@ -537,36 +538,32 @@ $('#btn-again').onclick = () => {
 };
 
 // ====== game lokal (latihan / host) ======
-let timer = null, nego = null;
-const TURN_DETIK = 45, NEGO_DETIK = 30;   // online: batas waktu tiap giliran & jendela negosiasi tiap ronde
+let timer = null;
+const TURN_DETIK = 45;   // online: batas waktu tiap giliran manusia
 function startLocal(players, broadcast) {
-  S = null; lastEv = 0; sentFor = 0; lock = null; feed.reset(); cards.clear();
+  S = null; lastEv = 0; sentFor = 0; lock = null; lockTiles = null; feed.reset(); cards.clear();
   mySeat = players.findIndex((p) => p.pid === myId);
   if (timer) timer.stop();
   timer = broadcast ? NDBD.TurnTimer({ seconds: TURN_DETIK, answer: (seat, id, c) => !!game && game.answer(seat, id, c),
     onTimeout: (seat) => toast(`⏱️ Waktu ${S.players[seat].name} habis: dipilihkan otomatis.`, 2500) }) : null;
-  nego = broadcast ? NDBD.Nego({ seconds: NEGO_DETIK, onChange: () => { schedule(); net.pushState(true); } }) : null;
-  game = GB.createGame(players, {
+  game = JT.createGame(players, {
     delay: speed,
     onUpdate(st) { S = st; if (timer) timer.watch(st); schedule(); if (broadcast) net.pushState(); },
-    async onPhase(kind, st) {
-      if (kind !== 'nego' || !nego) return;
-      const humans = st.players.filter((p) => p.pid && !p.bot && (p.pid === myId || net.online.has(p.pid))).map((p) => p.pid);
-      await nego.phase(st, humans);
-    },
   });
-  S = game.S; S.matchId = `gb-${broadcast ? net.lobby.code : 'latihan'}-${Date.now().toString(36)}`;   // kunci kredit dompet (sekali per match)
-  show('scr-game'); render(); showRole();
+  S = game.S; S.matchId = `jt-${broadcast ? net.lobby.code : 'latihan'}-${Date.now().toString(36)}`;   // kunci kredit dompet (sekali per match)
+  buildBoard(); show('scr-game'); render(); showRole();
   game.run().then(() => { if (broadcast) net.pushState(true); schedule(); });
 }
 function startPractice(role) {
   mode = 'practice'; practiceRole = role;
-  const meP = { name: myName(), bot: false, pid: myId };
-  const players = [role === 'jaksa' ? meP : { name: BOTS.jaksa, bot: true }]
-    .concat(['kong', 'bumn', 'umkm'].map((r) => Object.assign(r === role ? Object.assign({}, meP) : { name: BOTS[r], bot: true }, { role: r })));
+  const me = { name: myName(), bot: false, pid: myId };
+  const players = role === 'oknum'
+    ? [me, { name: 'Bot Ojol 🤖', bot: true }, { name: 'Bot PKL 🤖', bot: true }, { name: 'Bot Buruh 🤖', bot: true }]
+    : [{ name: 'Pak Oknum 🤖', bot: true }, me, { name: 'Bot PKL 🤖', bot: true }, { name: 'Bot Buruh 🤖', bot: true }];
   startLocal(players, false);
 }
-document.querySelectorAll('[data-prac]').forEach((b) => { b.onclick = () => startPractice(b.dataset.prac); });
+$('#btn-prac-r').onclick = () => startPractice('rakyat');
+$('#btn-prac-o').onclick = () => startPractice('oknum');
 
 // ====== tutorial ======
 const coach = {
@@ -604,11 +601,11 @@ addEventListener('resize', () => { if (!$('#coach').hidden && coach.place) coach
 async function startTutorial() {
   mode = 'tutorial'; tutorialAbort = false;
   $('#btn-skip').hidden = false;
-  show('scr-game');
-  for (const ch of GBT.CHAPTERS) {
+  buildBoard(); show('scr-game');
+  for (const ch of TUT.CHAPTERS) {
     if (tutorialAbort) break;
     tutorialChapter = ch; mySeat = ch.human; lastEv = 0; sentFor = 0;
-    await TUT.runChapter(ch, GB, {
+    await TUT.runChapter(ch, JT, {
       delay: speed,
       onGame(g) { game = g; S = g.S; render(); },
       onUpdate(st) { S = st; if (tutorialAbort) { game.stop(); } schedule(); },
@@ -617,6 +614,7 @@ async function startTutorial() {
         return new Promise((res) => {
           tutorialAnswer = res;
           lock = step && step.lock !== undefined ? step.lock : null;
+          lockTiles = step && step.lockTiles ? step.lockTiles : null;
           render();
           if (step) setTimeout(() => coach.prompt(step), 120);
           if (tutorialAbort) res(p.bot);
@@ -625,11 +623,11 @@ async function startTutorial() {
     });
   }
   coach.hide(); $('#btn-skip').hidden = true;
-  if (!tutorialAbort) store.set('gb_tutorial', 1);
+  if (!tutorialAbort) store.set('ndbd_tutorial', 1);
   tutorialChapter = null; mode = null; S = null;
   show('scr-lobby'); refreshLobby();
   if (!tutorialAbort) {
-    const b = NDBDDompet.bonusTutorial('gb');
+    const b = NDBDDompet.bonusTutorial('jt');
     toast(b.baru ? `🎉 Tutorial selesai! Bonus +${b.dana} 🏝️ Dana Offshore masuk dompet.` : '🎉 Tutorial selesai! Coba Latihan vs Bot atau Main Online.', 3500);
   }
 }
@@ -642,15 +640,15 @@ $('#btn-skip').onclick = () => {
 
 // ====== online (Supabase Realtime Broadcast) ======
 const net = {
-  sb: null, ch: null, code: null, isHost: false, lobby: null, online: new Set(), pushT: 0,
+  sb: null, ch: null, code: null, isHost: false, lobby: null, online: new Set(), hostSeen: true, pushT: 0,
   ready() { return SB_URL.startsWith('http') && window.supabase; },
   async open(code, isHost) {
     this.leave();
     this.code = code; this.isHost = isHost;
     if (!this.sb) this.sb = window.supabase.createClient(SB_URL, SB_KEY, { realtime: { params: { eventsPerSecond: 20 } } });
-    const ch = this.sb.channel('gb-' + code, { config: { broadcast: { self: false }, presence: { key: myId } } });
+    const ch = this.sb.channel('ndbd-' + code, { config: { broadcast: { self: false }, presence: { key: myId } } });
     this.ch = ch;
-    if (isHost) this.lobby = { code, hostId: myId, jaksaId: 'bot', started: false, players: [] };
+    if (isHost) this.lobby = { code, hostId: myId, oknumId: 'bot', started: false, players: [] };
     ch.on('presence', { event: 'sync' }, () => this.onPresence());
     ch.on('broadcast', { event: 'hello' }, () => { if (this.isHost) { this.pushLobby(); if (S) this.pushState(true); } });
     ch.on('broadcast', { event: 'action' }, ({ payload: a }) => {
@@ -659,13 +657,12 @@ const net = {
       if (pl && pl.pid === a.pid && !pl.bot) game.answer(a.seat, a.id, a.choice);
     });
     ch.on('broadcast', { event: 'chat' }, ({ payload }) => chat.receive(payload));
-    ch.on('broadcast', { event: 'ready' }, ({ payload }) => { if (this.isHost && nego) nego.ready(payload.pid); });
     ch.on('broadcast', { event: 'lobby' }, ({ payload }) => { if (!this.isHost) { this.lobby = payload; if (!payload.started) { S = null; renderWait(); show('scr-wait'); } } });
     ch.on('broadcast', { event: 'state' }, ({ payload }) => {
       if (this.isHost) return;
       NDBD.syncClock(payload.hostNow);
       S = payload; mySeat = S.players.findIndex((p) => p.pid === myId);
-      if ($('#scr-game').hidden && S.phase !== 'end') { lastEv = S.evN; sentFor = 0; show('scr-game'); showRole(); }
+      if ($('#scr-game').hidden && S.phase !== 'end') { lastEv = S.evN; sentFor = 0; buildBoard(); show('scr-game'); showRole(); }
       schedule();
       if (S.phase === 'end') setTimeout(showEnd, 1600);
     });
@@ -686,7 +683,7 @@ const net = {
     this.online = new Set(ps.map((p) => p.id));
     if (this.isHost) {
       if (!this.lobby.started) this.lobby.players = ps.map((p) => ({ id: p.id, name: p.name }));
-      if (this.lobby.jaksaId !== 'bot' && !this.online.has(this.lobby.jaksaId) && !this.lobby.started) this.lobby.jaksaId = 'bot';
+      if (this.lobby.oknumId !== 'bot' && !this.online.has(this.lobby.oknumId) && !this.lobby.started) this.lobby.oknumId = 'bot';
       this.pushLobby(); renderWait(); if (S) schedule();
     } else {
       const hostHere = ps.some((p) => p.host);
@@ -709,33 +706,27 @@ const net = {
 };
 function leaveAll() {
   if (timer) timer.stop();
-  if (nego) nego.cancel();
   if (game && mode !== 'client') game.stop();
   net.leave(); mode = null; S = null; game = null; $('#g-banner').hidden = true;
   chat.setEnabled(false); chat.reset();
 }
 // ====== chat (online, kanal Umum) ======
 const chat = NDBD.Chat({ myId, myName, mySeat: () => mySeat, send: (m) => net.send('chat', m) });
-$('#nego').addEventListener('click', (e) => {
-  if (!e.target.closest('[data-nego-siap]')) return;
-  if (mode === 'host' && nego) nego.ready(myId); else net.send('ready', { pid: myId });
-  e.target.closest('button').disabled = true;
-});
 
 function renderWait() {
   const L = net.lobby; if (!L) return;
   $('#w-code').textContent = L.code;
   $('#w-players').innerHTML = L.players.map((p, i) => {
-    const jk = L.jaksaId === p.id;
-    const btn = net.isHost ? `<button data-jaksa="${esc(p.id)}">${jk ? 'Batal Jaksa' : 'Jadikan Jaksa'}</button>` : '';
-    return `<div><span>${i === 0 ? '👑 ' : ''}${esc(p.name)}${p.id === myId ? ' (kamu)' : ''} ${jk ? '<span class="okn">· ⚖️ Jaksa</span>' : '<span class="muted">· 💼 Pelaku usaha</span>'}</span>${btn}</div>`;
-  }).join('') + (L.jaksaId === 'bot' ? '<div><span class="muted">⚖️ Jaksa: bot</span></div>' : '') +
-    `<div><span class="muted small">Kursi kosong diisi bot. Maks. 3 pelaku usaha + 1 Jaksa manusia.</span></div>`;
+    const okn = L.oknumId === p.id;
+    const btn = net.isHost ? `<button data-okn="${esc(p.id)}">${okn ? 'Batal Oknum' : 'Jadikan Oknum'}</button>` : '';
+    return `<div><span>${i === 0 ? '👑 ' : ''}${esc(p.name)}${p.id === myId ? ' (kamu)' : ''} ${okn ? '<span class="okn">· 👮 Oknum</span>' : '<span class="muted">· 🧍 Rakyat</span>'}</span>${btn}</div>`;
+  }).join('') + (L.oknumId === 'bot' ? '<div><span class="muted">👮 Oknum: bot</span></div>' : '') +
+    `<div><span class="muted small">Kursi kosong diisi bot. Maks. 3 Rakyat + 1 Oknum manusia.</span></div>`;
   $('#w-host').hidden = !net.isHost; $('#w-guest').hidden = net.isHost;
 }
 $('#w-players').addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-jaksa]'); if (!b || !net.isHost) return;
-  net.lobby.jaksaId = net.lobby.jaksaId === b.dataset.jaksa ? 'bot' : b.dataset.jaksa;
+  const b = e.target.closest('button[data-okn]'); if (!b || !net.isHost) return;
+  net.lobby.oknumId = net.lobby.oknumId === b.dataset.okn ? 'bot' : b.dataset.okn;
   net.pushLobby(); renderWait();
 });
 function newCode() { const A = 'ABCDEFGHJKMNPQRSTUVWXYZ'; return Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join(''); }
@@ -754,32 +745,32 @@ async function joinRoom(code) {
   mode = 'client'; S = null;
   try { await net.open(code, false); } catch (e) { toast('Gagal terhubung: ' + e.message); mode = null; return; }
   chat.reset(); chat.setEnabled(true);
-  net.lobby = { code, players: [], jaksaId: 'bot' }; renderWait(); show('scr-wait');
+  net.lobby = { code, players: [], oknumId: 'bot' }; renderWait(); show('scr-wait');
 }
 $('#btn-host').onclick = hostRoom;
 $('#btn-join').onclick = () => joinRoom($('#in-code').value);
 $('#btn-wait-back').onclick = () => { leaveAll(); show('scr-lobby'); };
 $('#btn-share').onclick = async () => {
   const url = location.origin + location.pathname + '?room=' + net.lobby.code;
-  const text = `Main Gedung Bundar (Negeri di Balik Daun) bareng! Kode room: ${net.lobby.code}`;
-  try { if (navigator.share) await navigator.share({ title: 'Gedung Bundar', text, url }); else { await navigator.clipboard.writeText(url); toast('Link disalin!'); } }
+  const text = `Main Jalan Tikus (Negeri di Balik Daun) bareng! Kode room: ${net.lobby.code}`;
+  try { if (navigator.share) await navigator.share({ title: 'Jalan Tikus', text, url }); else { await navigator.clipboard.writeText(url); toast('Link disalin!'); } }
   catch (e) { /* dibatalkan */ }
 };
 $('#btn-start').onclick = () => {
   const L = net.lobby, byId = Object.fromEntries(L.players.map((p) => [p.id, p]));
-  const seats = [L.jaksaId !== 'bot' && byId[L.jaksaId] ? { name: byId[L.jaksaId].name, bot: false, pid: L.jaksaId } : { name: BOTS.jaksa, bot: true }];
-  const roles = ['kong', 'bumn', 'umkm'].sort(() => Math.random() - 0.5);
-  const manusia = L.players.filter((p) => p.id !== L.jaksaId).slice(0, 3);
-  roles.forEach((r, i) => seats.push(manusia[i] ? { name: manusia[i].name, bot: false, pid: manusia[i].id, role: r } : { name: BOTS[r], bot: true, role: r }));
+  const seats = [L.oknumId !== 'bot' && byId[L.oknumId] ? { name: byId[L.oknumId].name, bot: false, pid: L.oknumId } : { name: 'Pak Oknum 🤖', bot: true }];
+  L.players.filter((p) => p.id !== L.oknumId).slice(0, 3).forEach((p) => seats.push({ name: p.name, bot: false, pid: p.id }));
+  const bots = ['Bot Ojol 🤖', 'Bot PKL 🤖', 'Bot Buruh 🤖'];
+  while (seats.length < 4) seats.push({ name: bots[seats.length - 1], bot: true });
   L.started = true; net.pushLobby();
   startLocal(seats, true);
 };
 
 // ====== lobby ======
 function refreshLobby() {
-  const done = store.get('gb_tutorial', 0);
+  const done = store.get('ndbd_tutorial', 0);
   $('#btn-tutorial').classList.toggle('primary', !done);
-  $('#btn-tutorial').querySelector('b').textContent = done ? '▶ Ulangi tutorial' : '▶ Tutorial (5 bab, ±6 menit)';
+  $('#btn-tutorial').querySelector('b').textContent = done ? '▶ Ulangi tutorial' : '▶ Tutorial (5 bab, ±5 menit)';
   const on = SB_URL.startsWith('http');
   $('#btn-host').disabled = !on; $('#btn-join').disabled = !on;
   $('#online-note').textContent = on ? '' : 'Mode online belum dikonfigurasi di file ini.';

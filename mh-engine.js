@@ -2,14 +2,14 @@
  * Dipakai di browser (window.MejaHijau) dan Node (require). Protokol sama dengan engine.js (Jalan Tikus):
  * setiap keputusan lewat ask(): kursi bot dijawab heuristik simulasi, kursi manusia menunggu answer().
  * Prompt angka (tarif, amplop, ongkos) tetap memakai options (satu opsi per angka) + prompt.angka {min, max} untuk UI.
- * Info rahasia: S.cur.x (isi amplop, tarif asli), Rupiah/Harta Aman oknum, S.priv[seat], S.stats (dibuka di akhir).
+ * Info rahasia: S.cur.x (isi amplop, tarif asli), Fulus/Aset oknum, S.priv[seat], S.stats (dibuka di akhir).
  */
 (function (root) {
   'use strict';
 
   const C = {
     PERKARA: 8, PERKARA_5P: 7, BERKAS: 2, BERKAS_5P: 2, DANA_5P: 8, GAJI: { hakim: 1, anggota: 1, panitera: 1, pengacara: 1 },
-    GAJI_RAKYAT: [1, 2, 3], NAIK: [0, 5, 10], RP_AWAL: { hakim: 2, anggota: 2, panitera: 3, pengacara: 3, rakyat: 2 }, KERJA: 2,
+    GAJI_RAKYAT: [1, 2, 3], NAIK: [0, 5, 10], RP_AWAL: { hakim: 3, anggota: 3, panitera: 0, pengacara: 6, rakyat: 2 }, RP_AWAL_5P: { pengacara: 3 }, KERJA: 2,
     CITRA_AWAL: 5, CITRA_MIN: 6, MUTASI: 0.7, CITRA_ADIL: 1, CITRA_KECIL: 2, CITRA_JANGGAL: 1, CITRA_BEBAS_VIRAL: 2, CITRA_PERS: 2,
     SAKIT_SP: 1, TERCECER_SP: 1, TUNJANGAN: 2, FEE: 0.2,
     VIRAL_AWAL: 2, VIRAL_MAX: 3, VIRAL_PER_MAIN: 2, VIRAL_SP: 3, KAWAL_SP: 1, DAMAI_SP: -2, KARET: 2,
@@ -20,6 +20,8 @@
     // strategi bot (bukan aturan; sama dengan tools/sim_meja_hijau.py)
     ASK: { rakus: 0.4, ambang: 0.3 }, ASK_5P: 0.8, MARKUP: { tipis: 3, sedang: 5, rakus: 7 }, DAMAI_TAWAR: 0.3, CURIGA: 0.5,
     TERIMA: { rakus: 0.5, ambang: 0.8 },
+    // Kekayaan akhir = Fulus + Aset (oknum) / + Nilai Usaha kelas (Keluarga Korban); juara Keadilan + Santunan. KURS: Kekayaan → Dana Offshore (docs/06)
+    NILAI_USAHA: [0, 1, 4], SANTUNAN: 25, SANTUNAN_5P: 35, KURS: 15, UANG: 'Fulus', ASET_BOT_RP: 6, ASET_BOT_SOR: 5,
   };
   const BEBAS = 0, RINGAN = 1, BERAT = 2;
   const VONIS = ['Bebas', 'Ringan', 'Berat'];
@@ -50,7 +52,7 @@
   // tabel 7.2 docs/05
   const KABAR = {
     1: ['Ketua MA Baru: "Bersih-Bersih!"', 'Sorotan Hakim, Panitera, Pengacara +1.'],
-    2: ['Tunjangan Hakim Naik', 'Tiap Hakim +2 Rupiah ("supaya tidak korupsi").'],
+    2: ['Tunjangan Hakim Naik', 'Tiap Hakim +2 Fulus ("supaya tidak korupsi").'],
     3: ['Makelar MA Terbongkar', 'Kasasi tidak bisa diblokir. Pengacara yang pernah membayar Makelar MA: Sorotan +2.'],
     4: ['Rehabilitasi dari Istana', 'Keluarga Korban −2 Keadilan (vonis lama dihapus).'],
     5: ['Abolisi "Rekonsiliasi"', 'Pemain rantai dengan Sorotan tertinggi: Sorotan −3.'],
@@ -58,7 +60,7 @@
     7: ['Komisi Yudisial Dilemahkan', 'Putusan Janggal tidak menambah Sorotan pribadi.'],
     8: ['Revisi UU ITE Ditunda Lagi', 'Pasal Karet kena di angka 1–3.'],
     9: ['No Viral No Justice', 'Ambang kasasi −2.'],
-    10: ['Hari Antikorupsi Sedunia', 'Jalur Langsung Sorotan +4; Transfer Hakim/Panitera Sorotan +2.'],
+    10: ['Hari Antikorupsi Sedunia', 'Jalur Langsung Sorotan +4; Beli Aset Hakim/Panitera Sorotan +2.'],
     11: ['Media Sibuk Gosip Artis', 'Sorotan Perkara ini −2.'],
     12: ['RUU Perampasan Aset Ditunda Lagi', 'Tidak terjadi apa-apa. Kartu diselipkan ke bawah deck.'],
   };
@@ -76,6 +78,7 @@
     pengacara: ['patuh', 'curiga', 'langsung'], rakyat: ['keadilan', 'damai', 'campur'] };
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const Dompet = () => root.NDBDDompet || require('./ndbd-dompet.js');   // konversi Kekayaan → Dana Offshore
   function mulberry32(seed) {
     return function () {
       seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
@@ -106,7 +109,7 @@
       players: players.map((p) => ({ name: p.name, bot: !!p.bot, pid: p.pid || null })),
       p: players.map((pl, seat) => {
         const role = ROLE_OF[seat];
-        return { seat, role, rp: C.RP_AWAL[role], aman: 0, sor: role === 'rakyat' ? 0 : 1, backing: ['hakim', 'anggota', 'pengacara'].includes(role) ? 1 : 0,
+        return { seat, role, rp: (players.length >= 5 && C.RP_AWAL_5P[role] !== undefined ? C.RP_AWAL_5P : C.RP_AWAL)[role], aset: 0, sor: role === 'rakyat' ? 0 : 1, backing: ['hakim', 'anggota', 'pengacara'].includes(role) ? 1 : 0,
           citra: C.CITRA_AWAL, lapas: 0, siasat: SIASAT_AWAL[role].slice(), jc: false, tumbal: role === 'hakim', makelar: false,
           kelas: 0, keadilan: 0, viral: role === 'rakyat' ? C.VIRAL_AWAL : 0, hadir: true,
           ottAt: -1, kebalAt: -1 };   // Perlindungan Korban: perkara OTT terakhir / perkara kebal Lapas
@@ -135,7 +138,7 @@
     const log = (msg) => { S.log.push({ n: ++S.logN, t: S.t, msg }); if (S.log.length > 60) S.log.shift(); update(); };
     const note = (seat, msg) => { const L = S.priv[seat].log; L.push({ n: ++S.logN, t: S.t, msg }); if (L.length > 40) L.shift(); update(); };
     const PACE = { perkara_baru: 1, kabar: 2.5, perkara: 3.5, gaji: 0.4, amplop: 1.2, damai: 1.2, respons: 1.4, karet: 1.2, simpan: 1,
-      putusan: 3.5, kasasi: 3, makelar: 1.5, bocor: 1.5, ott: 1.5, lapas: 1.5, transfer: 1.2, cepu: 2.5, praper: 2, pk: 1.5, naik: 1.2, siasat: 1.2 };
+      putusan: 3.5, kasasi: 3, makelar: 1.5, bocor: 1.5, ott: 1.5, lapas: 1.5, aset: 1.2, cepu: 2.5, praper: 2, pk: 1.5, naik: 1.2, siasat: 1.2 };
     const pace = async (k = 1) => { if (opts.onPace) opts.onPace(k); const d = delayMs(); if (d) await sleep(d * k); };
     async function ev(type, data = {}) {
       const e = Object.assign({}, data, { n: ++S.evN, type, t: S.t });
@@ -188,7 +191,7 @@
       const options = [
         { id: 'tumbal', label: 'Tumbalkan Panitera', sub: `Sekali per game · Sorotanmu → ${C.TUMBAL_SOR_HAKIM} · Panitera Sorotan +${C.TUMBAL_SOR_PANITERA}`, disabled: !bisaTumbal },
         { id: 'backing', label: 'Pakai Backing', sub: 'Buang 1 Backing · Sorotan → 7', disabled: !p.backing },
-        { id: 'tertangkap', label: 'Pasrah tertangkap', sub: 'Semua Rupiah disita · Lapas 1 perkara · Sorotan → 5' },
+        { id: 'tertangkap', label: 'Pasrah tertangkap', sub: 'Semua Fulus disita · Lapas 1 perkara · Sorotan → 5' },
       ];
       await ev('ott', { seat: p.seat });
       const c = await ask(p.seat, { kind: 'ott', text: '🚨 OTT! Sorotanmu menyentuh 10. Bagaimana kamu lolos?', options },
@@ -202,18 +205,19 @@
       } else {
         st('ott_tertangkap'); st('disita', p.rp);
         const kebal = p.kebalAt === S.t;
-        log(`🚨 OTT! ${name(p.seat)} TERTANGKAP. Semua Rupiah di tangan disita${kebal ? ' (baru keluar Lapas, jadi tidak masuk lagi)' : ', masuk Lapas 1 perkara'}. Keluarga Korban Keadilan +1.`);
+        log(`🚨 OTT! ${name(p.seat)} TERTANGKAP. Semua Fulus di tangan disita${kebal ? ' (baru keluar Lapas, jadi tidak masuk lagi)' : ', masuk Lapas 1 perkara'}. Keluarga Korban Keadilan +1.`);
         p.rp = 0; p.sor = 5; R.keadilan += 1;
         if (!p.backing) { p.backing = 1; log(`🛡️ Simpati Publik: jaringan lama ${name(p.seat)} turun tangan (+1 Backing).`); }
         if (!kebal) { p.lapas = 1; await ev('lapas', { seat: p.seat, sebab: 'ott' }); }
       }
     }
-    async function transfer(p) {
+    // Beli Aset: Fulus → Aset (potong 20%). Aset tidak bisa disita OTT. Hakim/Panitera: pamer harta, Sorotan +1 (LHKPN).
+    async function beliAset(p) {
       const masuk = Math.floor(p.rp * (1 - C.FEE));
-      note(p.seat, `💸 Kamu transfer ${p.rp} Rupiah → +${masuk} Harta Aman.`);
-      log(`💸 ${name(p.seat)} mentransfer uang ke luar negeri.`);
-      p.aman += masuk; p.rp = 0;
-      await ev('transfer', { seat: p.seat, jumlah: masuk });
+      note(p.seat, `🏠 Kamu membelanjakan ${p.rp} Fulus jadi Aset (+${masuk}).`);
+      log(`🏠 ${name(p.seat)} membeli aset baru.`);
+      p.aset += masuk; p.rp = 0; st('aset_dibeli', masuk);
+      await ev('aset', { seat: p.seat, jumlah: masuk });
       if (['hakim', 'anggota', 'panitera'].includes(p.role)) await sorot(p, S.f.antikorupsi ? 2 : 1);
     }
 
@@ -246,12 +250,12 @@
       if (!p.lapas) return;
       p.lapas = 0;
       p.kebalAt = S.t + 1;   // Perlindungan Korban: kebal Lapas di perkara berikutnya
-      const dompet = p.rp + (p.role !== 'rakyat' ? p.aman : 0);
+      const dompet = p.rp + (p.role !== 'rakyat' ? p.aset : 0);
       if (dompet >= C.SEL_MEWAH) {
         const c = await yesNo(p.seat, 'sel_mewah', `🔒 Kamu di Lapas. Beli Sel Mewah (${C.SEL_MEWAH}) supaya tetap bisa beraksi di perkara ini?`,
-          ['🛋️ Beli Sel Mewah', p.role !== 'rakyat' ? 'Boleh dibayar dari Harta Aman' : `Bayar ${C.SEL_MEWAH} Rupiah`], ['Jalani hukuman', 'Absen 1 perkara, tanpa gaji'], dompet >= C.SEL_MEWAH + 2);
+          ['🛋️ Beli Sel Mewah', p.role !== 'rakyat' ? 'Kurang Fulus? Jual sebagian Aset' : `Bayar ${C.SEL_MEWAH} Fulus`], ['Jalani hukuman', 'Absen 1 perkara, tanpa gaji'], dompet >= C.SEL_MEWAH + 2);
         if (c === 'ya') {
-          if (p.rp >= C.SEL_MEWAH) p.rp -= C.SEL_MEWAH; else { p.aman -= C.SEL_MEWAH - p.rp; p.rp = 0; }
+          if (p.rp >= C.SEL_MEWAH) p.rp -= C.SEL_MEWAH; else { p.aset -= C.SEL_MEWAH - p.rp; p.rp = 0; }
           st('sel_mewah'); log(`🛋️ ${name(p.seat)} membeli Sel Mewah dan tetap beraksi dari dalam.`);
           return;
         }
@@ -303,7 +307,7 @@
 
       // --- Perkara Tanpa Pembela ---
       if (card.jenis === 'kecil') {
-        if (R.hadir) { R.rp += C.KERJA; log(`🛠️ ${name(R.seat)} tidak punya urusan di sini: Kerja, +${C.KERJA} Rupiah.`); }
+        if (R.hadir) { R.rp += C.KERJA; log(`🛠️ ${name(R.seat)} tidak punya urusan di sini: Kerja, +${C.KERJA} Fulus.`); }
         let berat = 0;
         for (const x of hakims) {
           const v = await ask(x.seat, { kind: 'putusan_kecil', text: `👵 ${card.nama}: terdakwa rakyat kecil tanpa pembela. Putusanmu?`, options: [
@@ -343,7 +347,7 @@
             hp = P[s];
           }
           const ok = await yesNo(hp.seat, 'praper_terima', `📜 Pengacara mengajukan Praperadilan dengan "biaya" ${C.PRAPER} untukmu. Kabulkan?`,
-            [`✅ Kabulkan (+${C.PRAPER} Rupiah)`, 'Perkara gugur · Sorotanmu +1'], ['❌ Tolak', 'Perkara lanjut disidangkan'], true);
+            [`✅ Kabulkan (+${C.PRAPER} Fulus)`, 'Perkara gugur · Sorotanmu +1'], ['❌ Tolak', 'Perkara lanjut disidangkan'], true);
           if (ok === 'ya') {
             kas -= C.PRAPER; hp.rp += C.PRAPER; syncKas();
             note(hp.seat, `📜 Kamu menerima ${C.PRAPER} dari Praperadilan.`);
@@ -469,7 +473,7 @@
           if (n && (cur.amplop || s === 'keadilan')) bot = 'viral' + n;
         }
         const c = await ask(R.seat, { kind: 'respons', text: `🕯️ Perkara ${card.nama}. Sorotan Perkara ${cur.sp}. Apa yang kamu lakukan?`, options: [
-          { id: 'damai', label: `🤝 Terima Uang Damai ${d || ''}`, sub: 'Rupiah bertambah, tapi tidak ada Keadilan di perkara ini · Sorotan Perkara −2', disabled: !d },
+          { id: 'damai', label: `🤝 Terima Uang Damai ${d || ''}`, sub: 'Fulus bertambah, tapi tidak ada Keadilan di perkara ini · Sorotan Perkara −2', disabled: !d },
           { id: 'viral1', label: '📹 Viralkan (1 kartu)', sub: `Sorotan Perkara +${C.VIRAL_SP} · dadu Pasal Karet 1–${S.f.karet} = Lapas`, disabled: R.viral < 1 },
           { id: 'viral2', label: '📹📹 Viralkan (2 kartu)', sub: `Sorotan Perkara +${2 * C.VIRAL_SP} · dadu Pasal Karet 2×`, disabled: R.viral < 2 },
           { id: 'kawal', label: '👀 Kawal Sidang', sub: `Sorotan Perkara +${C.KAWAL_SP} · ambil 1 Kartu Viral (maks. ${C.VIRAL_MAX})` }] }, bot);
@@ -625,7 +629,7 @@
       // --- PK Diskon ---
       const pkLama = S.beratKaya.filter((x) => x !== t);
       if (aktif(PG) && PG.siasat.includes('pk') && pkLama.length && PG.rp >= C.PK && aktif(H)) {
-        const c = await yesNo(PG.seat, 'pk', `📜 Pakai PK Diskon? Bayar ${C.PK} Rupiah ke ${name(H.seat)}: satu vonis Berat lama jadi Ringan, kamu dapat ½ Dana Klien lama.`,
+        const c = await yesNo(PG.seat, 'pk', `📜 Pakai PK Diskon? Bayar ${C.PK} Fulus ke ${name(H.seat)}: satu vonis Berat lama jadi Ringan, kamu dapat ½ Dana Klien lama.`,
           ['📜 Ajukan PK', 'Keluarga Korban −1 Keadilan'], ['Tidak', ''], true);
         if (c === 'ya') {
           const ok = await yesNo(H.seat, 'pk_terima', `📜 Pengacara mengajukan PK Diskon dengan "biaya" ${C.PK} untukmu. Kabulkan?`,
@@ -644,15 +648,15 @@
       await akhirPerkara(t, [...rantai]);
     }
 
-    // ---------- akhir perkara: Cepu, kelola (Transfer, Jumpa Pers, Naik Kelas) ----------
+    // ---------- akhir perkara: Cepu, kelola (Beli Aset, Jumpa Pers, Naik Kelas) ----------
     async function akhirPerkara(t, rantai) {
       const last = t === S.putaran;
       const c = cepuSeat !== null ? P[cepuSeat] : null;
       if (c && !c.jc && rantai.includes(c) && c.hadir) {
-        const k = await yesNo(c.seat, 'kedok', `🕵️ Kamu Cepu. Buka kedok sekarang? Semua anggota rantai perkara ini Sorotan +${C.CEPU_SOR}; kamu jadi Justice Collaborator (Sorotan 0, +${C.CEPU_BONUS} Harta Aman) dan keluar dari rantai.`,
-          ['🕵️ Buka kedok', 'Sebelum mereka sempat transfer'], ['Tunggu dulu', ''], t >= S.putaran - 1 || c.sor >= 8);
+        const k = await yesNo(c.seat, 'kedok', `🕵️ Kamu Cepu. Buka kedok sekarang? Semua anggota rantai perkara ini Sorotan +${C.CEPU_SOR}; kamu jadi Justice Collaborator (Sorotan 0, +${C.CEPU_BONUS} Aset) dan keluar dari rantai.`,
+          ['🕵️ Buka kedok', 'Sebelum mereka sempat mengamankan Fulus jadi Aset'], ['Tunggu dulu', ''], t >= S.putaran - 1 || c.sor >= 8);
         if (k === 'ya') {
-          c.jc = true; c.sor = 0; c.aman += C.CEPU_BONUS; R.keadilan += 1; st('cepu_bongkar');
+          c.jc = true; c.sor = 0; c.aset += C.CEPU_BONUS; R.keadilan += 1; st('cepu_bongkar');
           log(`🕵️ ${name(c.seat)} ternyata CEPU! Rantai suap perkara ini dibongkar.`);
           await ev('cepu', { seat: c.seat });
           for (const x of rantai) if (x !== c) await sorot(x, C.CEPU_SOR);
@@ -662,22 +666,23 @@
         if (!p || stopped) continue;
         for (let guard = 0; guard < 6; guard++) {
           const s = strat[p.seat];
-          const bisaT = p.rp > 0 && (p.role !== 'rakyat' || p.kelas === 2);
+          const bisaT = p.rp > 0 && p.role !== 'rakyat';
+          const pamer = ['hakim', 'anggota', 'panitera'].includes(p.role);
           const opsi = [];
-          if (bisaT) opsi.push({ id: 'transfer', label: `💸 Transfer ${p.rp} → +${Math.floor(p.rp * (1 - C.FEE))} Harta Aman`,
-            sub: ['hakim', 'anggota', 'panitera'].includes(p.role) ? `Potongan 20% · Sorotan +${S.f.antikorupsi ? 2 : 1} (PPATK)` : 'Potongan 20%' });
+          if (bisaT) opsi.push({ id: 'aset', label: `🏠 Beli Aset: ${p.rp} Fulus → Aset ${Math.floor(p.rp * (1 - C.FEE))}`,
+            sub: `Potongan 20% · aman dari sitaan OTT${pamer ? ` · pamer harta: Sorotan +${S.f.antikorupsi ? 2 : 1}` : ''}` });
           if (p.siasat.includes('pers')) opsi.push({ id: 'pers', label: `🎤 Jumpa Pers (Citra +${C.CITRA_PERS})`, sub: `Sekali per game · Citra sekarang ${p.citra}, minimal ${C.CITRA_MIN}` });
           if (p.role === 'rakyat' && p.kelas < 2) opsi.push({ id: 'naik', label: `⬆️ Naik jadi ${KELAS[p.kelas + 1]} (${C.NAIK[p.kelas + 1]})`,
-            sub: p.kelas + 1 === 2 ? 'Pengusaha boleh Transfer ke Luar' : `Gaji ${C.GAJI_RAKYAT[p.kelas + 1]}/perkara`, disabled: p.rp < C.NAIK[p.kelas + 1] });
+            sub: `Gaji ${C.GAJI_RAKYAT[p.kelas + 1]}/perkara · Nilai Usaha ${C.NILAI_USAHA[p.kelas + 1]}`, disabled: p.rp < C.NAIK[p.kelas + 1] });
           if (!opsi.some((o) => !o.disabled)) break;
-          opsi.push({ id: 'selesai', label: '✅ Selesai', sub: last ? '⚠️ Perkara terakhir: Rupiah di tangan HANGUS' : '' });
+          opsi.push({ id: 'selesai', label: '✅ Selesai', sub: bisaT ? 'Fulus di tangan tetap dihitung di akhir, tapi bisa disita kalau OTT' : '' });
           let bot = 'selesai';
           if (p.siasat.includes('pers') && (p.citra < C.CITRA_MIN + 1 || last)) bot = 'pers';
           else if (p.role === 'rakyat' && p.kelas < 2 && p.rp >= C.NAIK[p.kelas + 1] && (s !== 'keadilan' || t >= 3)) bot = 'naik';
-          else if (bisaT && (p.rp >= 6 || last || (p.sor >= 7 && p.rp >= 2))) bot = 'transfer';
-          const ch = await ask(p.seat, { kind: 'kelola', text: `🏦 Akhir perkara ${t}${last ? ' (terakhir)' : ''}. Rupiah di tanganmu ${p.rp}.`, options: opsi }, bot);
+          else if (bisaT && !last && ((p.rp >= C.ASET_BOT_RP && p.sor >= C.ASET_BOT_SOR) || (p.sor >= 7 && p.rp >= 2)) && !(pamer && p.sor >= 9)) bot = 'aset';
+          const ch = await ask(p.seat, { kind: 'kelola', text: `🏦 Akhir perkara ${t}${last ? ' (terakhir)' : ''}. Fulus di tanganmu ${p.rp}.`, options: opsi }, bot);
           if (ch === 'selesai') break;
-          if (ch === 'transfer') await transfer(p);
+          if (ch === 'aset') await beliAset(p);
           else if (ch === 'pers') { p.siasat.splice(p.siasat.indexOf('pers'), 1); p.citra += C.CITRA_PERS; log(`🎤 ${name(p.seat)} menggelar jumpa pers. Citra +${C.CITRA_PERS}.`); await ev('siasat', { seat: p.seat, id: 'pers' }); }
           else if (ch === 'naik') {
             p.rp -= C.NAIK[p.kelas + 1]; p.kelas++;
@@ -699,17 +704,21 @@
       if (stopped) { S.phase = 'stopped'; S.prompt = null; update(); return S; }
       S.turn = null;
       const menang = n5 ? C.KEADILAN_5P : C.KEADILAN_MENANG;
+      // Kekayaan = Fulus + Aset (oknum; Hakim dimutasi ×0,7) / Fulus + Nilai Usaha kelas (+ Santunan kalau juara Keadilan)
       const skor = P.filter((p) => p.role !== 'rakyat').map((p) => {
         const mutasi = (p.role === 'hakim' || p.role === 'anggota') && p.citra < C.CITRA_MIN;
         if (mutasi) st('hakim_dimutasi');
-        return { seat: p.seat, role: p.role, aman: p.aman, score: mutasi ? Math.floor(p.aman * C.MUTASI) : p.aman, mutasi, citra: p.citra, cepu: p.seat === cepuSeat };
+        const kotor = p.rp + p.aset;
+        return { seat: p.seat, role: p.role, rp: p.rp, aset: p.aset, kekayaan: mutasi ? Math.floor(kotor * C.MUTASI) : kotor, mutasi, citra: p.citra, cepu: p.seat === cepuSeat };
       });
-      const r = { seat: R.seat, role: 'rakyat', aman: R.aman, keadilan: R.keadilan, kelas: R.kelas, rp: R.rp, juaraKeadilan: R.keadilan >= menang,
-        score: R.keadilan >= menang ? Infinity : R.kelas === 2 ? R.aman : -1, gagal: R.kelas < 2 };
+      const juaraK = R.keadilan >= menang, santunan = n5 ? C.SANTUNAN_5P : C.SANTUNAN;
+      const r = { seat: R.seat, role: 'rakyat', keadilan: R.keadilan, kelas: R.kelas, rp: R.rp, usaha: C.NILAI_USAHA[R.kelas], santunan: juaraK ? santunan : 0,
+        juaraKeadilan: juaraK, kekayaan: R.rp + C.NILAI_USAHA[R.kelas] + (juaraK ? santunan : 0), gagal: R.kelas < 2 };
       skor.push(r);
       skor.forEach((x) => { x.name = name(x.seat); x.tie = rng(); });
-      skor.sort((a, b) => (b.score - a.score) || (b.tie - a.tie));
-      S.result = { ranking: skor, winner: skor[0].seat, cepu: cepuSeat, strat, keadilanMenang: menang };
+      skor.sort((a, b) => ((b.juaraKeadilan ? 1 : 0) - (a.juaraKeadilan ? 1 : 0)) || (b.kekayaan - a.kekayaan) || (b.tie - a.tie));
+      Dompet().konversi(skor, C.KURS);
+      S.result = { ranking: skor, winner: skor[0].seat, cepu: cepuSeat, strat, keadilanMenang: menang, uang: C.UANG, kurs: C.KURS };
       S.phase = 'end';
       log(`🏁 Permainan selesai. Juara: ${skor[0].name} (${ROLES[skor[0].role][1]})${r.juaraKeadilan ? ' lewat Keadilan!' : '.'}`);
       await ev('end', {});

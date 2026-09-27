@@ -6,7 +6,7 @@ const tutorial = require('./tutorial.js');
 const { estimasi } = require('./durasi.js');
 
 async function botGames(n) {
-  const wins = { oknum: 0, rakyat: 0 }, seat = [0, 0, 0, 0];
+  const wins = { oknum: 0, rakyat: 0 }, seat = [0, 0, 0, 0], dana = [0, 0, 0, 0];
   let pengusaha = 0;
   for (let i = 0; i < n; i++) {
     const players = [0, 1, 2, 3].map((s) => ({ name: 'P' + s, bot: true }));
@@ -14,8 +14,13 @@ async function botGames(n) {
     const S = await g.run();
     wins[S.result.winner === 0 ? 'oknum' : 'rakyat']++; seat[S.result.winner]++;
     pengusaha += S.rs.filter((r) => r.kelas === 3).length;
+    for (const x of S.result.ranking) {
+      assert(Number.isInteger(x.kekayaan) && x.kekayaan >= 0 && x.dana >= 0, 'Kekayaan/Dana tidak valid');
+      dana[x.seat] += x.dana;
+    }
+    assert(S.o.aset >= 0 && S.o.rp >= 0 && S.rs.every((r) => r.rp >= 0), 'Receh/Aset negatif');
   }
-  return { oknum: wins.oknum / n, pengusaha: pengusaha / (3 * n), seat: seat.map((x) => Math.round((100 * x) / n)) };
+  return { oknum: wins.oknum / n, pengusaha: pengusaha / (3 * n), seat: seat.map((x) => Math.round((100 * x) / n)), dana: dana.map((x) => Math.round(x / n)) };
 }
 
 async function randomHumans(n) {
@@ -84,6 +89,11 @@ process.on('exit', () => { if (!selesai) { console.error('MACET: ada promise yan
   const b = await botGames(3000);
   console.log(`3000 match bot: juara per kursi Oknum/R1/R2/R3 = ${b.seat.join('/')}% (target ±25% masing-masing), Rakyat jadi Pengusaha ${(b.pengusaha * 100).toFixed(0)}%`);
   assert(b.seat.every((x) => x >= 18 && x <= 32), 'Peluang juara tidak seimbang');
+  const rataDana = b.dana.reduce((s, x) => s + x, 0) / 4;
+  console.log(`Dana Offshore rata-rata per kursi (Online, kurs ${JT.C.KURS}): ${b.dana.join('/')} (rata-rata ${Math.round(rataDana)}, target ±100)`);
+  assert(b.dana.every((x) => Math.abs(x - rataDana) <= 0.2 * rataDana), 'Dana per role timpang > ±20%');
+  assert(rataDana >= 80 && rataDana <= 120, 'Kurs perlu dikalibrasi ulang (rata-rata Dana di luar 80–120)');
+  require('./dompet-check.js');
 
   const kinds = await randomHumans(300);
   console.log(`300 match semua kursi manusia (jawaban acak): selesai tanpa macet. Jenis prompt teruji: ${[...kinds].sort().join(', ')}`);

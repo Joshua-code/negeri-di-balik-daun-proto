@@ -5,771 +5,158 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#14532d">
-<title>Jalan Tikus — Negeri di Balik Daun</title>
+<title>Negeri di Balik Daun</title>
 <style>
 :root {
   --bg: #f4f1ea; --panel: #ffffff; --ink: #1c1917; --muted: #78716c; --line: #e7e2d8;
-  --leaf: #166534; --leaf-soft: #dcfce7; --danger: #b91c1c; --danger-soft: #fee2e2; --gold: #b45309; --gold-soft: #fef3c7;
-  --tile: #fbfaf7; --tile-hi: #fff7d6; --shadow: 0 2px 10px rgba(0,0,0,.08);
-  --s0: #b91c1c; --s1: #2563eb; --s2: #16a34a; --s3: #d97706;
+  --leaf: #166534; --leaf-soft: #dcfce7; --gold: #b45309; --gold-soft: #fef3c7; --shadow: 0 2px 10px rgba(0,0,0,.08);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #12140f; --panel: #1c1f18; --ink: #ecebe6; --muted: #a8a29e; --line: #2e332a;
-    --leaf: #4ade80; --leaf-soft: #14301f; --danger: #f87171; --danger-soft: #3b1515; --gold: #fbbf24; --gold-soft: #3a2c0c;
-    --tile: #1f231b; --tile-hi: #3a3413; --shadow: 0 2px 10px rgba(0,0,0,.4);
+    --leaf: #4ade80; --leaf-soft: #14301f; --gold: #fbbf24; --gold-soft: #3a2c0c; --shadow: 0 2px 10px rgba(0,0,0,.4);
   }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-button { font: inherit; color: inherit; cursor: pointer; }
 [hidden] { display: none !important; }
-.screen { max-width: 540px; margin: 0 auto; padding: 12px 12px 24px; min-height: 100dvh; }
-h1 { font-size: 26px; margin: 18px 0 2px; }
-h2 { font-size: 19px; margin: 16px 0 8px; }
+.screen { max-width: 540px; margin: 0 auto; padding: 12px 16px 28px; min-height: 100dvh; }
+h1 { font-size: 26px; margin: 6px 0 2px; }
+h2 { font-size: 17px; margin: 22px 0 8px; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
-.btn { display: block; width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); text-align: left; margin: 8px 0; box-shadow: var(--shadow); }
-.btn b { display: block; }
-.btn span { display: block; font-size: 12.5px; color: var(--muted); }
-.btn.primary { background: var(--leaf); border-color: var(--leaf); color: #fff; }
-.btn.primary span { color: #e6ffe9; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #06200f; } :root:not([data-theme="light"]) .btn.primary span { color: #0b3a1c; } }
-.btn:disabled { opacity: .45; cursor: default; }
-.row { display: flex; gap: 8px; align-items: center; }
-.row > .btn { margin: 8px 0; }
-input { font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); width: 100%; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: var(--shadow); }
-.hero { text-align: center; padding: 8px 0 4px; }
+a { color: inherit; }
+.crumb { font-size: 12.5px; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.crumb b { color: var(--ink); }
+.hero { text-align: center; padding: 14px 0 4px; }
 .hero .leaf { font-size: 44px; }
-
-/* game */
-#scr-game { padding: 0 8px; display: flex; flex-direction: column; }
-#scr-game[hidden] { display: none; }
-.topbar { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; align-items: center; gap: 8px; padding: 8px 2px; }
-.topbar .title { flex: 1; font-weight: 700; font-size: 14px; }
-.topbar button { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 6px 10px; font-size: 13px; }
-.board { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(7, 1fr); gap: 2px; width: 100%; aspect-ratio: 1; }
-.tile { position: relative; background: var(--tile); border: 1px solid var(--line); border-radius: 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9.5px; line-height: 1.05; text-align: center; overflow: hidden; padding: 1px; }
-.tile .em { font-size: 17px; line-height: 1.1; }
-.tile.pos { border: 2px solid var(--danger); background: var(--danger-soft); }
-.tile.pos::after { content: "🚨"; position: absolute; top: -1px; right: 0; font-size: 11px; }
-.tile.pos.off { opacity: .55; border-style: dashed; }
-.tile.pick { outline: 2px dashed var(--gold); outline-offset: -3px; background: var(--tile-hi); }
-.tile.picked { border: 3px solid var(--gold); background: var(--gold-soft); }
-.tile.locked { opacity: .35; }
-.tile .pawns { position: absolute; bottom: 1px; left: 0; right: 0; display: flex; justify-content: center; gap: 1px; }
-.pawn { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid #fff; font-size: 8px; line-height: 10px; color: #fff; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.4); }
-.pawn.me { width: 16px; height: 16px; line-height: 13px; font-size: 9px; }
-.center { grid-row: 2 / 7; grid-column: 2 / 7; display: flex; flex-direction: column; gap: 4px; padding: 3px; min-width: 0; min-height: 0; }
-#kabar { background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 9px; padding: 5px 7px; font-size: 11px; }
-#kabar b { font-size: 11.5px; }
-#kabar.batal b { text-decoration: line-through; }
-#oknum { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 5px 7px; font-size: 11px; }
-#oknum.turn, .pcard.turn { box-shadow: 0 0 0 2px var(--leaf); }
-#oknum .name { font-weight: 700; color: var(--s0); }
-.meter { height: 8px; background: var(--line); border-radius: 5px; overflow: hidden; margin: 2px 0; }
-.meter > i { display: block; height: 100%; background: linear-gradient(90deg, #eab308, #dc2626); }
-.stats { display: flex; flex-wrap: wrap; gap: 3px 8px; }
-#dice { font-size: 12px; font-weight: 700; }
-.players { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 6px 0; }
-.pcard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 5px 6px; font-size: 11px; min-width: 0; }
-.pcard .nm { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pcard.mine { border: 2px solid var(--leaf); }
-.pcard .kl { font-size: 11.5px; }
-.pcard button { font-size: 10px; padding: 2px 5px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); margin-top: 2px; }
-.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 3px; }
-#prompt { position: sticky; bottom: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px 16px 0 0; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 16px rgba(0,0,0,.12); max-height: 52dvh; overflow: auto; z-index: 4; margin: auto -8px 0; }
-#prompt .q { font-weight: 700; margin-bottom: 4px; }
-#prompt .opt { display: block; width: 100%; text-align: left; padding: 10px 12px; margin: 6px 0; border-radius: 11px; border: 1px solid var(--line); background: var(--bg); }
-#prompt .opt b { display: block; font-size: 14.5px; }
-#prompt .opt span { display: block; font-size: 12px; color: var(--muted); }
-#prompt .opt.go { background: var(--leaf); color: #fff; border-color: var(--leaf); }
-#prompt .opt.go span { color: #e6ffe9; }
-#prompt .opt:disabled { opacity: .4; }
-#prompt .wait { color: var(--muted); padding: 6px 2px; }
-.spacer { height: 8px; }
-
-/* overlays */
-.ov { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
-.ov .card { max-width: 440px; width: 100%; max-height: 88dvh; overflow: auto; }
-.ov h3 { margin: 0 0 6px; }
-.ov ul { padding-left: 18px; margin: 6px 0; }
-#tip { position: fixed; top: 8px; left: 8px; right: 8px; z-index: 25; max-width: 520px; margin: 0 auto; background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 14px; padding: 10px 12px; box-shadow: var(--shadow); font-size: 13.5px; }
-#tip .row { justify-content: space-between; margin-top: 6px; }
-#tip button, .coach-bubble button { border: 0; background: var(--gold); color: #fff; border-radius: 9px; padding: 7px 14px; font-weight: 700; }
-#toast { position: fixed; left: 50%; bottom: 40%; transform: translateX(-50%); z-index: 30; background: var(--ink); color: var(--bg); padding: 9px 14px; border-radius: 12px; font-size: 13px; max-width: 86vw; text-align: center; }
-#coach { position: fixed; inset: 0; z-index: 22; pointer-events: none; }
-#coach.blocking { pointer-events: auto; }
-.coach-hl { position: fixed; border-radius: 10px; pointer-events: none; transition: all .2s; }
-#coach.blocking .coach-hl { box-shadow: 0 0 0 9999px rgba(0,0,0,.62), 0 0 0 3px var(--gold); }
-#coach:not(.blocking) .coach-hl { box-shadow: 0 0 0 3px var(--gold), 0 0 18px var(--gold); animation: pulse 1.2s infinite; }
-@keyframes pulse { 50% { box-shadow: 0 0 0 5px var(--gold), 0 0 26px var(--gold); } }
-.coach-bubble { position: fixed; left: 10px; right: 10px; max-width: 480px; margin: 0 auto; background: var(--panel); color: var(--ink); border: 2px solid var(--gold); border-radius: 14px; padding: 11px 13px; font-size: 14px; pointer-events: auto; box-shadow: var(--shadow); }
-.coach-bubble .ch { font-size: 11px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .04em; }
-.coach-bubble .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
-.fly { position: fixed; z-index: 40; font-size: 26px; pointer-events: none; animation: fly 1.3s ease-in forwards; }
-@keyframes fly { to { transform: translate(var(--dx), var(--dy)) scale(.6); opacity: 0; } }
-#offshore { position: fixed; top: 52px; right: 10px; z-index: 39; background: var(--leaf-soft); border: 1px solid var(--leaf); border-radius: 10px; padding: 4px 8px; font-size: 12px; font-weight: 700; }
-.code { font-size: 44px; letter-spacing: 8px; font-weight: 800; text-align: center; margin: 6px 0; }
-.plist div { padding: 8px 10px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
-.plist button { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 4px 8px; font-size: 12px; }
-.plist .okn { color: var(--danger); font-weight: 700; }
-.rank div { display: flex; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--line); }
-.rank div:first-child { font-weight: 800; }
-.korban li { margin: 3px 0; }
-.cardpop { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); z-index: 21; width: min(78vw, 300px); border-radius: 16px; background: var(--panel); border: 3px solid var(--gold); box-shadow: 0 12px 40px rgba(0,0,0,.45); padding: 14px 16px; text-align: center; animation: pop .35s ease-out; }
-.cardpop .kind { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
-.cardpop .big { font-size: 40px; line-height: 1.2; }
-.cardpop h4 { margin: 4px 0 6px; font-size: 18px; }
-.cardpop p { margin: 0; font-size: 14px; }
-.cardpop .close { margin-top: 10px; font-size: 11px; color: var(--muted); }
-.cardpop.nasib { border-color: var(--s1); } .cardpop.nasib .kind { color: var(--s1); }
-.cardpop.oknum { border-color: var(--danger); } .cardpop.oknum .kind { color: var(--danger); }
-@keyframes pop { from { transform: translate(-50%, -50%) scale(.6) rotate(-6deg); opacity: 0; } }
-#hovertip { position: fixed; z-index: 60; max-width: 240px; background: var(--ink); color: var(--bg); font-size: 12px; line-height: 1.35; padding: 6px 9px; border-radius: 8px; pointer-events: none; box-shadow: var(--shadow); }
-[data-tip] { cursor: help; }
-@keyframes flash { from { background: var(--gold-soft); } }
-.pawn.now { animation: bob .8s infinite; }
-@keyframes bob { 50% { transform: translateY(-3px); } }
-.banner { background: var(--danger-soft); color: var(--danger); border-radius: 10px; padding: 8px 10px; font-size: 13px; margin: 6px 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: var(--shadow); }
+.dompet { border: 2px solid var(--gold); text-align: center; }
+.dompet .saldo { font-size: 34px; font-weight: 800; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.dompet .per { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+.dompet .per div { background: var(--bg); border-radius: 10px; padding: 6px 4px; font-size: 12px; }
+.dompet .per b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
+input { font: inherit; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); width: 100%; }
+.game { display: flex; gap: 12px; align-items: flex-start; text-decoration: none; color: inherit; margin: 8px 0; }
+.game .ic { font-size: 30px; line-height: 1; width: 40px; text-align: center; flex: none; }
+.game .body { flex: 1; min-width: 0; }
+.game .nm { font-weight: 800; font-size: 16px; }
+.game .ds { font-size: 13px; color: var(--muted); margin: 2px 0 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-size: 11.5px; border: 1px solid var(--line); border-radius: 99px; padding: 2px 8px; background: var(--bg); white-space: nowrap; }
+.chip.cur { border-color: var(--gold); background: var(--gold-soft); }
+.chip.ok { border-color: var(--leaf); background: var(--leaf-soft); }
+.game .go { align-self: center; font-weight: 800; color: var(--leaf); font-size: 20px; }
+a.game:hover { border-color: var(--leaf); }
+.locked { opacity: .55; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid2 .card { padding: 11px; font-size: 13px; }
+.grid2 .card b { display: block; font-size: 14px; }
+.riwayat div { display: flex; justify-content: space-between; gap: 8px; padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.riwayat div:last-child { border-bottom: 0; }
+.riwayat .dn { font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+details summary { cursor: pointer; font-weight: 700; }
+details p, details li { font-size: 13.5px; }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
-<script src="ndbd-ui.js?v=2"></script>
-<script src="engine.js?v=2"></script>
-<script src="tutorial.js?v=2"></script>
+<script src="ndbd-dompet.js?v=3"></script>
 </head>
 <body>
-
-<!-- LOBBY -->
-<section id="scr-lobby" class="screen">
+<main class="screen">
+  <nav class="crumb" aria-label="Lokasi"><span title="Peta dunia RPG: segera">🌍 Dunia Antah Berantah</span><span>›</span><b>🍃 Negeri di Balik Daun</b></nav>
   <div class="hero">
     <div class="leaf">🍃</div>
     <h1>Negeri di Balik Daun</h1>
-    <div class="muted">Game 1 · <b>Jalan Tikus</b> — rakyat mencoba naik kelas, oknum memeras di jalan.</div>
+    <div class="muted">Tiga meja permainan tempat hukum bisa ditawar. Menangkan match, kumpulkan currency, bawa pulang Dana Offshore.</div>
   </div>
-  <div class="spacer"></div>
-  <label class="small muted" for="in-name">Namamu</label>
-  <input id="in-name" maxlength="14" placeholder="mis. Joshua">
-  <button class="btn primary" id="btn-tutorial"><b>▶ Tutorial (5 bab, ±5 menit)</b><span>Belajar sambil main. Disarankan sebelum main bareng.</span></button>
-  <h2>Main online bareng teman</h2>
-  <button class="btn" id="btn-host"><b>🏠 Buat Room</b><span>Kamu jadi host. Bagikan kode/link ke teman. Kursi kosong diisi bot.</span></button>
-  <div class="row">
-    <input id="in-code" maxlength="4" placeholder="KODE" style="text-transform:uppercase;letter-spacing:4px;font-weight:700">
-    <button class="btn" id="btn-join" style="width:auto;margin:0;white-space:nowrap"><b>Gabung</b></button>
-  </div>
-  <div id="online-note" class="small muted"></div>
-  <h2>Latihan sendiri vs bot</h2>
-  <div class="row" style="align-items:stretch">
-    <button class="btn" id="btn-prac-r"><b>🧍 Jadi Rakyat</b><span>vs 1 Oknum + 2 Rakyat bot</span></button>
-    <button class="btn" id="btn-prac-o"><b>👮 Jadi Oknum</b><span>vs 3 Rakyat bot</span></button>
-  </div>
-  <a class="btn" href="gedung-bundar.html" style="text-decoration:none;color:inherit"><b>🏛️ Game 2: Gedung Bundar →</b><span>Pengusaha membangun bisnis, jaksa menghitung "kerugian negara".</span></a>
-  <a class="btn" href="meja-hijau.html" style="text-decoration:none;color:inherit"><b>⚖️ Game 3: Meja Hijau →</b><span>Putusan dijual lewat amplop, korban melawan lewat viral.</span></a>
-  <p class="small muted">Satir fiksi. Semua tokoh & kejadian di dalam game rekaan, terinspirasi pola penyimpangan hukum yang diberitakan media.</p>
-</section>
 
-<!-- WAITING ROOM -->
-<section id="scr-wait" class="screen" hidden>
-  <h2>Ruang tunggu</h2>
-  <div class="card">
-    <div class="muted small" style="text-align:center">Kode room</div>
-    <div class="code" id="w-code">----</div>
-    <button class="btn primary" id="btn-share" style="text-align:center"><b>📤 Bagikan link ke teman</b></button>
-  </div>
-  <h2>Pemain</h2>
-  <div class="card plist" id="w-players"></div>
-  <div id="w-host" hidden>
-    <p class="small muted">Tap <b>Jadikan Oknum</b> pada salah satu pemain, atau biarkan Oknum dimainkan bot. Maks. 4 manusia; sisanya bot.</p>
-    <button class="btn primary" id="btn-start" style="text-align:center"><b>Mulai permainan</b></button>
-  </div>
-  <p id="w-guest" class="muted" hidden>Menunggu host memulai permainan…</p>
-  <button class="btn" id="btn-wait-back" style="text-align:center">Keluar</button>
-</section>
+  <h2>🏝️ Dompet Dana Offshore</h2>
+  <section class="card dompet" aria-label="Dompet Dana Offshore">
+    <div class="small muted">Saldo</div>
+    <div class="saldo" id="saldo">0</div>
+    <div class="small muted">Dipakai nanti di Negeri Singa, Balai Lelang, dan lokasi lain di Dunia Antah Berantah.</div>
+    <div class="per" id="per"></div>
+  </section>
 
-<!-- GAME -->
-<section id="scr-game" class="screen" hidden>
-  <div class="topbar">
-    <div class="title" id="g-title">Putaran 1/12</div>
-    <button id="btn-skip" hidden>Lewati tutorial</button>
-    <button id="btn-speed" data-tip="Kecepatan jalannya bot & animasi">▶ Normal</button>
-    <button id="btn-help">? Aturan</button>
+  <h2>Namamu</h2>
+  <input id="in-name" maxlength="14" placeholder="mis. Joshua" aria-label="Namamu">
+
+  <h2>🎲 Meja permainan</h2>
+  <div id="games"></div>
+
+  <details class="card" style="margin-top:10px">
+    <summary>Bagaimana currency jadi Dana Offshore?</summary>
+    <p>Tiap game punya currency sendiri: <b>🪙 Receh</b> (Jalan Tikus), <b>💹 Cuan</b> (Gedung Bundar), <b>💵 Fulus</b> (Meja Hijau). Currency hanya berlaku di dalam match. Di akhir match, <b>Kekayaan</b>-mu (currency + aset/nilai usaha) dikonversi:</p>
+    <p style="text-align:center"><b>Dana = Kekayaan × kurs game × rasio peringkat</b></p>
+    <ul id="rumus"></ul>
+    <p class="muted">Dana Offshore tidak pernah masuk ke dalam match. Tidak ada pay-to-win.</p>
+  </details>
+
+  <h2>🧾 Riwayat</h2>
+  <section class="card riwayat" id="riwayat" aria-live="polite"></section>
+
+  <h2>🗺️ Di luar Negeri di Balik Daun</h2>
+  <div class="grid2">
+    <div class="card locked"><b>🦁 Negeri Singa</b>Beli & upgrade aset dengan Dana Offshore. <i>Segera.</i></div>
+    <div class="card locked"><b>🔨 Balai Lelang</b>Lelang barang sitaan antar pemain. <i>Segera.</i></div>
+    <div class="card locked"><b>🗳️ Pesta Demokrasi</b>Game 4 · area control. <i>Season 2.</i></div>
+    <div class="card locked"><b>🌴 Tanah Air</b>Game 5 · worker placement. <i>Season 3.</i></div>
   </div>
-  <div id="g-banner" class="banner" hidden></div>
-  <div class="board" id="board"></div>
-  <div class="players" id="players"></div>
-  <div id="log"></div>
-  <div id="prompt"></div>
-</section>
 
-<!-- END -->
-<section id="scr-end" class="screen" hidden>
-  <h2>🏁 Hasil akhir</h2>
-  <div class="card rank" id="e-rank"></div>
-  <h2>📋 Laporan Korban</h2>
-  <div class="card"><ul class="korban" id="e-korban"></ul></div>
-  <button class="btn primary" id="btn-again" style="text-align:center"><b>Main lagi</b></button>
-  <button class="btn" id="btn-end-back" style="text-align:center">Ke lobby</button>
-</section>
-
-<!-- OVERLAYS -->
-<div class="ov" id="ov-role" hidden><div class="card" id="role-card"></div></div>
-<div class="ov" id="ov-help" hidden><div class="card" id="help-card"></div></div>
-<div id="tip" hidden></div>
-<div id="toast" hidden></div>
-<div id="cardpop" class="cardpop" hidden></div>
-<div id="hovertip" hidden></div>
-<div id="coach" hidden><div class="coach-hl"></div><div class="coach-bubble"></div></div>
+  <p class="small muted" style="margin-top:22px">Satir fiksi. Semua tokoh & kejadian di dalam game rekaan, terinspirasi pola penyimpangan hukum yang diberitakan media. Dompet tersimpan di perangkat ini.</p>
+</main>
 
 <script>
 'use strict';
-// ====== konfigurasi online (Supabase Realtime Broadcast; tanpa tabel) ======
-const SB_OVERRIDE = (() => { try { return JSON.parse(localStorage.getItem('ndbd_sb')); } catch (e) { return null; } })(); // hanya untuk tes lokal
-const SB_URL = (SB_OVERRIDE && SB_OVERRIDE.url) || 'https://axlmcglultvdxuwbspci.supabase.co';
-const SB_KEY = (SB_OVERRIDE && SB_OVERRIDE.key) || 'sb_publishable_lUOhxk6WVX8jskieKVFtfg_ZPx7Dk0z';
-
-const JT = window.JalanTikus, TUT = window.Tutorial;
-const $ = (s, el = document) => el.querySelector(s);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = (s) => document.querySelector(s);
+const D = window.NDBDDompet;
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
 };
-const myId = (store.get('ndbd_id', null) || (() => { const id = Math.random().toString(36).slice(2, 10); store.set('ndbd_id', id); return id; })()) + (new URLSearchParams(location.search).get('as') || ''); // ?as= untuk tes 2 tab
-const SEAT_COLOR = ['var(--s0)', 'var(--s1)', 'var(--s2)', 'var(--s3)'];
-const KELAS_EM = ['🧍', '🧺', '🏪', '🏢'];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const angka = (n) => Number(n).toLocaleString('id-ID');
 
-let mode = null;          // 'tutorial' | 'practice' | 'host' | 'client'
-let S = null, game = null, mySeat = -1;
-let lock = null, lockTiles = null, pick = [], pickFor = 0, sentFor = 0, lastEv = 0;
-let tutorialAnswer = null, tutorialChapter = null, tutorialAbort = false;
-let practiceRole = 'rakyat';
+const INFO = {
+  jt: { ic: '🛵', ds: 'Roll & move. Rakyat naik kelas, oknum aparat memeras lewat razia.', pemain: '4 pemain', durasi: '±20 menit', tut: 'ndbd_tutorial' },
+  gb: { ic: '🏛️', ds: 'Engine building. Pengusaha membangun bisnis, jaksa menghitung "kerugian negara".', pemain: '4 pemain', durasi: '±18 menit', tut: 'gb_tutorial' },
+  mh: { ic: '⚖️', ds: 'Lelang tertutup & bluffing. Putusan dijual lewat amplop, korban melawan lewat viral.', pemain: '4–5 pemain', durasi: '±17 menit', tut: 'mh_tutorial' },
+};
 
-function show(id) { document.querySelectorAll('.screen').forEach((s) => { s.hidden = s.id !== id; }); window.scrollTo(0, 0); if (id === 'scr-game') renderSpeed(); }
-function toast(msg, ms = 2200) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => { t.hidden = true; }, ms); }
-function myName() { return ($('#in-name').value.trim() || 'Pemain').slice(0, 14); }
-
-// ====== papan ======
-function cell(i) {
-  if (i <= 6) return [7, 7 - i];
-  if (i <= 12) return [7 - (i - 6), 1];
-  if (i <= 18) return [1, 1 + (i - 12)];
-  return [1 + (i - 18), 7];
-}
-function tip(t) { return `data-tip="${esc(t)}"`; }
-function buildBoard() {
-  const b = $('#board');
-  b.innerHTML = JT.BOARD.map((t, i) => {
-    const [r, c] = cell(i), [em, nm] = JT.TILE[t];
-    return `<div class="tile" data-tile="${i}" ${tip(`${nm}: ${JT.TILE[t][2]}`)} style="grid-row:${r};grid-column:${c}"><div class="em">${em}</div><div>${nm}</div><div class="pawns"></div></div>`;
-  }).join('') + `<div class="center"><div id="kabar"></div><div id="oknum"></div><div id="dice"></div></div>`;
-  b.onclick = (e) => {
-    const t = e.target.closest('.tile'); if (!t) return;
-    const i = +t.dataset.tile, p = S && S.prompt;
-    if (p && p.kind === 'pos' && p.seat === mySeat && p.id !== sentFor && p.tiles.includes(i) && (!lockTiles || lockTiles.includes(i))) {
-      const need = Math.min(p.pick, p.tiles.length);
-      if (pick.includes(i)) pick = pick.filter((x) => x !== i); else if (pick.length < need) pick.push(i); else { pick.shift(); pick.push(i); }
-      render(); return;
-    }
-    const [em, nm, desc] = JT.TILE[JT.BOARD[i]];
-    toast(`${em} ${nm}: ${desc}`, 3200);
-  };
-}
-
-// ====== render ======
-let raf = 0;
-function schedule() { if (!raf) raf = setTimeout(() => { raf = 0; render(); }, 30); }
 function render() {
-  if (!S) return;
-  const o = S.o, t = S.t;
-  $('#g-title').textContent = mode === 'tutorial' && tutorialChapter ? `Tutorial ${tutorialChapter.id}/5 · ${tutorialChapter.title}` : `Putaran ${t}/${S.putaran}`;
-  // tiles
-  const p = S.prompt, picking = p && p.kind === 'pos' && p.seat === mySeat && p.id !== sentFor;
-  if (p && p.id !== pickFor) { pickFor = p.id; pick = []; }
-  const okAktif = t === 0 || t > o.bebasDi;
-  document.querySelectorAll('.tile').forEach((el) => {
-    const i = +el.dataset.tile;
-    const isPos = !picking && (o.pos.includes(i) || o.posTambahan === i);
-    el.classList.toggle('pos', isPos); el.classList.toggle('off', isPos && !okAktif);
-    const allowed = picking && p.tiles.includes(i) && (!lockTiles || lockTiles.includes(i));
-    el.classList.toggle('pick', allowed && !pick.includes(i));
-    el.classList.toggle('picked', picking && pick.includes(i));
-    el.classList.toggle('locked', picking && !allowed);
-    const pawns = S.rs.filter((r) => r.pos === i).map((r) =>
-      `<div class="pawn ${r.seat === mySeat ? 'me' : ''} ${S.turn === r.seat ? 'now' : ''}" style="background:${SEAT_COLOR[r.seat]}" data-tip="${esc(S.players[r.seat].name)} · ${JT.KELAS[r.kelas]}">${esc(S.players[r.seat].name[0] || '?')}</div>`).join('');
-    el.querySelector('.pawns').innerHTML = pawns;
-  });
-  // kabar
-  const kb = $('#kabar');
-  if (S.kabar) { const [nm, tx] = JT.KABAR[S.kabar.id]; kb.className = S.kabar.batal ? 'batal' : ''; kb.innerHTML = `<span data-tip="Kabar Istana: kebijakan/skandal yang berlaku selama putaran ini.">📰</span> <b>${esc(nm)}</b>${S.kabar.batal ? ' — <b style="text-decoration:none">DIBATALKAN demo</b>' : '<br>' + esc(tx)}`; }
-  else kb.innerHTML = '📰 <b>Kabar Istana</b><br>Dibuka tiap awal putaran.';
-  // oknum
-  const okEl = $('#oknum');
-  okEl.classList.toggle('turn', S.turn === 0);
-  okEl.classList.toggle('mine', mySeat === 0);
-  const hand = mySeat === 0 ? o.hand.map((k) => JT.OKNUM[k][0]).join(', ') || '-' : `${o.hand.length}`;
-  const C = JT.C;
-  okEl.innerHTML = `<div class="row" style="justify-content:space-between"><span class="name">👮 ${esc(S.players[0].name)}${mySeat === 0 ? ' (kamu)' : ''}</span>${okAktif ? '' : '<b style="color:var(--danger)" data-tip="Oknum di Lapas: semua Pos kosong, Rakyat bebas lewat.">🔒 Lapas</b>'}</div>
-    <div class="small" ${tip('Sorotan publik 0–10. Naik saat Oknum memeras, transfer, atau diviralkan. Menyentuh 10 = OTT.')}>Sorotan <b>${o.sorotan}</b>/10 ${o.sorotan >= 8 ? '⚠️' : ''}</div><div class="meter"><i style="width:${o.sorotan * 10}%"></i></div>
-    <div class="stats">
-      <span ${tip(`Citra institusi (0–${C.CITRA_MAX}). Harus ≥ ${C.CITRA_MIN} di akhir, kalau tidak Oknum dimutasi (Harta Aman ×${String(C.MUTASI_KALI).replace('.', ',')}). Turun kalau diviralkan, rekayasa dibongkar, laporan diproses, atau OTT.`)}>Citra <b>${o.citra}</b>/${C.CITRA_MIN}</span>
-      <span ${tip('Backing: pelindung saat OTT. Sekali pakai, Sorotan turun ke 7.')}>🛡️${o.backing}</span>
-      <span ${tip('Token Rekayasa Kasus yang tersisa.')}>⚖️${o.rekayasa}</span>
-      <span ${tip('Jumlah Pos Razia. Berkurang permanen kalau bawahan ditumbalkan.')}>🚨${o.nPos}</span>
-      <span ${tip('Rupiah di tangan Oknum. Bisa disita saat OTT, hangus di akhir.')}>💰${o.rp}</span>
-      <span ${tip('Harta Aman di luar negeri = skor akhir. Tidak bisa disita.')}>🏦<b>${o.aman}</b></span>
-      <span ${tip(`Kartu Oknum di tangan (maks. 3). Dapat 1 kartu tiap ${C.KARTU_TIAP} putaran.`)}>🃏${esc(hand)}</span></div>
-    <div class="nd-last" ${tip('Aksi terakhir Oknum di putaran ini')}>${esc(feed.lastAction(S.players[0].name, S.t)) || '—'}</div>${hostSeatBtn(0)}`;
-  $('#dice').textContent = S.dice ? `🎲 ${S.players[S.turn] ? S.players[S.turn].name : ''}: ${S.dice}` : '';
-  feed.render({ log: S.log, t: S.t, players: S.players.map((x, i) => ({ name: x.name, color: SEAT_COLOR[i] })) });
-  // players
-  $('#players').innerHTML = S.rs.map((r) => {
-    const mine = r.seat === mySeat, nx = r.kelas + 1;
-    const izin = r.kelas === 0 || r.kelas === 3 ? ''
-      : r.izin ? `<span ${tip(`Izin untuk jadi ${JT.KELAS[nx]} sudah ada.`)}>📄✅</span>`
-      : r.berkas !== null ? `<span ${tip(`Berkas izin resmi sedang diproses, jadi di putaran ${r.berkas}.`)}>📄⏳${r.berkas}</span>`
-      : `<span ${tip(`Belum punya izin untuk jadi ${JT.KELAS[nx]}. Lewat 🏛️ Kantor Izin (gratis, 2 putaran) atau pakai calo.`)}>📄–</span>`;
-    const kelasTip = r.kelas < 3 ? `Kelas ${JT.KELAS[r.kelas]}: gaji ${C.GAJI[r.kelas]}/giliran. Naik ke ${JT.KELAS[nx]}: biaya ${C.NAIK[nx]}${nx >= 2 ? ' + izin' : ''}.`
-      : `Pengusaha: gaji ${C.GAJI[3]}/giliran dan bisa Transfer ke Luar.`;
-    return `<div class="pcard ${mine ? 'mine' : ''} ${S.turn === r.seat ? 'turn' : ''}" ${mine ? 'id="me"' : ''}>
-      <div class="nm"><span class="dot" style="background:${SEAT_COLOR[r.seat]}"></span>${esc(S.players[r.seat].name)}${mine ? ' (kamu)' : ''}</div>
-      <div class="kl"><span ${tip(kelasTip)}>${KELAS_EM[r.kelas]} ${JT.KELAS[r.kelas]}</span> ${izin}</div>
-      <div><span ${tip('Rupiah di tangan. Untuk bayar & naik kelas. Hangus di akhir permainan.')}>💰${r.rp}</span> · <span ${tip('Harta Aman di luar negeri = skor akhir. Hanya Pengusaha yang bisa transfer.')}>🏦<b>${r.aman}</b></span> · <span ${tip('Kartu Rekaman: untuk Viralkan saat razia (Sorotan Oknum +3) atau membongkar rekayasa kasus. Maks. 3.')}>📹${r.rekaman}</span></div>
-      <div>${r.lapas ? `<span ${tip(`Di Lapas: melewatkan ${r.lapas} putaran lagi.`)}>🔒${r.lapas}</span> ` : ''}${r.utang ? `<span ${tip(`Utang Pinjol: bayar ${r.utang} saat melewati 🌅 Subuh.`)}>📱−${r.utang}</span> ` : ''}</div><div class="nd-last" ${tip('Aksi terakhir pemain ini di putaran sekarang')}>${esc(feed.lastAction(S.players[r.seat].name, S.t)) || '—'}</div>${hostSeatBtn(r.seat)}</div>`;
+  const d = D.data();
+  $('#saldo').textContent = angka(d.saldo);
+  $('#per').innerHTML = Object.keys(D.GAME).map((g) => `<div>${INFO[g].ic} ${esc(D.GAME[g].nama)}<b>${angka(d.perGame[g] || 0)}</b></div>`).join('');
+  $('#games').innerHTML = Object.keys(D.GAME).map((g) => {
+    const G = D.GAME[g], I = INFO[g], tut = store.get(I.tut, 0), bonus = d.tutorial[g];
+    return `<a class="card game" href="${G.url}">
+      <div class="ic" aria-hidden="true">${I.ic}</div>
+      <div class="body"><div class="nm">${esc(G.nama)}</div><div class="ds">${esc(I.ds)}</div>
+        <div class="chips"><span class="chip cur">${G.em} ${esc(G.uang)}</span><span class="chip">${I.pemain}</span><span class="chip">${I.durasi}</span>
+        ${tut || bonus ? '<span class="chip ok">✅ Tutorial</span>' : `<span class="chip">🎓 Tutorial: +${D.BONUS_TUTORIAL} Dana</span>`}</div></div>
+      <div class="go" aria-hidden="true">›</div></a>`;
   }).join('');
-  renderPrompt();
-  handleEvents();
-  if (S.phase === 'end' && mode !== 'tutorial') setTimeout(showEnd, 1600);
-}
-function hostSeatBtn(seat) {
-  if (mode !== 'host' || !S.players[seat].pid || S.players[seat].pid === myId) return '';
-  const online = net.online.has(S.players[seat].pid);
-  if (S.players[seat].bot) return `<button onclick="game.setBot(${seat},false)">↩ kembalikan ke pemain</button>`;
-  return online ? '' : `<button onclick="game.setBot(${seat},true)">📴 offline → jadikan bot</button>`;
-}
-
-function renderPrompt() {
-  const el = $('#prompt'), p = S.prompt;
-  if (S.phase !== 'play') { el.innerHTML = `<div class="wait">${S.phase === 'end' ? '🏁 Permainan selesai…' : ''}</div>`; return; }
-  if (p && p.seat === mySeat) {
-    const sent = p.id === sentFor;
-    if (p.kind === 'pos') {
-      const need = Math.min(p.pick, p.tiles.length);
-      el.innerHTML = `<div class="q">🚨 ${esc(p.text)}${NDBD.timerBadge(S)}</div><div class="small muted">Petak berbingkai kuning bisa dipilih. Dipilih: <b>${pick.length}/${need}</b></div>
-        <button class="opt go" data-pos="1" ${pick.length === need && !sent ? '' : 'disabled'}><b>Konfirmasi Pos</b><span>${pick.map((i) => JT.TILE[JT.BOARD[i]][1] + ' #' + i).join(', ') || 'tap petak di papan'}</span></button>`;
-      return;
-    }
-    el.innerHTML = `<div class="q">${esc(p.text)}${NDBD.timerBadge(S)}</div>` + p.options.map((x) => {
-      const dis = sent || x.disabled || (lock !== null && x.id !== lock);
-      return `<button class="opt ${lock !== null && x.id === lock ? 'go' : ''}" data-c='${esc(JSON.stringify(x.id))}' ${dis ? 'disabled' : ''}><b>${esc(x.label)}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ''}</button>`;
-    }).join('');
-    tipFor('p:' + p.kind);
-    return;
-  }
-  const who = p ? S.players[p.seat].name : S.turn !== null ? S.players[S.turn].name : '';
-  el.innerHTML = `<div class="wait">⏳ ${who ? (p ? `Menunggu <b>${esc(who)}</b> memilih…${NDBD.timerBadge(S)}` : `<b>${esc(who)}</b> sedang jalan…`) : '…'}</div>`;
-}
-$('#prompt').addEventListener('click', (e) => {
-  const b = e.target.closest('button'); if (!b || b.disabled || !S || !S.prompt) return;
-  if (b.dataset.pos) submit(pick.slice()); else submit(JSON.parse(b.dataset.c));
-});
-function submit(choice) {
-  const p = S.prompt; if (!p || p.seat !== mySeat || p.id === sentFor) return;
-  sentFor = p.id;
-  if (mode === 'tutorial') { const r = tutorialAnswer; tutorialAnswer = null; lock = null; lockTiles = null; coach.hide(); render(); if (r) r(choice); }
-  else if (mode === 'client') { net.send('action', { pid: myId, seat: mySeat, id: p.id, choice }); render(); }
-  else { game.answer(mySeat, p.id, choice); }
-}
-
-// ====== event: animasi & tips ======
-function handleEvents() {
-  for (const e of S.events) {
-    if (e.n <= lastEv) continue;
-    lastEv = e.n;
-    if (e.type === 'transfer' && e.seat === mySeat) flyMoney(e.jumlah);
-    if (e.type === 'kabar') tipFor('e:kabar');
-    if (e.type === 'demo') tipFor('e:demo');
-    if (e.type === 'ott') tipFor('e:ott');
-    if (e.type === 'lapas' && e.seat === mySeat) tipFor('e:lapas');
-    if (e.type === 'nasib' && e.seat === mySeat) tipFor('e:nasib');
-    const nm = (seat) => (seat === mySeat ? 'Kamu' : S.players[seat].name);
-    if (e.type === 'kabar') showCard('kabar', '📰 Kabar Istana' + (e.batal ? ' · DIBATALKAN DEMO' : ''), '🏛️', JT.KABAR[e.id][0], e.batal ? 'Rakyat turun ke jalan. Kabar ini tidak berlaku.' : JT.KABAR[e.id][1]);
-    if (e.type === 'nasib' && e.seat === mySeat) showCard('nasib', `🎲 Kartu Nasib · ${nm(e.seat)}`, '🎲', JT.NASIB[e.id][0], JT.NASIB[e.id][1]);
-    if (e.type === 'kartu_oknum') showCard('oknum', `🃏 Kartu Oknum · ${nm(0)}`, '👮', JT.OKNUM[e.id][0], JT.OKNUM[e.id][1]);
-    if (e.type === 'ambil_oknum') {
-      if (mySeat === 0) showCard('oknum', '🃏 Kamu dapat Kartu Oknum', '👮', JT.OKNUM[e.id][0], JT.OKNUM[e.id][1]);
-      else toast(`🃏 ${S.players[0].name} mengambil 1 Kartu Oknum (rahasia).`);
-    }
-  }
-}
-// ====== kartu besar di tengah layar ======
-const cards = NDBD.CardQueue($('#cardpop'), { speed: () => speed() });
-const showCard = (...a) => cards.show(...a);
-const feed = NDBD.Feed($('#log'), { label: 'Putaran' });
-
-// ====== tooltip ikon: hover (desktop) / tap (HP) ======
-const hoverTip = $('#hovertip');
-const isTouch = () => matchMedia('(hover: none)').matches;
-document.addEventListener('mouseover', (e) => {
-  const t = !isTouch() && e.target.closest('[data-tip]');
-  if (!t) { hoverTip.hidden = true; return; }
-  hoverTip.textContent = t.dataset.tip; hoverTip.hidden = false;
-  const r = t.getBoundingClientRect(), w = hoverTip.offsetWidth, h = hoverTip.offsetHeight;
-  hoverTip.style.left = Math.max(6, Math.min(innerWidth - w - 6, r.left + r.width / 2 - w / 2)) + 'px';
-  hoverTip.style.top = (r.top - h - 6 < 4 ? r.bottom + 6 : r.top - h - 6) + 'px';
-});
-document.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-tip]');
-  if (!t || t.closest('.tile') || t.closest('button') || !isTouch()) return;
-  toast(t.dataset.tip, 3500);
-});
-
-// ====== kecepatan ======
-const SPEEDS = [['🐢 Lambat', 1600], ['▶ Normal', 1000], ['⏩ Cepat', 450]];
-let speedIdx = store.get('ndbd_speed', 1);
-const speed = () => SPEEDS[speedIdx][1];
-function renderSpeed() { $('#btn-speed').textContent = SPEEDS[speedIdx][0]; $('#btn-speed').hidden = mode === 'client'; }
-$('#btn-speed').onclick = () => { speedIdx = (speedIdx + 1) % SPEEDS.length; store.set('ndbd_speed', speedIdx); renderSpeed(); };
-function flyMoney(n) {
-  const from = ($('#me') || $('#oknum')).getBoundingClientRect();
-  let badge = $('#offshore');
-  if (!badge) { badge = document.createElement('div'); badge.id = 'offshore'; document.body.appendChild(badge); }
-  badge.textContent = `🦁 Negeri Singa +${n}`; badge.hidden = false;
-  const to = badge.getBoundingClientRect();
-  for (let k = 0; k < 6; k++) {
-    const f = document.createElement('div'); f.className = 'fly'; f.textContent = '💸';
-    f.style.left = (from.left + from.width / 2 + (k - 3) * 8) + 'px'; f.style.top = (from.top + 10) + 'px';
-    f.style.setProperty('--dx', (to.left - from.left - from.width / 2 + 20) + 'px'); f.style.setProperty('--dy', (to.top - from.top) + 'px');
-    f.style.animationDelay = (k * 90) + 'ms';
-    document.body.appendChild(f); setTimeout(() => f.remove(), 2000);
-  }
-  setTimeout(() => { badge.hidden = true; }, 2600);
-}
-
-const TIPS = {
-  'p:razia': 'Kamu berhenti tepat di Pos Razia 🚨. "86" = lebih murah, tapi uangnya ke Oknum. Tilang resmi = lebih mahal, masuk kas negara. Viral = gratis & Sorotan Oknum +3, tapi ada risiko Pasal Karet (dadu 1–2 → Lapas).',
-  'p:kelola': 'Setelah jalan, kamu bisa naik kelas, urus izin lewat calo, atau (kalau Pengusaha) Transfer ke Luar. Hanya Harta Aman 🏦 yang dihitung di akhir.',
-  'p:lapas': 'Di Lapas kamu melewatkan giliran tanpa gaji. Yang punya uang bisa beli remisi (langsung bebas) atau sel mewah (tetap gajian).',
-  'p:pinjol': 'Pinjol: uang cepat sekarang, bayar lebih mahal saat melewati Subuh. Gagal bayar = uang & Kartu Rekaman hilang.',
-  'p:bongkar': 'Oknum merekayasa kasusmu! Kartu Rekaman 📹 bisa membongkarnya. Tanpa rekaman, kamu masuk Lapas.',
-  'p:pos': 'Rakyat hanya kena razia kalau BERHENTI tepat di Pos. Mereka maju 1–6 petak, jadi pasang Pos di petak 1–6 di depan Rakyat yang kaya ("86"-nya lebih mahal).',
-  'p:aksi': 'Satu aksi per giliran. Sowan menurunkan Sorotan, Rekayasa menjebloskan Rakyat (hindari yang pegang rekaman), Operasi resmi menaikkan Citra. Citra harus ≥ 9 di akhir.',
-  'p:ott': 'OTT! Pilih cara lolos. Harta Aman di luar negeri tidak bisa disita. Hanya Rupiah di tangan yang terancam.',
-  'e:kabar': 'Kabar Istana dibuka tiap putaran dan mengubah aturan sementara. Demo besar bisa membatalkan kabar berikutnya.',
-  'e:demo': 'Demo berhasil! Kabar Istana putaran berikutnya dibatalkan. Tapi Oknum bisa menangkap satu pendemo dengan tuduhan penghasutan.',
-  'e:ott': 'OTT terjadi saat Sorotan Oknum menyentuh 10. Biasanya Oknum lolos lewat Backing atau Tumbal, tapi kehilangan sesuatu.',
-  'e:lapas': 'Kamu masuk Lapas. Tajam ke bawah: rakyat miskin biasanya tidak mampu membeli remisi.',
-  'e:nasib': 'Kartu Nasib: hidup tidak bisa ditebak. Anak sakit, orderan ramai, atau salah tangkap.',
-};
-const tipQueue = [];
-function tipFor(key) {
-  if (mode === 'tutorial' || !TIPS[key]) return;
-  const seen = store.get('ndbd_tips', {});
-  if (seen[key] || !NDBD.tips.allow(key, S ? S.t : 0)) return;   // hanya prompt milikmu, maks 1 per putaran
-  seen[key] = 1; store.set('ndbd_tips', seen);
-  tipQueue.push(TIPS[key]); nextTip();
-}
-function nextTip() {
-  const el = $('#tip'); if (!el.hidden || !tipQueue.length) return;
-  el.innerHTML = `💡 ${esc(tipQueue.shift())}<div class="row"><span class="small muted">Tips pertama kali ${NDBD.tips.offButton()}</span><button class="ok">Oke</button></div>`;
-  el.hidden = false; el.querySelector('button.ok').onclick = () => { el.hidden = true; nextTip(); };
-}
-
-// ====== kartu peran & bantuan ======
-const ROLE = {
-  rakyat: `<h3>🧍 Kamu: RAKYAT</h3><p><b>🎯 Tujuan:</b> naik kelas <b>Jelata → Pedagang → Juragan → Pengusaha</b>, lalu <b>Transfer ke Luar</b>. Pemenang = <b>Harta Aman 🏦</b> terbanyak setelah ${JT.C.PUTARAN} putaran.</p>
-    <p><b>✅ Cara menang:</b></p><ul><li>Urus izin di 🏛️ Kantor Izin (gratis tapi lambat). Pakai calo hanya saat mendesak; uangnya menggemukkan Oknum.</li><li>Viralkan 📹 Oknum saat Sorotannya tinggi untuk memicu OTT.</li><li>Jadi Pengusaha secepatnya, lalu transfer (di 🏦 Bank potongannya lebih kecil).</li></ul>
-    <p><b>⚠️ Ancaman:</b> berhenti tepat di Pos Razia 🚨 (lewat saja aman), Rekayasa Kasus, Pasal Karet.</p>`,
-  oknum: `<h3>👮 Kamu: OKNUM APARAT</h3><p><b>🎯 Tujuan:</b> kumpulkan setoran ("86", pungli calo, uang keamanan), lalu <b>Transfer ke Luar</b>. Pemenang = <b>Harta Aman 🏦</b> terbanyak. <b>Citra harus ≥ 9</b> (maks. 10) di akhir, kalau tidak hartamu ×0,8. Citra turun kalau kamu diviralkan, rekayasamu dibongkar, laporan polisi diproses, atau kena OTT.</p>
-    <p><b>✅ Cara menang:</b></p><ul><li>Pasang Pos 🚨 di petak 1–6 di depan Rakyat yang kaya. Rakyat hanya kena razia kalau <b>berhenti tepat</b> di Pos.</li><li>Sowan ke atasan saat Sorotan ≥ 7.</li><li>Rekayasa kasus terhadap Rakyat yang tidak memegang Kartu Rekaman 📹.</li><li>Sisakan beberapa putaran terakhir untuk Operasi resmi, supaya Citra kembali ≥ 9.</li></ul>
-    <p><b>⚠️ Ancaman:</b> Sorotan 10 = <b>OTT</b>. Viral dan laporan polisi menaikkan Sorotan.</p>`,
-};
-function showRole() {
-  const role = mySeat === 0 ? 'oknum' : mySeat > 0 ? 'rakyat' : null;
-  if (!role) return;
-  const kartu = role === 'oknum' && S.o.hand.length ? `<p><b>🃏 Kartu awalmu:</b> ${S.o.hand.map((k) => `<b>${esc(JT.OKNUM[k][0])}</b> (${esc(JT.OKNUM[k][1])})`).join('; ')}</p>` : '';
-  $('#role-card').innerHTML = ROLE[role] + kartu + '<button class="btn primary" style="text-align:center"><b>Siap!</b></button>';
-  $('#ov-role').hidden = false;
-  $('#role-card button').onclick = () => { $('#ov-role').hidden = true; };
-}
-$('#help-card').innerHTML = `<h3>Aturan singkat Jalan Tikus</h3>
-  <p><b>Putaran (${JT.C.PUTARAN}×):</b> Kabar Istana → Oknum pasang 4 Pos & 1 aksi → tiap Rakyat: gaji, lempar dadu, jalan, efek petak, kelola.</p>
-  <p><b>Kelas & gaji:</b> Jelata 2 · Pedagang 3 (biaya ${JT.C.NAIK[1]}, tanpa izin) · Juragan 5 (biaya ${JT.C.NAIK[2]} + izin) · Pengusaha 7 (biaya ${JT.C.NAIK[3]} + izin).</p>
-  <p><b>Izin:</b> 🏛️ Kantor Izin (lewat saja, jadi 2 putaran kemudian, gratis) atau calo (kapan saja, 3/5 Rupiah ke Oknum).</p>
-  <p><b>Razia 🚨:</b> hanya kalau <b>berhenti tepat</b> di Pos. Pilihan: 86 (2/4/6/9 ke Oknum) · Tilang resmi (3/5/7/10 ke kas negara) · Viral 📹 (Sorotan +3, dadu Pasal Karet 1–2 = Lapas).</p>
-  <p><b>Oknum:</b> Sorotan 10 = OTT (lolos pakai Backing/Tumbal atau tertangkap). Citra (0–10) harus ≥ 9 di akhir, kalau tidak Harta Aman ×0,8. Citra naik lewat operasi resmi, tilang resmi & rekayasa; turun kalau diviralkan, rekayasa dibongkar, laporan diproses, atau OTT. Dapat 1 Kartu Oknum tiap 4 putaran.</p>
-  <p><b>Akhir:</b> setelah ${JT.C.PUTARAN} putaran, Rupiah hangus. Hanya Harta Aman 🏦 yang dihitung. Rakyat yang belum Pengusaha = 0.</p>
-  <p><b>Ikon:</b> 💰 Rupiah · 🏦 Harta Aman · 📹 Kartu Rekaman · 📄 izin · 🔒 Lapas · 📱 utang Pinjol · 🛡️ Backing · ⚖️ token Rekayasa · 🚨 Pos · 🃏 Kartu Oknum. Arahkan kursor (atau tap) ikon untuk penjelasan.</p>
-  <button class="btn primary" style="text-align:center"><b>Tutup</b></button>`;
-$('#btn-help').onclick = () => { $('#ov-help').hidden = false; };
-$('#help-card button').onclick = () => { $('#ov-help').hidden = true; };
-
-// ====== layar akhir ======
-function showEnd() {
-  if (!S || S.phase !== 'end' || !$('#scr-end').hidden) return;
-  const R = S.result, st = S.stats, g = (k) => st[k] || 0;
-  $('#e-rank').innerHTML = R.ranking.map((x, i) => `<div><span>${['🥇', '🥈', '🥉', '4.'][i]} ${esc(x.name)}${x.seat === mySeat ? ' (kamu)' : ''} <span class="small muted">${x.role === 'Oknum' ? '👮 Oknum' : KELAS_EM[x.kelas] + ' ' + JT.KELAS[x.kelas]}${x.mutasi ? ' · dimutasi ×0,8' : ''}</span></span><b>🏦 ${x.score}</b></div>`).join('');
-  const setoran = g('uang_86') + g('pungli') + g('uang_keamanan');
-  const gagal = S.rs.filter((r) => r.kelas < 3).length;
-  $('#e-korban').innerHTML = [
-    `💸 Rakyat membayar <b>${setoran}</b> Rupiah "86", pungli & uang keamanan, setara ${Math.round(setoran / 2)} hari gaji Jelata.`,
-    `⚖️ <b>${g('lapas_rekayasa')}</b> warga dipenjara karena rekayasa kasus${g('rekayasa_dibongkar') ? ` (${g('rekayasa_dibongkar')} dibongkar rekaman)` : ''}.`,
-    `📹 <b>${g('lapas_pasal_karet')}</b> warga dilaporkan balik (pasal karet) setelah memviralkan.`,
-    `📢 <b>${g('lapas_penghasutan')}</b> pendemo ditangkap karena "penghasutan".`,
-    `📝 <b>${g('laporan_diabaikan')}</b> laporan polisi diabaikan, <b>${g('laporan_diproses')}</b> diproses.`,
-    `🚜 <b>${g('lapak_digusur')}</b> lapak digusur · 📄 <b>${g('berkas_hilang')}</b> berkas izin "hilang".`,
-    `🚨 Oknum kena OTT <b>${g('ott_backing') + g('ott_tumbal_pos') + g('ott_tumbal_kartu') + g('ott_tertangkap')}</b> kali, benar-benar tertangkap <b>${g('ott_tertangkap')}</b> kali.`,
-    `🧍 <b>${gagal}</b> dari ${S.rs.length} rakyat tidak pernah sampai jadi Pengusaha.`,
+  const pct = (x) => Math.round(x * 100) + '%';
+  $('#rumus').innerHTML = [
+    `Rasio peringkat: juara <b>${pct(D.RASIO[0])}</b> · ke-2 ${pct(D.RASIO[1])} · ke-3 ${pct(D.RASIO[2])} · ke-4 ${pct(D.RASIO[3])} · ke-5 ${pct(D.RASIO[4])} (Meja Hijau 5 pemain).`,
+    `Mode: Online <b>100%</b> · Latihan vs bot 50% · Tutorial tamat: bonus sekali +${D.BONUS_TUTORIAL}.`,
+    'Kurs tiap game disetel supaya rata-rata satu match online bernilai ±100 Dana di ketiga game.',
   ].map((x) => `<li>${x}</li>`).join('');
-  $('#btn-again').hidden = mode === 'client';
-  show('scr-end');
+  const R = d.riwayat.slice(0, 10);
+  const MODE = { online: '🌐 Online', latihan: '🤖 Latihan', tutorial: '🎓 Tutorial' };
+  $('#riwayat').innerHTML = R.length ? R.map((r) => {
+    const G = D.GAME[r.game];
+    const detail = r.mode === 'tutorial' ? 'Bonus tutorial tamat'
+      : `${esc(r.role)} · peringkat ${r.peringkat}/${r.n} · ${G.em} ${r.kekayaan} ${esc(G.uang)}`;
+    const t = new Date(r.waktu);
+    return `<div><span>${INFO[r.game].ic} <b>${esc(G.nama)}</b> <span class="small muted">${MODE[r.mode] || ''}</span><br><span class="small muted">${detail} · ${t.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} ${t.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></span><span class="dn">+${angka(r.dana)} 🏝️</span></div>`;
+  }).join('') : '<p class="small muted" style="margin:0">Belum ada match. Mulai dari tutorial salah satu game untuk bonus Dana pertama.</p>';
 }
-$('#btn-end-back').onclick = () => { leaveAll(); show('scr-lobby'); };
-$('#btn-again').onclick = () => {
-  if (mode === 'practice') startPractice(practiceRole);
-  else if (mode === 'host') { S = null; net.lobby.started = false; net.pushLobby(); renderWait(); show('scr-wait'); }
-};
 
-// ====== game lokal (latihan / host) ======
-let timer = null;
-const TURN_DETIK = 45;   // online: batas waktu tiap giliran manusia
-function startLocal(players, broadcast) {
-  S = null; lastEv = 0; sentFor = 0; lock = null; lockTiles = null; feed.reset(); cards.clear();
-  mySeat = players.findIndex((p) => p.pid === myId);
-  if (timer) timer.stop();
-  timer = broadcast ? NDBD.TurnTimer({ seconds: TURN_DETIK, answer: (seat, id, c) => !!game && game.answer(seat, id, c),
-    onTimeout: (seat) => toast(`⏱️ Waktu ${S.players[seat].name} habis: dipilihkan otomatis.`, 2500) }) : null;
-  game = JT.createGame(players, {
-    delay: speed,
-    onUpdate(st) { S = st; if (timer) timer.watch(st); schedule(); if (broadcast) net.pushState(); },
-  });
-  S = game.S;
-  buildBoard(); show('scr-game'); render(); showRole();
-  game.run().then(() => { if (broadcast) net.pushState(true); schedule(); });
-}
-function startPractice(role) {
-  mode = 'practice'; practiceRole = role;
-  const me = { name: myName(), bot: false, pid: myId };
-  const players = role === 'oknum'
-    ? [me, { name: 'Bot Ojol 🤖', bot: true }, { name: 'Bot PKL 🤖', bot: true }, { name: 'Bot Buruh 🤖', bot: true }]
-    : [{ name: 'Pak Oknum 🤖', bot: true }, me, { name: 'Bot PKL 🤖', bot: true }, { name: 'Bot Buruh 🤖', bot: true }];
-  startLocal(players, false);
-}
-$('#btn-prac-r').onclick = () => startPractice('rakyat');
-$('#btn-prac-o').onclick = () => startPractice('oknum');
-
-// ====== tutorial ======
-const coach = {
-  info(step) { return new Promise((res) => this.show(step, true, res)); },
-  prompt(step) { this.show(step, false); },
-  show(step, blocking, done) {
-    const c = $('#coach'), hl = $('.coach-hl'), bub = $('.coach-bubble');
-    c.hidden = false; c.classList.toggle('blocking', blocking);
-    const tgt = step.target ? $(step.target) : null;
-    bub.innerHTML = `<div class="ch">Tutorial · Bab ${tutorialChapter.id}: ${esc(tutorialChapter.title)}</div><div>${step.text}</div>` +
-      (blocking ? '<div class="row" style="justify-content:flex-end;margin-top:8px"><button>Lanjut ▶</button></div>' : '<div class="hint">👉 Lakukan langkah yang disorot.</div>');
-    if (blocking) bub.querySelector('button').onclick = () => { c.hidden = true; done(); };
-    if (tgt) tgt.scrollIntoView({ block: 'nearest' });
-    const place = () => {
-      if (tgt) {
-        const r = tgt.getBoundingClientRect();
-        Object.assign(hl.style, { display: 'block', left: r.left - 4 + 'px', top: r.top - 4 + 'px', width: r.width + 8 + 'px', height: r.height + 8 + 'px' });
-        const below = r.top + r.height / 2 < innerHeight / 2;
-        if (!blocking) { bub.style.top = '8px'; bub.style.bottom = 'auto'; }
-        else if (below) { bub.style.top = Math.min(r.bottom + 12, innerHeight - 200) + 'px'; bub.style.bottom = 'auto'; }
-        else { bub.style.top = 'auto'; bub.style.bottom = Math.min(innerHeight - r.top + 12, innerHeight - 200) + 'px'; }
-      } else {
-        hl.style.display = blocking ? 'block' : 'none';
-        Object.assign(hl.style, { left: '50%', top: '50%', width: '0px', height: '0px' });
-        bub.style.top = '30%'; bub.style.bottom = 'auto';
-      }
-    };
-    requestAnimationFrame(() => requestAnimationFrame(place));
-    this.place = place;
-  },
-  hide() { $('#coach').hidden = true; },
-};
-addEventListener('resize', () => { if (!$('#coach').hidden && coach.place) coach.place(); });
-
-async function startTutorial() {
-  mode = 'tutorial'; tutorialAbort = false;
-  $('#btn-skip').hidden = false;
-  buildBoard(); show('scr-game');
-  for (const ch of TUT.CHAPTERS) {
-    if (tutorialAbort) break;
-    tutorialChapter = ch; mySeat = ch.human; lastEv = 0; sentFor = 0;
-    await TUT.runChapter(ch, JT, {
-      delay: speed,
-      onGame(g) { game = g; S = g.S; render(); },
-      onUpdate(st) { S = st; if (tutorialAbort) { game.stop(); } schedule(); },
-      step: async (step) => { if (tutorialAbort) return; render(); await new Promise((r) => setTimeout(r, 150)); await coach.info(step); },
-      answer(p, step) {
-        return new Promise((res) => {
-          tutorialAnswer = res;
-          lock = step && step.lock !== undefined ? step.lock : null;
-          lockTiles = step && step.lockTiles ? step.lockTiles : null;
-          render();
-          if (step) setTimeout(() => coach.prompt(step), 120);
-          if (tutorialAbort) res(p.bot);
-        });
-      },
-    });
-  }
-  coach.hide(); $('#btn-skip').hidden = true;
-  if (!tutorialAbort) store.set('ndbd_tutorial', 1);
-  tutorialChapter = null; mode = null; S = null;
-  show('scr-lobby'); refreshLobby();
-  if (!tutorialAbort) toast('🎉 Tutorial selesai! Coba Latihan vs Bot atau Main Online.', 3500);
-}
-$('#btn-tutorial').onclick = () => startTutorial();
-$('#btn-skip').onclick = () => {
-  tutorialAbort = true; coach.hide();
-  if (tutorialAnswer) { const r = tutorialAnswer; tutorialAnswer = null; r(S && S.prompt ? S.prompt.bot : null); }
-  if (game) game.stop();
-};
-
-// ====== online (Supabase Realtime Broadcast) ======
-const net = {
-  sb: null, ch: null, code: null, isHost: false, lobby: null, online: new Set(), hostSeen: true, pushT: 0,
-  ready() { return SB_URL.startsWith('http') && window.supabase; },
-  async open(code, isHost) {
-    this.leave();
-    this.code = code; this.isHost = isHost;
-    if (!this.sb) this.sb = window.supabase.createClient(SB_URL, SB_KEY, { realtime: { params: { eventsPerSecond: 20 } } });
-    const ch = this.sb.channel('ndbd-' + code, { config: { broadcast: { self: false }, presence: { key: myId } } });
-    this.ch = ch;
-    if (isHost) this.lobby = { code, hostId: myId, oknumId: 'bot', started: false, players: [] };
-    ch.on('presence', { event: 'sync' }, () => this.onPresence());
-    ch.on('broadcast', { event: 'hello' }, () => { if (this.isHost) { this.pushLobby(); if (S) this.pushState(true); } });
-    ch.on('broadcast', { event: 'action' }, ({ payload: a }) => {
-      if (!this.isHost || !S || !game) return;
-      const pl = S.players[a.seat];
-      if (pl && pl.pid === a.pid && !pl.bot) game.answer(a.seat, a.id, a.choice);
-    });
-    ch.on('broadcast', { event: 'chat' }, ({ payload }) => chat.receive(payload));
-    ch.on('broadcast', { event: 'lobby' }, ({ payload }) => { if (!this.isHost) { this.lobby = payload; if (!payload.started) { S = null; renderWait(); show('scr-wait'); } } });
-    ch.on('broadcast', { event: 'state' }, ({ payload }) => {
-      if (this.isHost) return;
-      NDBD.syncClock(payload.hostNow);
-      S = payload; mySeat = S.players.findIndex((p) => p.pid === myId);
-      if ($('#scr-game').hidden && S.phase !== 'end') { lastEv = S.evN; sentFor = 0; buildBoard(); show('scr-game'); showRole(); }
-      schedule();
-      if (S.phase === 'end') setTimeout(showEnd, 1600);
-    });
-    await new Promise((res, rej) => {
-      const to = setTimeout(() => rej(new Error('timeout')), 10000);
-      ch.subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          clearTimeout(to);
-          await ch.track({ id: myId, name: myName(), host: isHost, ts: Date.now() });
-          if (!isHost) this.send('hello', { id: myId });
-          res();
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') { clearTimeout(to); rej(new Error(status)); }
-      });
-    });
-  },
-  onPresence() {
-    const ps = Object.values(this.ch.presenceState()).map((a) => a[0]).filter(Boolean).sort((a, b) => a.ts - b.ts);
-    this.online = new Set(ps.map((p) => p.id));
-    if (this.isHost) {
-      if (!this.lobby.started) this.lobby.players = ps.map((p) => ({ id: p.id, name: p.name }));
-      if (this.lobby.oknumId !== 'bot' && !this.online.has(this.lobby.oknumId) && !this.lobby.started) this.lobby.oknumId = 'bot';
-      this.pushLobby(); renderWait(); if (S) schedule();
-    } else {
-      const hostHere = ps.some((p) => p.host);
-      $('#g-banner').hidden = hostHere; $('#g-banner').textContent = '📴 Host terputus. Tunggu host kembali, atau buat room baru.';
-    }
-  },
-  send(event, payload) { if (this.ch) this.ch.send({ type: 'broadcast', event, payload }); },
-  pushLobby() { if (this.isHost) this.send('lobby', this.lobby); },
-  pushState(now) {
-    if (!this.isHost || !S) return;
-    const go = () => {
-      this.pushT = 0;
-      const pub = JSON.parse(JSON.stringify(S, (k, v) => (k === 'decks' ? undefined : v)));
-      pub.hostNow = Date.now();
-      this.send('state', pub);
-    };
-    if (now) { clearTimeout(this.pushT); go(); } else if (!this.pushT) this.pushT = setTimeout(go, 120);
-  },
-  leave() { if (this.ch) { this.sb.removeChannel(this.ch); this.ch = null; } this.lobby = null; },
-};
-function leaveAll() {
-  if (timer) timer.stop();
-  if (game && mode !== 'client') game.stop();
-  net.leave(); mode = null; S = null; game = null; $('#g-banner').hidden = true;
-  chat.setEnabled(false); chat.reset();
-}
-// ====== chat (online, kanal Umum) ======
-const chat = NDBD.Chat({ myId, myName, mySeat: () => mySeat, send: (m) => net.send('chat', m) });
-
-function renderWait() {
-  const L = net.lobby; if (!L) return;
-  $('#w-code').textContent = L.code;
-  $('#w-players').innerHTML = L.players.map((p, i) => {
-    const okn = L.oknumId === p.id;
-    const btn = net.isHost ? `<button data-okn="${esc(p.id)}">${okn ? 'Batal Oknum' : 'Jadikan Oknum'}</button>` : '';
-    return `<div><span>${i === 0 ? '👑 ' : ''}${esc(p.name)}${p.id === myId ? ' (kamu)' : ''} ${okn ? '<span class="okn">· 👮 Oknum</span>' : '<span class="muted">· 🧍 Rakyat</span>'}</span>${btn}</div>`;
-  }).join('') + (L.oknumId === 'bot' ? '<div><span class="muted">👮 Oknum: bot</span></div>' : '') +
-    `<div><span class="muted small">Kursi kosong diisi bot. Maks. 3 Rakyat + 1 Oknum manusia.</span></div>`;
-  $('#w-host').hidden = !net.isHost; $('#w-guest').hidden = net.isHost;
-}
-$('#w-players').addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-okn]'); if (!b || !net.isHost) return;
-  net.lobby.oknumId = net.lobby.oknumId === b.dataset.okn ? 'bot' : b.dataset.okn;
-  net.pushLobby(); renderWait();
-});
-function newCode() { const A = 'ABCDEFGHJKMNPQRSTUVWXYZ'; return Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join(''); }
-async function hostRoom() {
-  if (!net.ready()) return toast('Mode online belum dikonfigurasi.');
-  store.set('ndbd_name', myName());
-  mode = 'host';
-  try { await net.open(newCode(), true); } catch (e) { toast('Gagal terhubung: ' + e.message); mode = null; return; }
-  chat.reset(); chat.setEnabled(true);
-  renderWait(); show('scr-wait');
-}
-async function joinRoom(code) {
-  if (!net.ready()) return toast('Mode online belum dikonfigurasi.');
-  code = code.trim().toUpperCase(); if (code.length !== 4) return toast('Kode room 4 huruf.');
-  store.set('ndbd_name', myName());
-  mode = 'client'; S = null;
-  try { await net.open(code, false); } catch (e) { toast('Gagal terhubung: ' + e.message); mode = null; return; }
-  chat.reset(); chat.setEnabled(true);
-  net.lobby = { code, players: [], oknumId: 'bot' }; renderWait(); show('scr-wait');
-}
-$('#btn-host').onclick = hostRoom;
-$('#btn-join').onclick = () => joinRoom($('#in-code').value);
-$('#btn-wait-back').onclick = () => { leaveAll(); show('scr-lobby'); };
-$('#btn-share').onclick = async () => {
-  const url = location.origin + location.pathname + '?room=' + net.lobby.code;
-  const text = `Main Jalan Tikus (Negeri di Balik Daun) bareng! Kode room: ${net.lobby.code}`;
-  try { if (navigator.share) await navigator.share({ title: 'Jalan Tikus', text, url }); else { await navigator.clipboard.writeText(url); toast('Link disalin!'); } }
-  catch (e) { /* dibatalkan */ }
-};
-$('#btn-start').onclick = () => {
-  const L = net.lobby, byId = Object.fromEntries(L.players.map((p) => [p.id, p]));
-  const seats = [L.oknumId !== 'bot' && byId[L.oknumId] ? { name: byId[L.oknumId].name, bot: false, pid: L.oknumId } : { name: 'Pak Oknum 🤖', bot: true }];
-  L.players.filter((p) => p.id !== L.oknumId).slice(0, 3).forEach((p) => seats.push({ name: p.name, bot: false, pid: p.id }));
-  const bots = ['Bot Ojol 🤖', 'Bot PKL 🤖', 'Bot Buruh 🤖'];
-  while (seats.length < 4) seats.push({ name: bots[seats.length - 1], bot: true });
-  L.started = true; net.pushLobby();
-  startLocal(seats, true);
-};
-
-// ====== lobby ======
-function refreshLobby() {
-  const done = store.get('ndbd_tutorial', 0);
-  $('#btn-tutorial').classList.toggle('primary', !done);
-  $('#btn-tutorial').querySelector('b').textContent = done ? '▶ Ulangi tutorial' : '▶ Tutorial (5 bab, ±5 menit)';
-  const on = SB_URL.startsWith('http');
-  $('#btn-host').disabled = !on; $('#btn-join').disabled = !on;
-  $('#online-note').textContent = on ? '' : 'Mode online belum dikonfigurasi di file ini.';
-}
 $('#in-name').value = store.get('ndbd_name', '');
-$('#in-name').addEventListener('change', () => store.set('ndbd_name', myName()));
-const qRoom = new URLSearchParams(location.search).get('room');
-if (qRoom) { $('#in-code').value = qRoom.toUpperCase(); toast(`Isi namamu lalu tekan Gabung untuk masuk room ${qRoom.toUpperCase()}.`, 4000); }
-refreshLobby();
+$('#in-name').addEventListener('change', () => store.set('ndbd_name', $('#in-name').value.trim().slice(0, 14)));
+addEventListener('storage', render);          // dompet diperbarui dari tab game lain
+addEventListener('pageshow', render);         // kembali dari halaman game (bfcache)
+render();
 </script>
 </body>
 </html>

@@ -14,12 +14,14 @@
     LINDUNG: { jeda: true, laci1: true, buka1: true, simpati: true, setor1: true, ott1: true }, HARGA: [3, 6, 10], PROD: [1, 2, 4], FEE: 0.2, FEE_AMNESTI: 0.05, GAJI_JAKSA: 4, GAJI_DIREKSI: 1,
     LOKER_AWAL: 4, LOKER_MAX: 10, LOKER_RESET: 4, KRISIS: 0.2,
     PENGALI: [1, 2, 3], AMBANG: [6, 5, 4], CITRA_VONIS: [1, 2, 3], LAPAS_VONIS: [1, 2, 2], BEKU: [1, 1, 2],
-    CITRA_KALAH: 2, KONPERS_CITRA: 2, KONPERS_LEPAS: 3, CITRA_MIN: 6, CITRA_AWAL: 5,
+    CITRA_KALAH: 2, KONPERS_CITRA: 2, KONPERS_LEPAS: 3, CITRA_MIN: 5, CITRA_AWAL: 6,
     ISTANA_BACKING: 2, LOBI: 5, BACKING_MAX: 3, CUCI: 2, SOWAN: 3, REMISI: 3, SEL_MEWAH: 2, KEMITRAAN_FEE: 3,
     UMKM_PENGUSAHA: 3, SETOR: 0.5, KORPORASI_JEJAK: 0.5, UPETI: 2, UMKM_JEJAK: 1, UMKM_KECIL: 1, KONG_SIDANG: 1,
     KARET: 2, VIRAL_MAX: 3, BOT_CITRA: 5,
+    // Kekayaan akhir = Cuan + Aset + nilai Usaha aktif (harga dasar × NILAI_USAHA); KURS: Kekayaan → Dana Offshore (docs/06)
+    NILAI_USAHA: 0.25, KURS: 4.5, UANG: 'Cuan', ASET_BOT_RP: 20, JAKSA_ASET_RP: 10, JAKSA_ASET_SOR: 8,
   };
-  // role: [emoji, nama, Rupiah awal, ukuran Usaha awal, Backing, gaji]
+  // role: [emoji, nama, Cuan awal, ukuran Usaha awal, Backing, gaji]
   const ROLES = {
     jaksa: ['⚖️', 'Jaksa'],
     kong: ['🎩', 'Konglomerat', 11, [1], 2, 0],
@@ -50,7 +52,7 @@
     3: ['Abolisi demi Rekonsiliasi', 'Semua pemain di Lapas langsung bebas, termasuk Jaksa.'],
     4: ['UU BUMN Baru: Rugi BUMN Bukan Rugi Negara', 'Ambang sidang Direksi maksimal 4 ronde ini.'],
     5: ['Jaksa Agung Ganti 43 Kajari', 'Sorotan Jaksa −1, kasus Laci terlama dibuang. Masalahnya dipindah, bukan diselesaikan.'],
-    6: ['Pengampunan Pajak', 'Transfer ke Luar Pelaku Usaha hanya dipotong 5% ronde ini.'],
+    6: ['Pengampunan Pajak', 'Beli Aset Pelaku Usaha hanya dipotong 5% ronde ini, dan Jaksa tidak kena Sorotan.'],
     7: ['RUU Perampasan Aset Ditunda Lagi', 'Tidak terjadi apa-apa. Kartu dikocok kembali ke deck.'],
     8: ['Direksi Takut Ambil Keputusan', 'Lapangan Kerja −2.'],
     9: ['Harga Komoditas Naik', 'Usaha Pangan & Tambang berproduksi +1 ronde ini.'],
@@ -61,6 +63,7 @@
   const KALK = ['Rendah', 'Tinggi', 'Fantastis'];
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const Dompet = () => root.NDBDDompet || require('./ndbd-dompet.js');   // konversi Kekayaan → Dana Offshore
   function mulberry32(seed) {
     return function () {
       seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
@@ -89,11 +92,11 @@
       t: 0, ronde: opts.putaran || C.RONDE, phase: 'play', turn: null, kabar: null, loker: C.LOKER_AWAL,
       pasar: [], proyekBuka: [], log: [], logN: 0, events: [], evN: 0, prompt: null, stats: {}, result: null, f: {},
       players: players.map((p) => ({ name: p.name, bot: !!p.bot, pid: p.pid || null })),
-      j: { seat: 0, rp: 3, aman: 0, citra: C.CITRA_AWAL, sorotan: 2, backing: 1, lapas: 0, laci: [], fantastis: 0 },
+      j: { seat: 0, rp: 3, aset: 0, citra: C.CITRA_AWAL, sorotan: 2, backing: 1, lapas: 0, laci: [], fantastis: 0 },
       ps: players.slice(1).map((p, i) => {
         const role = p.role || ['kong', 'bumn', 'umkm'][i];
         const R = ROLES[role];
-        return { seat: i + 1, role, rp: R[2], aman: 0, usaha: [], jejak: 0, jejakMitra: 0, backing: R[4], gaji: R[5],
+        return { seat: i + 1, role, rp: R[2], aset: 0, usaha: [], jejak: 0, jejakMitra: 0, backing: R[4], gaji: R[5],
           viral: role === 'umkm' ? 2 : 0, lapas: 0, pengusaha: role !== 'umkm', menangSidang: false };
       }),
       decks: { usaha: deckUsaha, proyek: deckProyek, kabar: script.kabar ? script.kabar.slice().reverse() : shuffle(Object.keys(KABAR).map(Number)) },
@@ -113,7 +116,7 @@
     const update = () => opts.onUpdate && opts.onUpdate(S);
     const log = (msg) => { S.log.push({ n: ++S.logN, t: S.t, msg }); if (S.log.length > 60) S.log.shift(); update(); };
     const PACE = { ronde: 1, kabar: 2.5, produksi: 0.8, upeti: 1.2, turn: 0.4, beli: 1, proyek: 1.2, kemitraan: 1.5, korporasi: 1.2,
-      transfer: 1.5, perkara: 2.5, sidang: 1.5, vonis: 2, laci: 1.2, respons: 1.2, ott: 1.5, lapas: 1.5, krisis: 2, koreksi_ma: 1.5, aksi: 1 };
+      aset: 1.5, perkara: 2.5, sidang: 1.5, vonis: 2, laci: 1.2, respons: 1.2, ott: 1.5, lapas: 1.5, krisis: 2, koreksi_ma: 1.5, aksi: 1 };
     const pace = async (k = 1) => { if (opts.onPace) opts.onPace(k); const d = delayMs(); if (d) await sleep(d * k); };
     async function ev(type, data = {}) {
       const e = Object.assign({}, data, { n: ++S.evN, type, t: S.t });
@@ -179,7 +182,7 @@
       const options = [
         { id: 'backing', label: 'Pakai Backing', sub: 'Buang 1 Backing · Sorotan → 7', disabled: !j.backing },
         { id: 'tumbal', label: 'Tumbal Kajari', sub: 'Buang 1 kasus Laci selamanya · Sorotan → 6 · Citra −2', disabled: !j.laci.length },
-        { id: 'tertangkap', label: 'Pasrah tertangkap', sub: 'Separuh Rupiah disita · Lapas 1 ronde · Sorotan → 5' },
+        { id: 'tertangkap', label: 'Pasrah tertangkap', sub: 'Separuh Cuan disita · Lapas 1 ronde · Sorotan → 5' },
       ];
       await ev('ott', { seat: 0 });
       const c = await ask(0, { kind: 'ott', text: '🚨 OTT! Sorotan menyentuh 10. Bagaimana kamu lolos?', options },
@@ -190,7 +193,7 @@
         log(`🚨 OTT! ${name(0)} mengorbankan Kajari: kasus ${name(k.seat)} dibuang dari Laci. Berita: "oknum jaksa daerah dicopot".`);
       } else {
         const sita = Math.ceil(j.rp / 2); j.rp -= sita; j.lapas = 1; j.sorotan = 5; st('ott_tertangkap');
-        log(`🚨 OTT! ${name(0)} TERTANGKAP. ${sita} Rupiah disita, masuk Lapas 1 ronde.`);
+        log(`🚨 OTT! ${name(0)} TERTANGKAP. ${sita} Cuan disita, masuk Lapas 1 ronde.`);
       }
     }
     async function masukLapas(p, n, sebab) {
@@ -199,14 +202,16 @@
       log(`🔒 ${name(p.seat)} masuk Lapas ${n} ronde: ${why}.`);
       await ev('lapas', { seat: p.seat, sebab });
     }
-    async function transfer(p) {
+    // Beli Aset: Cuan → Aset (potong 20%). Aset tidak bisa disita OTT/vonis dan tidak kena krisis. Jaksa: pamer harta, Sorotan +1.
+    async function beliAset(p) {
       const masuk = Math.floor(p.rp * (1 - fee(p)));
-      p.aman += masuk;
-      log(`💸 ${name(p.seat)} transfer ${p.rp} Rupiah ke luar negeri → +${masuk} Harta Aman.`);
+      p.aset += masuk; st('aset_dibeli', masuk);
+      log(`🏠 ${name(p.seat)} membelanjakan ${p.rp} Cuan jadi Aset (+${masuk}).`);
       p.rp = 0;
-      await ev('transfer', { seat: p.seat, jumlah: masuk });
-      if (p === j) await naikSorotan(1);
+      await ev('aset', { seat: p.seat, jumlah: masuk });
+      if (p === j && S.f.fee === null) await naikSorotan(1);
     }
+    const nilaiUsahaAktif = (p) => p.usaha.filter((u) => !u.beku).reduce((s, u) => s + Math.floor(C.HARGA[u.ukuran] * C.NILAI_USAHA), 0);
 
     // ---------- Kabar Istana ----------
     async function bukaKabar() {
@@ -241,7 +246,7 @@
         p.rp += n;
       }
       if (!j.lapas) j.rp += C.GAJI_JAKSA;
-      log(`🏭 Produksi: ${ps.map((p) => `${name(p.seat)} ${p.rp}`).join(' · ')} Rupiah.`);
+      log(`🏭 Produksi: ${ps.map((p) => `${name(p.seat)} ${p.rp}`).join(' · ')} Cuan.`);
       await ev('produksi', {});
     }
     async function upeti() {
@@ -261,7 +266,7 @@
           await perkara(p, kasus.rugi, kasus.kalk, false, true);
         }
       }
-      if (total) { log(`🗄️ Upeti Laci: ${total} Rupiah masuk ke ${name(0)}.`); await ev('upeti', { total }); }
+      if (total) { log(`🗄️ Upeti Laci: ${total} Cuan masuk ke ${name(0)}.`); await ev('upeti', { total }); }
     }
 
     // ---------- Pelaku Usaha ----------
@@ -273,13 +278,13 @@
         log(`🏢 ${name(p.seat)} mengakuisisi ${c.nama} pakai uang negara (Aksi Korporasi). Jejak +${jj}.`);
       } else {
         const h = harga(p, c); p.rp -= h;
-        log(`🛒 ${name(p.seat)} membeli ${c.nama} (${h} Rupiah).`);
+        log(`🛒 ${name(p.seat)} membeli ${c.nama} (${h} Cuan).`);
       }
       p.usaha.push(c); ubahLoker(1);
       await ev(gratis ? 'korporasi' : 'beli', { seat: p.seat, id: c.id });
       if (!p.pengusaha && p.usaha.length >= C.UMKM_PENGUSAHA) {
         p.pengusaha = true; st('umkm_jadi_pengusaha_ronde', S.t);
-        log(`⬆️ ${name(p.seat)} naik kelas jadi Pengusaha! Sekarang boleh Transfer ke Luar.`);
+        log(`⬆️ ${name(p.seat)} naik kelas jadi Pengusaha! Sekarang boleh Beli Aset.`);
         await ev('naik', { seat: p.seat });
       }
     }
@@ -294,14 +299,14 @@
         log(`🤝 Kemitraan: ${name(pemberi.seat)} memberi proyek ${pr(id).nama} ke ${name(p.seat)} (+${pr(id).untung}, fee ${C.KEMITRAAN_FEE}). Keduanya kena Jejak.`);
         await ev('kemitraan', { seat: p.seat, from: pemberi.seat, id });
       } else {
-        log(`📜 ${name(p.seat)} mengambil Proyek ${pr(id).nama}: +${pr(id).untung} Rupiah, Jejak +${jj}.`);
+        log(`📜 ${name(p.seat)} mengambil Proyek ${pr(id).nama}: +${pr(id).untung} Cuan, Jejak +${jj}.`);
         await ev('proyek', { seat: p.seat, id });
       }
     }
     // rencana bot (heuristik simulasi): { cat, arg, v }
     function nilaiUsaha(p, c) { return prodUsaha(p, c) * sisa() - harga(p, c) + (p.pengusaha ? 0 : 8); }
     function rencanaBot(p) {
-      if (p.pengusaha && p.rp > 0 && (S.t >= S.ronde - 1 || p.rp >= 20)) return { cat: 'transfer' };
+      if (p.pengusaha && p.rp >= C.ASET_BOT_RP && S.t < S.ronde) return { cat: 'aset' };
       const opsi = [];
       for (const c of S.pasar) {
         if (harga(p, c) <= p.rp) opsi.push({ v: nilaiUsaha(p, c), cat: 'beli', arg: c.id });
@@ -314,7 +319,6 @@
       let best = null;
       for (const o of opsi) if (!best || o.v > best.v) best = o;
       if (best && best.v > 0) return best;
-      if (p.pengusaha && p.rp >= 10) return { cat: 'transfer' };
       return { cat: 'pas' };
     }
 
@@ -330,7 +334,7 @@
       if (c === 'lewat') return;
       const tBot = (calonBot.length ? calonBot : lain).slice().sort((a, b) => a.rp - b.rp)[0].seat;
       const tSeat = await ask(p.seat, { kind: 'kemitraan_target', text: `Kemitraan ${pr(c).nama}: untuk siapa?`,
-        options: lain.map((q) => ({ id: q.seat, label: name(q.seat), sub: `${ROLES[q.role][1]} · ${q.rp} Rupiah · Jejak ${q.jejak}` })) }, tBot);
+        options: lain.map((q) => ({ id: q.seat, label: name(q.seat), sub: `${ROLES[q.role][1]} · ${q.rp} Cuan · Jejak ${q.jejak}` })) }, tBot);
       const q = ps.find((x) => x.seat === tSeat);
       const jawab = await ask(q.seat, { kind: 'terima_kemitraan', text: `${name(p.seat)} menawarkan proyek ${pr(c).nama} lewat Kemitraan.`, options: [
         { id: 'terima', label: `Terima (+${pr(c).untung - C.KEMITRAAN_FEE} bersih)`, sub: `Untung ${pr(c).untung}, fee ${C.KEMITRAAN_FEE} ke Direksi · Jejak +${jejakProyek(q, c)}` },
@@ -365,15 +369,15 @@
         ];
         if (p.role === 'bumn') options.push({ id: 'korporasi', label: '🏢 Aksi Korporasi', sub: 'Ambil Usaha gratis pakai uang negara · Jejak + ½ harga', disabled: !S.pasar.length });
         options.push(
-          { id: 'transfer', label: `💸 Transfer ke Luar (−${Math.round(fee(p) * 100)}%)`, sub: !p.pengusaha ? `Belum Pengusaha (butuh ${C.UMKM_PENGUSAHA} Usaha)` : `${p.rp} Rupiah → ${Math.floor(p.rp * (1 - fee(p)))} Harta Aman`, disabled: !p.pengusaha || !p.rp },
+          { id: 'aset', label: `🏠 Beli Aset (−${Math.round(fee(p) * 100)}%)`, sub: !p.pengusaha ? `Belum Pengusaha (butuh ${C.UMKM_PENGUSAHA} Usaha)` : `${p.rp} Cuan → Aset ${Math.floor(p.rp * (1 - fee(p)))} · aman dari vonis & krisis`, disabled: !p.pengusaha || !p.rp },
           { id: 'lobi', label: `🛡️ Lobi Istana (${C.LOBI})`, sub: `+1 Backing (maks ${C.BACKING_MAX}). 2 Backing = Minta Istana`, disabled: p.rp < C.LOBI || p.backing >= C.BACKING_MAX },
-          { id: 'cuci', label: '🧼 Hibah Yayasan', sub: `Hapus Jejak, ${C.CUCI} Rupiah per Jejak`, disabled: !p.jejak || p.rp < C.CUCI },
+          { id: 'cuci', label: '🧼 Hibah Yayasan', sub: `Hapus Jejak, ${C.CUCI} Cuan per Jejak`, disabled: !p.jejak || p.rp < C.CUCI },
           { id: 'setoran', label: '🤫 Setoran Pengamanan (bebas)', sub: sudahSetor ? 'Sudah menyetor di giliran ini' : 'Bayar Jaksa. Tidak memakai Aksi. Janji tidak mengikat · Sorotan Jaksa +1', disabled: !p.rp || (C.LINDUNG.setor1 && sudahSetor) },
           { id: 'pas', label: 'Pas', sub: 'Tidak melakukan apa-apa' });
         const c = await ask(p.seat, { kind: 'aksi', text: 'Pilih 1 aksi.', options }, plan.cat);
         const kembali = { id: 'kembali', label: '↩ Kembali', sub: '' };
         if (c === 'pas') { log(`${name(p.seat)} pas.`); await ev('aksi', { seat: p.seat, c }); return; }
-        if (c === 'transfer') { await transfer(p); return; }
+        if (c === 'aset') { await beliAset(p); return; }
         if (c === 'lobi') { p.rp -= C.LOBI; p.backing++; st('lobi_istana'); log(`🛡️ ${name(p.seat)} melobi Istana: +1 Backing.`); await ev('aksi', { seat: p.seat, c }); return; }
         if (c === 'beli' || c === 'korporasi') {
           const gratis = c === 'korporasi';
@@ -387,7 +391,7 @@
         }
         if (c === 'proyek') {
           const id = await ask(p.seat, { kind: 'pilih_proyek', text: 'Ambil Proyek mana?',
-            options: proyekBisa.map((x) => ({ id: x, label: `${pr(x).sektor === null ? '🏘️' : SEKTOR[pr(x).sektor][0]} ${pr(x).nama}`, sub: `+${pr(x).untung} Rupiah · Jejak +${jejakProyek(p, x)}` })).concat([kembali]) },
+            options: proyekBisa.map((x) => ({ id: x, label: `${pr(x).sektor === null ? '🏘️' : SEKTOR[pr(x).sektor][0]} ${pr(x).nama}`, sub: `+${pr(x).untung} Cuan · Jejak +${jejakProyek(p, x)}` })).concat([kembali]) },
           plan.cat === 'proyek' ? plan.arg : proyekBisa.reduce((a, x) => (pr(x).untung > pr(a).untung ? x : a)));
           if (id === 'kembali') continue;
           await ambilProyek(p, id); return;
@@ -405,7 +409,7 @@
           const n = await ask(p.seat, { kind: 'setoran', text: `Berapa "setoran pengamanan" untuk ${name(0)}?`, options: opts2.concat([kembali]) }, 'kembali');
           if (n === 'kembali') continue;
           p.rp -= n; j.rp += n; st('setoran_pengamanan_bebas', n); sudahSetor = true;
-          log(`🤫 ${name(p.seat)} menitipkan ${n} Rupiah ke ${name(0)}. "Semoga perkaranya aman."`);
+          log(`🤫 ${name(p.seat)} menitipkan ${n} Cuan ke ${name(0)}. "Semoga perkaranya aman."`);
           await naikSorotan(1);
         }
       }
@@ -455,7 +459,7 @@
       if (c === 'sowan') { j.rp -= C.SOWAN; j.sorotan = Math.max(0, j.sorotan - 2); st('sowan'); log(`🙇 ${name(0)} sowan ke atasan (setor ${C.SOWAN}).`); await ev('aksi', { seat: 0, c }); }
       else if (c === 'selidik') {
         const tSeat = await ask(0, { kind: 'target', text: 'Selidiki siapa?', options: berjejak.map((p) => ({ id: p.seat, label: `${ROLES[p.role][0]} ${name(p.seat)}`,
-          sub: bolehDijerat(p) ? `Jejak ${p.jejak} · ${p.rp} Rupiah · 🛡️${p.backing}${p.role === 'umkm' ? ` · 📹${p.viral}` : ''}` : 'Baru saja dijerat: masa jeda sampai ronde depan',
+          sub: bolehDijerat(p) ? `Jejak ${p.jejak} · ${p.rp} Cuan · 🛡️${p.backing}${p.role === 'umkm' ? ` · 📹${p.viral}` : ''}` : 'Baru saja dijerat: masa jeda sampai ronde depan',
           disabled: !bolehDijerat(p) })) }, plan.cat === 'selidik' ? plan.seat : target[0].seat);
         const t = ps.find((p) => p.seat === tSeat);
         const boleh = kalkBoleh(t);
@@ -470,11 +474,12 @@
         await perkara(t, t.jejak * C.PENGALI[kalk], kalk, konpers === 'ya', false);
       } else { log(`${name(0)} pas.`); await ev('aksi', { seat: 0, c }); }
       if (j.rp > 0 && !j.lapas) {
-        const t = await ask(0, { kind: 'transfer_jaksa', text: 'Pindahkan uang ke luar negeri?', options: [
-          { id: 'transfer', label: 'Transfer (−20%)', sub: `${j.rp} Rupiah → ${Math.floor(j.rp * (1 - C.FEE))} Harta Aman · Sorotan +1` },
-          { id: 'tidak', label: 'Simpan dulu', sub: 'Rupiah bisa disita kalau kena OTT' }] },
-        S.t === S.ronde || (j.rp >= 10 && j.sorotan <= 6) ? 'transfer' : 'tidak');
-        if (t === 'transfer') await transfer(j);
+        const pamer = S.f.fee === null;
+        const t = await ask(0, { kind: 'aset_jaksa', text: 'Belikan Cuan jadi Aset (rumah atas nama ipar, moge, tas mewah)?', options: [
+          { id: 'aset', label: `Beli Aset (−${Math.round(C.FEE * 100)}%)`, sub: `${j.rp} Cuan → Aset ${Math.floor(j.rp * (1 - C.FEE))} · tidak bisa disita OTT${pamer ? ' · Pamer harta: Sorotan +1' : ' · Pengampunan Pajak: tanpa Sorotan'}` },
+          { id: 'tidak', label: 'Simpan Cuan', sub: 'Utuh di akhir, tapi separuhnya disita kalau tertangkap OTT' }] },
+        S.t < S.ronde && j.rp >= C.JAKSA_ASET_RP && (!pamer || (j.sorotan >= C.JAKSA_ASET_SOR && j.sorotan <= 8)) ? 'aset' : 'tidak');
+        if (t === 'aset') await beliAset(j);
       }
     }
 
@@ -543,7 +548,7 @@
         await ev('sidang', { seat: p.seat, d, mod, ambang: a, menang });
         if (menang) {
           cairkan(); j.citra -= C.CITRA_KALAH; p.rp += 1; p.menangSidang = true; st('target_menang_sidang');
-          log(`✅ ${name(p.seat)} MENANG sidang! Ganti rugi dari negara: 1 Rupiah. Jejaknya tetap tercatat.`);
+          log(`✅ ${name(p.seat)} MENANG sidang! Ganti rugi dari negara: 1 Cuan. Jejaknya tetap tercatat.`);
         } else {
           const bayar = Math.min(p.rp, rugi); p.rp -= bayar;
           p.usaha = p.usaha.filter((u) => !beku.includes(u));
@@ -584,7 +589,7 @@
           st('krisis');
           for (const p of ps.concat([j])) p.rp -= Math.floor(p.rp * C.KRISIS);
           S.loker = C.LOKER_RESET;
-          log(`📉 KRISIS! Lapangan kerja habis, dunia usaha takut bergerak. Semua pemain kehilangan 20% Rupiah.`);
+          log(`📉 KRISIS! Lapangan kerja habis, dunia usaha takut bergerak. Semua pemain kehilangan 20% Cuan.`);
           await ev('krisis', {});
         }
       }
@@ -598,12 +603,16 @@
       }
       const mutasi = j.citra < C.CITRA_MIN;
       if (mutasi) st('jaksa_dimutasi');
-      const skor = [{ seat: 0, role: 'jaksa', aman: j.aman, score: mutasi ? Math.floor(j.aman * 0.7) : j.aman, mutasi, citra: j.citra }]
-        .concat(ps.map((p) => ({ seat: p.seat, role: p.role, aman: p.aman, score: p.pengusaha ? p.aman : 0, gagal: !p.pengusaha, usaha: p.usaha.length })));
+      // Kekayaan = Cuan + Aset (+ nilai Usaha aktif untuk Pelaku Usaha). Jaksa dimutasi: ×0,7.
+      const kotorJ = j.rp + j.aset;
+      const skor = [{ seat: 0, role: 'jaksa', rp: j.rp, aset: j.aset, mutasi, citra: j.citra, kekayaan: mutasi ? Math.floor(kotorJ * 0.7) : kotorJ }]
+        .concat(ps.map((p) => ({ seat: p.seat, role: p.role, rp: p.rp, aset: p.aset, nilaiUsaha: nilaiUsahaAktif(p), gagal: !p.pengusaha, usaha: p.usaha.length,
+          kekayaan: p.rp + p.aset + nilaiUsahaAktif(p) })));
       skor.forEach((x) => { x.name = name(x.seat); x.tie = rng(); });
-      skor.sort((a, b) => (b.score - a.score) || ((b.usaha || 0) - (a.usaha || 0)) || (b.tie - a.tie));
+      skor.sort((a, b) => (b.kekayaan - a.kekayaan) || ((b.usaha || 0) - (a.usaha || 0)) || (b.tie - a.tie));
       if (ps.some((p) => p.role === 'umkm' && p.pengusaha)) st('umkm_jadi_pengusaha');
-      S.result = { ranking: skor, winner: skor[0].seat };
+      Dompet().konversi(skor, C.KURS);
+      S.result = { ranking: skor, winner: skor[0].seat, uang: C.UANG, kurs: C.KURS };
       S.phase = 'end';
       log(`🏁 Permainan selesai. Juara: ${skor[0].name} (${ROLES[skor[0].role][1]}).`);
       update();

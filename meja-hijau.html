@@ -125,7 +125,7 @@ label.chk input { width: auto; }
 .coach-bubble .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
 .fly { position: fixed; z-index: 40; font-size: 26px; pointer-events: none; animation: fly 1.3s ease-in forwards; }
 @keyframes fly { to { transform: translate(var(--dx), var(--dy)) scale(.6); opacity: 0; } }
-#offshore { position: fixed; top: 52px; right: 10px; z-index: 39; background: var(--leaf-soft); border: 1px solid var(--leaf); border-radius: 10px; padding: 4px 8px; font-size: 12px; font-weight: 700; }
+#aset-badge { position: fixed; top: 52px; right: 10px; z-index: 39; background: var(--leaf-soft); border: 1px solid var(--leaf); border-radius: 10px; padding: 4px 8px; font-size: 12px; font-weight: 700; }
 .code { font-size: 44px; letter-spacing: 8px; font-weight: 800; text-align: center; margin: 6px 0; }
 .plist div { padding: 8px 10px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 6px; }
 .rank div { display: flex; justify-content: space-between; gap: 8px; padding: 8px 4px; border-bottom: 1px solid var(--line); }
@@ -145,19 +145,21 @@ label.chk input { width: auto; }
 .banner { background: var(--danger-soft); color: var(--danger); border-radius: 10px; padding: 8px 10px; font-size: 13px; margin: 6px 0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
-<script src="ndbd-ui.js?v=2"></script>
-<script src="mh-engine.js?v=2"></script>
-<script src="tutorial.js?v=2"></script>
-<script src="mh-tutorial.js?v=2"></script>
+<script src="ndbd-ui.js?v=3"></script>
+<script src="ndbd-dompet.js?v=3"></script>
+<script src="mh-engine.js?v=3"></script>
+<script src="tutorial.js?v=3"></script>
+<script src="mh-tutorial.js?v=3"></script>
 </head>
 <body>
 
 <!-- LOBBY -->
 <section id="scr-lobby" class="screen">
+  <a class="small muted" href="index.html" style="color:inherit">← 🍃 Negeri di Balik Daun</a>
   <div class="hero">
     <div class="leaf">⚖️</div>
     <h1>Meja Hijau</h1>
-    <div class="muted">Game 3 · <b>Negeri di Balik Daun</b> — putusan dijual lewat amplop, korban melawan lewat viral.</div>
+    <div class="muted">Game 3 · putusan dijual lewat amplop, korban melawan lewat viral. Currency: <b>💵 Fulus</b>.</div>
   </div>
   <div class="spacer"></div>
   <label class="small muted" for="in-name">Namamu</label>
@@ -179,8 +181,7 @@ label.chk input { width: auto; }
     <button class="btn" data-prac="4" id="prac-anggota" hidden><b>🧑‍⚖️ Hakim Anggota</b><span>Majelis 3 hakim</span></button>
   </div>
   <label class="chk"><input type="checkbox" id="chk-5p"> Varian 5 pemain (+ Hakim Anggota)</label>
-  <a class="btn" href="index.html"><b>🛣️ Game 1: Jalan Tikus</b><span>Rakyat naik kelas, oknum memeras di jalan.</span></a>
-  <a class="btn" href="gedung-bundar.html"><b>🏛️ Game 2: Gedung Bundar</b><span>Pengusaha membangun bisnis, jaksa menghitung "kerugian negara".</span></a>
+  <a class="btn" href="index.html"><b>🍃 Kembali ke Negeri di Balik Daun</b><span>Dompet Dana Offshore & game lainnya.</span></a>
   <p class="small muted">Satir fiksi. Semua tokoh & kejadian di dalam game rekaan, terinspirasi pola penyimpangan hukum yang diberitakan media.</p>
 </section>
 
@@ -226,10 +227,12 @@ label.chk input { width: auto; }
 <section id="scr-end" class="screen" hidden>
   <h2>🏁 Hasil akhir</h2>
   <div class="card rank" id="e-rank"></div>
+  <div id="e-konversi"></div>
   <h2>📋 Laporan Korban</h2>
   <div class="card"><ul class="korban" id="e-korban"></ul></div>
   <button class="btn primary" id="btn-again" style="text-align:center"><b>Main lagi</b></button>
   <button class="btn" id="btn-end-back" style="text-align:center">Ke lobby</button>
+  <a class="btn" href="index.html" style="text-align:center;text-decoration:none;color:inherit"><b>🍃 Negeri di Balik Daun</b></a>
 </section>
 
 <!-- OVERLAYS -->
@@ -243,7 +246,7 @@ label.chk input { width: auto; }
 
 <script>
 'use strict';
-// ====== konfigurasi online (Supabase Realtime Broadcast; sama dengan index.html) ======
+// ====== konfigurasi online (Supabase Realtime Broadcast; sama dengan jalan-tikus.html) ======
 const SB_OVERRIDE = (() => { try { return JSON.parse(localStorage.getItem('ndbd_sb')); } catch (e) { return null; } })(); // hanya untuk tes lokal
 const SB_URL = (SB_OVERRIDE && SB_OVERRIDE.url) || 'https://axlmcglultvdxuwbspci.supabase.co';
 const SB_KEY = (SB_OVERRIDE && SB_OVERRIDE.key) || 'sb_publishable_lUOhxk6WVX8jskieKVFtfg_ZPx7Dk0z';
@@ -319,23 +322,23 @@ function render() {
   const menang = S.n5 ? C.KEADILAN_5P : C.KEADILAN_MENANG;
   $('#players').innerHTML = order.map((seat) => {
     const p = S.p[seat], R = MH.ROLES[p.role], mine = seat === mySeat, buka = terbuka(p);
-    const rp = buka && p.rp !== null ? p.rp : '?', aman = buka && p.aman !== null ? p.aman : '?';
+    const rp = buka && p.rp !== null ? p.rp : '?', aset = buka && p.aset !== null ? p.aset : '?';
     let st = '';
     if (p.role === 'rakyat') {
       st = `<span ${tip(`Keadilan: juara langsung kalau mencapai ${menang}.`)}>⚖️ <b>${p.keadilan}</b>/${menang}</span>
         <span ${tip('Kartu Viral (jumlahnya terbuka). Tiap kartu Sorotan Perkara +3.')}>📹${p.viral}</span>
-        <span ${tip(`Kelas ${MH.KELAS[p.kelas]}. Hanya Pengusaha yang boleh Transfer ke Luar.`)}>${['🧍', '🧺', '🏢'][p.kelas]} ${MH.KELAS[p.kelas]}</span>`;
+        <span ${tip(`Kelas ${MH.KELAS[p.kelas]}: Nilai Usaha ${C.NILAI_USAHA[p.kelas]}, ikut dihitung di akhir.`)}>${['🧍', '🧺', '🏢'][p.kelas]} ${MH.KELAS[p.kelas]}</span>`;
     } else {
       st = `<span ${tip('Sorotan pribadi 0–10. Menyentuh 10 = OTT.')}>🔦<b class="${p.sor >= 8 ? 'warn' : ''}">${p.sor}</b></span>
-        ${p.role === 'hakim' || p.role === 'anggota' ? `<span ${tip(`Citra. Harus ≥ ${C.CITRA_MIN} di akhir, kalau tidak dimutasi (Harta Aman ×0,7).`)}>🎖️<b class="${p.citra < C.CITRA_MIN ? 'warn' : ''}">${p.citra}</b>/${C.CITRA_MIN}</span>` : ''}
+        ${p.role === 'hakim' || p.role === 'anggota' ? `<span ${tip(`Citra. Harus ≥ ${C.CITRA_MIN} di akhir, kalau tidak dimutasi (Kekayaan ×0,7).`)}>🎖️<b class="${p.citra < C.CITRA_MIN ? 'warn' : ''}">${p.citra}</b>/${C.CITRA_MIN}</span>` : ''}
         <span ${tip('Backing: pelindung saat OTT (Sorotan → 7).')}>🛡️${p.backing}</span>`;
     }
     const siasat = p.siasat.length ? `<span ${tip('Kartu Siasat tersisa: ' + p.siasat.map((k) => MH.SIASAT[k][0]).join(', '))}>🃏${p.siasat.length}</span>` : '';
     return `<div class="pcard ${mine ? 'mine' : ''} ${S.turn === seat ? 'turn' : ''} ${p.hadir === false ? 'away' : ''}" style="--c:${SEAT_COLOR[seat]}" ${mine ? 'id="me"' : ''}>
       <div class="nm">${esc(S.players[seat].name)}${mine && S.players[seat].name !== 'Kamu' ? ' (kamu)' : ''}</div>
       <div class="rl">${R[0]} ${R[1]}${p.jc ? ' · <b>🕵️ JC</b>' : ''}${p.lapas ? ' · <span class="warn">🔒 Lapas</span>' : p.hadir === false ? ' · <span class="warn">🔒 absen</span>' : ''}</div>
-      <div class="stats"><span ${tip(buka ? 'Rupiah di tangan. Bisa disita saat OTT, hangus di akhir.' : 'Rupiah pemain lain rahasia.')}>💰${rp}</span>
-        <span ${tip(buka ? 'Harta Aman di luar negeri = skor akhir.' : 'Harta Aman pemain lain rahasia.')}>🏦<b>${aman}</b></span>${siasat}</div>
+      <div class="stats"><span ${tip(buka ? 'Fulus di tangan. Dihitung di akhir, tapi disita semua kalau tertangkap OTT.' : 'Fulus pemain lain rahasia.')}>💵${rp}</span>
+        ${p.role === 'rakyat' ? '' : `<span ${tip(buka ? 'Aset: dihitung di akhir dan tidak bisa disita OTT.' : 'Aset pemain lain rahasia.')}>🏠<b>${aset}</b></span>`}${siasat}</div>
       <div class="stats">${st}</div><div class="nd-last" ${tip('Aksi terakhir pemain ini di perkara sekarang')}>${esc(feed.lastAction(S.players[seat].name, S.t)) || '—'}</div>${hostSeatBtn(seat)}</div>`;
   }).join('');
   // rahasiaku
@@ -412,7 +415,7 @@ function handleEvents() {
   for (const e of S.events) {
     if (e.n <= lastEv) continue;
     lastEv = e.n;
-    if (e.type === 'transfer' && e.seat === mySeat) flyMoney(e.jumlah);
+    if (e.type === 'aset' && e.seat === mySeat) flyMoney(e.jumlah);
     if (e.type === 'kabar') { const k = $('#kabar'); k.classList.remove('flash'); void k.offsetWidth; k.classList.add('flash'); }
     if (e.type === 'perkara') {
       const c = MH.PERKARA[e.id], T = MH.TERDAKWA[c.jenis];
@@ -426,7 +429,7 @@ function handleEvents() {
     if (e.type === 'cepu') showCard('good', '🕵️ Cepu', '🕵️', `${nama(e.seat)} ternyata Cepu!`, 'Rantai suap perkara ini dibongkar. Semua anggotanya Sorotan +5.');
     if (e.type === 'praper') showCard('bad', '📜 Praperadilan', '📜', 'Perkara gugur', 'Tidak ada putusan, tidak ada kasasi, tidak ada Keadilan.');
     if (e.type === 'karet') toast(`🎲 Dadu Pasal Karet: ${e.d}${e.d <= (S.f.karet || 2) ? ' — dilaporkan balik!' : ' — aman'}`, 2200);
-    if (e.type === 'naik' && e.seat === mySeat) showCard('good', '⬆️ Naik kelas', e.kelas === 2 ? '🏢' : '🧺', `Kamu jadi ${MH.KELAS[e.kelas]}!`, e.kelas === 2 ? 'Sekarang kamu boleh Transfer ke Luar.' : 'Gaji naik.');
+    if (e.type === 'naik' && e.seat === mySeat) showCard('good', '⬆️ Naik kelas', e.kelas === 2 ? '🏢' : '🧺', `Kamu jadi ${MH.KELAS[e.kelas]}!`, `Gaji naik. Nilai Usaha ${C.NILAI_USAHA[e.kelas]}.`);
     if (e.type === 'lapas' && e.seat === mySeat) tipFor('e:lapas');
   }
 }
@@ -459,12 +462,12 @@ function renderSpeed() { $('#btn-speed').textContent = SPEEDS[speedIdx][0]; $('#
 $('#btn-speed').onclick = () => { speedIdx = (speedIdx + 1) % SPEEDS.length; store.set('ndbd_speed', speedIdx); renderSpeed(); };
 function flyMoney(n) {
   const from = ($('#me') || $('#perkara')).getBoundingClientRect();
-  let badge = $('#offshore');
-  if (!badge) { badge = document.createElement('div'); badge.id = 'offshore'; document.body.appendChild(badge); }
-  badge.textContent = `🏝️ Negeri Singa +${n}`; badge.hidden = false;
+  let badge = $('#aset-badge');
+  if (!badge) { badge = document.createElement('div'); badge.id = 'aset-badge'; document.body.appendChild(badge); }
+  badge.textContent = `🏠 Aset +${n}`; badge.hidden = false;
   const to = badge.getBoundingClientRect();
   for (let k = 0; k < 6; k++) {
-    const f = document.createElement('div'); f.className = 'fly'; f.textContent = '💸';
+    const f = document.createElement('div'); f.className = 'fly'; f.textContent = '💵';
     f.style.left = (from.left + from.width / 2 + (k - 3) * 8) + 'px'; f.style.top = (from.top + 10) + 'px';
     f.style.setProperty('--dx', (to.left - from.left - from.width / 2 + 20) + 'px'); f.style.setProperty('--dy', (to.top - from.top) + 'px');
     f.style.animationDelay = (k * 90) + 'ms';
@@ -483,14 +486,14 @@ const TIPS = {
   'p:respons': 'Keadilan hanya didapat kalau putusan akhir adil. Kalau hakim sudah dibeli, satu-satunya jalan adalah kasasi: Sorotan Perkara harus tinggi. Viral menaikkan Sorotan, tapi awas Pasal Karet.',
   'p:simpan': 'Menyimpan amplop berarti kamu masuk rantai suap. Kalau putusannya janggal, Sorotanmu naik; kalau kasasi terjadi, naik lagi +3.',
   'p:putusan': 'Kamu bebas memutus apa saja. Janggal = Citra −1 dan Sorotan rantai naik. Menyimpan amplop lalu memutus Adil = Ingkar: Pengacara bisa membocorkanmu.',
-  'p:kelola': 'Rupiah di tangan bisa disita saat OTT dan hangus di akhir. Transfer ke luar negeri jadi Harta Aman (skor akhir). Pejabat yang transfer: Sorotan +1.',
-  'p:kedok': 'Membuka kedok membuat semua anggota rantai perkara ini Sorotan +5, sebelum mereka sempat transfer.',
+  'p:kelola': 'Fulus di tangan dihitung di akhir, tapi disita semua kalau tertangkap OTT. Beli Aset (potong 20%) supaya aman. Pejabat yang pamer harta: Sorotan +1.',
+  'p:kedok': 'Membuka kedok membuat semua anggota rantai perkara ini Sorotan +5, sebelum mereka sempat mengamankan Fulus jadi Aset.',
   'p:putusan_kecil': 'Tidak ada klien, tidak ada pembela. Vonis Berat memberimu Citra +2. Laporan Korban mencatatnya.',
   'p:makelar': 'Makelar MA bisa "mengurus" kasasi, kecuali Sorotan Perkara sudah ≥ 9.',
   'e:kabar': 'Kabar Istana dibuka tiap perkara dan mengubah aturan sementara.',
   'e:perkara': 'Lihat kartu perkara: Dana Klien, keinginan klien, Putusan Adil, dan meter Sorotan Perkara dengan garis ambang kasasi.',
   'e:kasasi': 'Kasasi terjadi kalau putusan janggal dan Sorotan Perkara mencapai ambang. Putusan dibalik jadi adil.',
-  'e:ott': 'OTT terjadi saat Sorotan pribadi menyentuh 10. Harta Aman di luar negeri tidak bisa disita.',
+  'e:ott': 'OTT terjadi saat Sorotan pribadi menyentuh 10. Aset 🏠 tidak bisa disita.',
   'e:lapas': 'Kamu masuk Lapas: absen 1 perkara, kecuali membeli Sel Mewah.',
 };
 const tipQueue = [];
@@ -509,16 +512,16 @@ function nextTip() {
 
 // ====== kartu peran & bantuan ======
 const ROLE_TXT = {
-  hakim: () => `<h3>👨‍⚖️ Kamu: HAKIM</h3><p><b>🎯 Tujuan:</b> Harta Aman 🏦 terbanyak setelah 5 perkara, <b>dan Citra ≥ ${C.CITRA_MIN}</b> (kalau tidak, dimutasi: ×0,7).</p>
+  hakim: () => `<h3>👨‍⚖️ Kamu: HAKIM</h3><p><b>🎯 Tujuan:</b> Kekayaan (Fulus 💵 + Aset 🏠) terbanyak setelah ${S && S.n5 ? C.PERKARA_5P : C.PERKARA} perkara, <b>dan Citra ≥ ${C.CITRA_MIN}</b> (kalau tidak, dimutasi: ×0,7).</p>
     <ul><li>Sebut <b>tarif</b> lewat Panitera, lalu simpan atau kembalikan amplop. Kamu tetap bebas memutus apa saja.</li><li>Putusan janggal: Citra −1. Vonis Berat pada rakyat kecil: Citra +2.</li><li>🎤 Jumpa Pers: Citra +2 · 🤒 Sakit Mendadak: Sorotan Perkara −1.</li><li>Saat OTT, kamu bisa <b>menumbalkan Panitera</b> (sekali).</li></ul>`,
-  anggota: () => `<h3>🧑‍⚖️ Kamu: HAKIM ANGGOTA</h3><p><b>🎯 Tujuan:</b> Harta Aman 🏦 terbanyak, <b>dan Citra ≥ ${C.CITRA_MIN}</b>.</p>
+  anggota: () => `<h3>🧑‍⚖️ Kamu: HAKIM ANGGOTA</h3><p><b>🎯 Tujuan:</b> Kekayaan (Fulus 💵 + Aset 🏠) terbanyak, <b>dan Citra ≥ ${C.CITRA_MIN}</b>.</p>
     <ul><li>Majelis 3 hakim: kamu, Hakim Ketua, dan hakim NPC yang selalu memilih Adil. Klien butuh suaramu <b>dan</b> suara Ketua.</li><li>Tarifmu disampaikan lewat Panitera, yang membagi amplop ke kedua hakim.</li></ul>`,
-  panitera: () => `<h3>📁 Kamu: PANITERA</h3><p><b>🎯 Tujuan:</b> Harta Aman 🏦 terbanyak setelah 5 perkara.</p>
+  panitera: () => `<h3>📁 Kamu: PANITERA</h3><p><b>🎯 Tujuan:</b> Kekayaan (Fulus 💵 + Aset 🏠) terbanyak setelah ${S && S.n5 ? C.PERKARA_5P : C.PERKARA} perkara.</p>
     <ul><li>Semua pesan dan amplop Hakim ↔ Pengacara <b>lewat kamu</b>. Gelembungkan tarif, lalu ambil selisihnya dari amplop.</li><li>Biaya Berkas ${S && S.n5 ? C.BERKAS_5P : C.BERKAS} dari kas klien tiap perkara.</li><li>Risiko: Jalur Langsung membuka tarif asli, dan kamulah tumbal saat Hakim kena OTT (tanpa Backing).</li></ul>`,
-  pengacara: () => `<h3>💼 Kamu: PENGACARA MAKELAR</h3><p><b>🎯 Tujuan:</b> Harta Aman 🏦 terbanyak setelah 5 perkara.</p>
+  pengacara: () => `<h3>💼 Kamu: PENGACARA MAKELAR</h3><p><b>🎯 Tujuan:</b> Kekayaan (Fulus 💵 + Aset 🏠) terbanyak setelah ${S && S.n5 ? C.PERKARA_5P : C.PERKARA} perkara.</p>
     <ul><li>Tiap perkara kamu memegang <b>kas klien</b>. Kalau klien menang, <b>sisa kas = komisimu</b>. Suaplah secukupnya.</li><li>Amplop lewat Panitera (bisa digelembungkan) atau <b>Jalur Langsung</b> (Sorotan +2).</li><li>Uang Damai meredam korban; Makelar MA (${C.MAKELAR}) memblokir kasasi.</li><li>📜 Praperadilan: perkara gugur · 📜 PK Diskon.</li></ul>`,
-  rakyat: () => `<h3>🕯️ Kamu: KELUARGA KORBAN</h3><p><b>🎯 Tujuan:</b> <b>Keadilan ≥ ${S && S.n5 ? C.KEADILAN_5P : C.KEADILAN_MENANG}</b> = langsung juara. Atau naik kelas sampai Pengusaha lalu Harta Aman terbanyak (sulit).</p>
-    <ul><li>Keadilan didapat kalau putusan akhir <b>adil</b> (dan kamu tidak menerima damai). Lewat kasasi: +1 bonus.</li><li>📹 Viral: Sorotan Perkara +3 per kartu → kasasi. Awas Pasal Karet (dadu 1–2 → Lapas).</li><li>🤝 Uang Damai: Rupiah untuk naik kelas, tapi keadilan dikhianati.</li></ul><p>Kalau Keluarga Korban juara, poin ranked ×1,5.</p>`,
+  rakyat: () => `<h3>🕯️ Kamu: KELUARGA KORBAN</h3><p><b>🎯 Tujuan:</b> <b>Keadilan ≥ ${S && S.n5 ? C.KEADILAN_5P : C.KEADILAN_MENANG}</b> = langsung juara + Santunan ${S && S.n5 ? C.SANTUNAN_5P : C.SANTUNAN} Fulus. Kalau tidak, bersaing lewat Kekayaan: Fulus 💵 + Nilai Usaha kelas (Jelata ${C.NILAI_USAHA[0]} · Pedagang ${C.NILAI_USAHA[1]} · Pengusaha ${C.NILAI_USAHA[2]}).</p>
+    <ul><li>Keadilan didapat kalau putusan akhir <b>adil</b> (dan kamu tidak menerima damai). Lewat kasasi: +1 bonus.</li><li>📹 Viral: Sorotan Perkara +3 per kartu → kasasi. Awas Pasal Karet (dadu 1–2 → Lapas).</li><li>🤝 Uang Damai: Fulus untuk naik kelas, tapi keadilan dikhianati.</li></ul><p>Kalau Keluarga Korban juara, poin ranked ×1,5.</p>`,
 };
 function showRole() {
   const p = me(); if (!p) return;
@@ -529,13 +532,13 @@ function showRole() {
   $('#role-card button').onclick = () => { $('#ov-role').hidden = true; };
 }
 $('#help-card').innerHTML = `<h3>Aturan singkat Meja Hijau</h3>
-  <p><b>Tiap perkara (5×):</b> Kabar Istana → buka Perkara → Biaya Berkas → Hakim menyebut tarif lewat Panitera → Pengacara mengirim amplop (atau Jalur Langsung) + Uang Damai → Keluarga Korban: Damai / Viral / Kawal → Hakim simpan/kembalikan amplop → Putusan → Kasasi? → Transfer.</p>
+  <p><b>Tiap perkara (${C.PERKARA}×; 5 pemain ${C.PERKARA_5P}×):</b> Kabar Istana → buka Perkara → Biaya Berkas → Hakim menyebut tarif lewat Panitera → Pengacara mengirim amplop (atau Jalur Langsung) + Uang Damai → Keluarga Korban: Damai / Viral / Kawal → Hakim simpan/kembalikan amplop → Putusan → Kasasi? → Beli Aset.</p>
   <p><b>Putusan janggal:</b> rantai suap Sorotan +1 (+2 kalau Sorotan Perkara ≥ 5), hakim Citra −1, lalu Sorotan Perkara +${C.MARAH}. Kalau ≥ ${C.KASASI_MIN} (Anak Pejabat ${C.KASASI_ANAK}): <b>kasasi</b>, putusan dibalik, rantai Sorotan +${C.KASASI_SOR}. Makelar MA (${C.MAKELAR}) bisa memblokir, kecuali ≥ ${C.MAKELAR_KEBAL}.</p>
   <p><b>Komisi Pengacara</b> = sisa kas klien kalau klien menang (separuh kalau Bebas meleset jadi Ringan).</p>
-  <p><b>OTT</b> (Sorotan 10): Tumbalkan Panitera (Hakim, sekali) / Backing / Tertangkap (Rupiah disita, Lapas 1 perkara).</p>
+  <p><b>OTT</b> (Sorotan 10): Tumbalkan Panitera (Hakim, sekali) / Backing / Tertangkap (semua Fulus disita, Lapas 1 perkara; Aset aman).</p>
   <p><b>Cepu:</b> 50% ada satu Cepu rahasia di rantai. Ia bisa membuka kedok: rantai Sorotan +${C.CEPU_SOR}.</p>
-  <p><b>Akhir:</b> Rupiah hangus. Juara = Harta Aman 🏦 terbanyak. Hakim Citra < ${C.CITRA_MIN}: ×0,7. <b>Keluarga Korban Keadilan ≥ ${C.KEADILAN_MENANG}</b> (5 pemain: ${C.KEADILAN_5P}) langsung juara.</p>
-  <p><b>Ikon:</b> 💰 Rupiah · 🏦 Harta Aman · 🔦 Sorotan · 🎖️ Citra · 🛡️ Backing · ⚖️ Keadilan · 📹 Viral · 🃏 Siasat · 🔒 Lapas/rahasia. Arahkan kursor (atau tap) ikon untuk penjelasan.</p>
+  <p><b>Akhir:</b> <b>Keluarga Korban Keadilan ≥ ${C.KEADILAN_MENANG}</b> (5 pemain: ${C.KEADILAN_5P}) langsung juara + Santunan. Selain itu peringkat ditentukan <b>Kekayaan</b>: Fulus + Aset (Hakim Citra < ${C.CITRA_MIN}: ×0,7), Keluarga Korban: Fulus + Nilai Usaha kelas. Lalu Kekayaan dikonversi jadi <b>🏝️ Dana Offshore</b> (juara 40%, ke-2 30%, ke-3 25%, ke-4 20%, ke-5 15%) untuk dompetmu di Negeri di Balik Daun.</p>
+  <p><b>Ikon:</b> 💵 Fulus · 🏠 Aset · 🔦 Sorotan · 🎖️ Citra · 🛡️ Backing · ⚖️ Keadilan · 📹 Viral · 🃏 Siasat · 🔒 Lapas/rahasia. Arahkan kursor (atau tap) ikon untuk penjelasan.</p>
   <button class="btn primary" style="text-align:center"><b>Tutup</b></button>`;
 $('#btn-help').onclick = () => { $('#ov-help').hidden = false; };
 $('#help-card button').onclick = () => { $('#ov-help').hidden = true; };
@@ -544,21 +547,22 @@ $('#help-card button').onclick = () => { $('#ov-help').hidden = true; };
 function showEnd() {
   if (!S || S.phase !== 'end' || !S.result || !$('#scr-end').hidden) return;
   const R = S.result, g = (k) => S.stats[k] || 0;
-  $('#e-rank').innerHTML = R.ranking.map((x, i) => {
-    const Ro = MH.ROLES[x.role];
-    const ket = [x.mutasi ? 'dimutasi ×0,7' : '', x.cepu ? '🕵️ Cepu' : '', x.juaraKeadilan ? `⚖️ Keadilan ${x.keadilan} — juara!` : '',
-      x.role === 'rakyat' && !x.juaraKeadilan ? `Keadilan ${x.keadilan}${x.gagal ? ', belum Pengusaha' : ''}` : ''].filter(Boolean).join(' · ');
-    const skor = x.juaraKeadilan ? `⚖️ ${x.keadilan}` : x.role === 'rakyat' && x.gagal ? '🏦 0' : `🏦 ${x.score}`;
-    return `<div><span>${['🥇', '🥈', '🥉', '4.', '5.'][i]} ${esc(x.name)}${x.seat === mySeat ? ' (kamu)' : ''} <span class="small muted">${Ro[0]} ${Ro[1]}${ket ? ' · ' + esc(ket) : ''}</span></span><b>${skor}</b></div>`;
-  }).join('');
+  const akhir = NDBDDompet.layarAkhir({ game: 'mh', result: R, mySeat, mode: mode === 'practice' ? 'latihan' : 'online', matchId: S.matchId || 'mh-' + S.evN,
+    label: (x) => {
+      const Ro = MH.ROLES[x.role];
+      const ket = [x.mutasi ? 'dimutasi ×0,7' : '', x.cepu ? '🕵️ Cepu' : '', x.juaraKeadilan ? `⚖️ Keadilan ${x.keadilan} — juara! (+Santunan ${x.santunan})` : '',
+        x.role === 'rakyat' && !x.juaraKeadilan ? `Keadilan ${x.keadilan} · ${MH.KELAS[x.kelas]}` : ''].filter(Boolean).join(' · ');
+      return `${Ro[0]} ${Ro[1]}${ket ? ' · ' + esc(ket) : ''}`;
+    } });
+  $('#e-rank').innerHTML = akhir.rank; $('#e-konversi').innerHTML = akhir.konversi;
   const suap = g('suap_dikirim'), ongkos = g('ongkos_panitera');
   $('#e-korban').innerHTML = [
-    `✉️ Total suap yang dikirim Pengacara: <b>${suap}</b> Rupiah, dan <b>${ongkos}</b> di antaranya diambil Panitera${suap ? ` (${Math.round((100 * ongkos) / suap)}%)` : ''}.`,
+    `✉️ Total suap yang dikirim Pengacara: <b>${suap}</b> Fulus, dan <b>${ongkos}</b> di antaranya diambil Panitera${suap ? ` (${Math.round((100 * ongkos) / suap)}%)` : ''}.`,
     `🔨 <b>${g('vonis_dibeli')}</b> vonis dibeli vs <b>${g('vonis_adil')}</b> vonis adil. Kasasi: <b>${g('kasasi')}</b>, diblokir Makelar MA: <b>${g('kasasi_diblokir')}</b>.${g('praperadilan') ? ` Praperadilan menggugurkan <b>${g('praperadilan')}</b> perkara.` : ''}`,
     `👵 <b>${g('rakyat_kecil_berat')}</b> rakyat kecil divonis Berat tanpa pembela.`,
-    `🤝 Keluarga korban menerima Uang Damai <b>${g('damai_diterima')}</b> kali (total ${g('uang_damai')} Rupiah).`,
+    `🤝 Keluarga korban menerima Uang Damai <b>${g('damai_diterima')}</b> kali (total ${g('uang_damai')} Fulus).`,
     `📹 <b>${g('lapas_pasal_karet')}</b> kali keluarga korban dilaporkan balik (pasal karet) setelah memviralkan.`,
-    `🚨 OTT <b>${g('ott')}</b> kali: tertangkap <b>${g('ott_tertangkap')}</b>, lolos lewat Backing <b>${g('ott_backing')}</b>, menumbalkan Panitera <b>${g('ott_tumbal')}</b>. Rupiah disita: ${g('disita')}.`,
+    `🚨 OTT <b>${g('ott')}</b> kali: tertangkap <b>${g('ott_tertangkap')}</b>, lolos lewat Backing <b>${g('ott_backing')}</b>, menumbalkan Panitera <b>${g('ott_tumbal')}</b>. Fulus disita: ${g('disita')}.`,
     R.cepu !== null ? `🕵️ Cepu di meja ini: <b>${esc(S.players[R.cepu].name)}</b>${g('cepu_bongkar') ? ', dan ia membuka kedok' : ', tapi tidak pernah membuka kedok'}.` : '🕵️ Tidak ada Cepu di meja ini. Semua kecurigaanmu sia-sia.',
   ].map((x) => `<li>${x}</li>`).join('');
   $('#btn-again').hidden = mode === 'client';
@@ -589,7 +593,7 @@ function startLocal(players, broadcast) {
       await nego.phase(st, humans);
     },
   });
-  S = game.S;
+  S = game.S; S.matchId = `mh-${broadcast ? net.lobby.code : 'latihan'}-${Date.now().toString(36)}`;   // kunci kredit dompet (sekali per match)
   show('scr-game'); render(); showRole();
   game.run().then(() => { if (broadcast) net.pushState(true); schedule(); });
 }
@@ -663,7 +667,10 @@ async function startTutorial() {
   if (!tutorialAbort) store.set('mh_tutorial', 1);
   tutorialChapter = null; mode = null; S = null;
   show('scr-lobby'); refreshLobby();
-  if (!tutorialAbort) toast('🎉 Tutorial selesai! Coba Latihan vs Bot atau Main Online.', 3500);
+  if (!tutorialAbort) {
+    const b = NDBDDompet.bonusTutorial('mh');
+    toast(b.baru ? `🎉 Tutorial selesai! Bonus +${b.dana} 🏝️ Dana Offshore masuk dompet.` : '🎉 Tutorial selesai! Coba Latihan vs Bot atau Main Online.', 3500);
+  }
 }
 $('#btn-tutorial').onclick = () => startTutorial();
 $('#btn-skip').onclick = () => {
@@ -681,15 +688,15 @@ function redact(st) {
   if (pub.cur) { delete pub.cur.x; if (!end) pub.cur.votes = {}; }
   if (!end) {
     pub.stats = {}; pub.cepu = null;
-    pub.p.forEach((p) => { if (p.role !== 'rakyat') { p.rp = null; p.aman = null; } });
-    pub.events = pub.events.map((e) => (e.type === 'transfer' ? Object.assign({}, e, { jumlah: null }) : e));
+    pub.p.forEach((p) => { if (p.role !== 'rakyat') { p.rp = null; p.aset = null; } });
+    pub.events = pub.events.map((e) => (e.type === 'aset' ? Object.assign({}, e, { jumlah: null }) : e));
   }
   if (pub.prompt) pub.prompt = { id: pub.prompt.id, seat: pub.prompt.seat, kind: pub.prompt.kind };
   pub.hostNow = Date.now();
   pub.privs = {};
   st.players.forEach((pl, seat) => {
     if (!pl.pid || pl.pid === myId || pl.bot) return;
-    pub.privs[pl.pid] = { seat, priv: st.priv[seat], rp: st.p[seat].rp, aman: st.p[seat].aman, prompt: st.prompt && st.prompt.seat === seat ? st.prompt : null };
+    pub.privs[pl.pid] = { seat, priv: st.priv[seat], rp: st.p[seat].rp, aset: st.p[seat].aset, prompt: st.prompt && st.prompt.seat === seat ? st.prompt : null };
   });
   return pub;
 }
@@ -701,7 +708,7 @@ function applyState(payload) {
   S.priv = [];
   if (mine && mySeat >= 0) {
     S.priv[mySeat] = mine.priv;
-    S.p[mySeat].rp = mine.rp; S.p[mySeat].aman = mine.aman;
+    S.p[mySeat].rp = mine.rp; S.p[mySeat].aset = mine.aset;
     if (mine.prompt && S.prompt && S.prompt.id === mine.prompt.id) S.prompt = mine.prompt;
   }
 }

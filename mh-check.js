@@ -8,17 +8,22 @@ const { estimasi } = require('./durasi.js');
 const NEGO_DETIK = 45;   // rata-rata pemakaian jendela negosiasi online (maks 60 detik, selesai lebih cepat kalau semua Siap)
 
 const pemain = (n, bot) => Array.from({ length: n }, (_, s) => ({ name: 'P' + s, bot }));
-// peluang juara per role di tools/sim_meja_hijau.py (docs/05 §12.1)
-const SIM = { 4: { hakim: 25, panitera: 25, pengacara: 24, rakyat: 26 }, 5: { hakim: 23, anggota: 14, panitera: 19, pengacara: 22, rakyat: 22 } };
+// target peluang juara per role (docs/05 §12.1, versi Kekayaan + Dana Offshore 27 Sep 2026). Hakim Anggota memang lebih lemah (majelis butuh dua hakim).
+const SIM = { 4: { hakim: 25, panitera: 25, pengacara: 24, rakyat: 26 }, 5: { hakim: 21, anggota: 14, panitera: 20, pengacara: 23, rakyat: 22 } };
 
 async function botGames(n, N) {
-  const win = {};
+  const win = {}, dana = {};
   for (let i = 0; i < N; i++) {
     const g = MH.createGame(pemain(n, true), { strict: true, rng: MH.mulberry32(i + 1) });
     const S = await g.run();
     const r = S.result.ranking[0].role; win[r] = (win[r] || 0) + 1;
+    for (const x of S.result.ranking) {
+      assert(Number.isInteger(x.kekayaan) && x.kekayaan >= 0 && x.dana >= 0, 'Kekayaan/Dana tidak valid');
+      dana[x.role] = (dana[x.role] || 0) + x.dana;
+    }
   }
-  return Object.fromEntries(Object.keys(SIM[n]).map((r) => [r, Math.round((100 * (win[r] || 0)) / N)]));
+  const roles = Object.keys(SIM[n]);
+  return { win: Object.fromEntries(roles.map((r) => [r, Math.round((100 * (win[r] || 0)) / N)])), dana: Object.fromEntries(roles.map((r) => [r, Math.round(dana[r] / N)])) };
 }
 
 async function randomHumans(n, N) {
@@ -49,7 +54,7 @@ async function randomHumans(n, N) {
     });
     const S = await g.run();
     assert.strictEqual(S.phase, 'end');
-    assert(S.p.every((p) => Number.isFinite(p.rp) && p.rp >= 0 && p.aman >= 0), 'Rupiah/Harta Aman negatif');
+    assert(S.p.every((p) => Number.isFinite(p.rp) && p.rp >= 0 && p.aset >= 0), 'Fulus/Aset negatif');
   }
   return kinds;
 }
@@ -59,9 +64,13 @@ process.on('exit', () => { if (!selesai) { console.error('MACET: ada promise yan
 
 (async () => {
   for (const n of [4, 5]) {
-    const b = await botGames(n, 3000);
-    console.log(`3000 match bot ${n} pemain: juara ${Object.entries(b).map(([k, v]) => `${k} ${v}% (sim ${SIM[n][k]}%)`).join(' · ')}`);
-    for (const k in b) assert(Math.abs(b[k] - SIM[n][k]) <= 6, `${n}p: ${k} menyimpang dari simulasi`);
+    const { win: b, dana } = await botGames(n, 3000);
+    console.log(`3000 match bot ${n} pemain: juara ${Object.entries(b).map(([k, v]) => `${k} ${v}% (target ${SIM[n][k]}%)`).join(' · ')}`);
+    for (const k in b) assert(Math.abs(b[k] - SIM[n][k]) <= 6, `${n}p: ${k} menyimpang dari target`);
+    const rata = Object.values(dana).reduce((s, x) => s + x, 0) / Object.keys(dana).length;
+    console.log(`  Dana Offshore rata-rata (Online, kurs ${MH.C.KURS}): ${Object.entries(dana).map(([k, v]) => `${k} ${v}`).join(' · ')} (rata-rata ${Math.round(rata)}, target ±100)`);
+    for (const k in dana) assert(Math.abs(dana[k] - rata) <= 0.2 * rata, `${n}p: Dana ${k} timpang > ±20%`);
+    assert(rata >= 80 && rata <= 120, 'Kurs perlu dikalibrasi ulang (rata-rata Dana di luar 80–120)');
   }
   for (const n of [4, 5]) {
     const kinds = await randomHumans(n, 300);
