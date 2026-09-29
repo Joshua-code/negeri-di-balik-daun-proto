@@ -33,7 +33,7 @@ a { color: inherit; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: var(--shadow); }
 .dompet { border: 2px solid var(--gold); text-align: center; }
 .dompet .saldo { font-size: 34px; font-weight: 800; margin: 2px 0; font-variant-numeric: tabular-nums; }
-.dompet .per { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+.dompet .per { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px; margin-top: 10px; }
 .dompet .per div { background: var(--bg); border-radius: 10px; padding: 6px 4px; font-size: 12px; }
 .dompet .per b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
 input { font: inherit; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); width: 100%; }
@@ -58,7 +58,7 @@ a.game:hover { border-color: var(--leaf); }
 details summary { cursor: pointer; font-weight: 700; }
 details p, details li { font-size: 13.5px; }
 </style>
-<script src="ndbd-dompet.js?v=3"></script>
+<script src="ndbd-dompet.js?v=4"></script>
 </head>
 <body>
 <main class="screen">
@@ -66,7 +66,7 @@ details p, details li { font-size: 13.5px; }
   <div class="hero">
     <div class="leaf">🍃</div>
     <h1>Negeri di Balik Daun</h1>
-    <div class="muted">Tiga meja permainan tempat hukum bisa ditawar. Menangkan match, kumpulkan currency, bawa pulang Dana Offshore.</div>
+    <div class="muted">Negeri tempat izin, razia, dan putusan punya tarif. Rintis usaha keluargamu, bertahanlah setahun, bawa pulang Dana Offshore.</div>
   </div>
 
   <h2>🏝️ Dompet Dana Offshore</h2>
@@ -80,12 +80,12 @@ details p, details li { font-size: 13.5px; }
   <h2>Namamu</h2>
   <input id="in-name" maxlength="14" placeholder="mis. Joshua" aria-label="Namamu">
 
-  <h2>🎲 Meja permainan</h2>
+  <h2>🎲 Permainan</h2>
   <div id="games"></div>
 
   <details class="card" style="margin-top:10px">
     <summary>Bagaimana currency jadi Dana Offshore?</summary>
-    <p>Tiap game punya currency sendiri: <b>🪙 Receh</b> (Jalan Tikus), <b>💹 Cuan</b> (Gedung Bundar), <b>💵 Fulus</b> (Meja Hijau). Currency hanya berlaku di dalam match. Di akhir match, <b>Kekayaan</b>-mu (currency + aset/nilai usaha) dikonversi:</p>
+    <p>Di dalam match, uangnya <b>🍃 Daun</b>, dan hanya berlaku di match itu. Di akhir tahun, <b>Kekayaan</b> keluargamu (Daun + nilai usaha + celengan mimpi) dikonversi:</p>
     <p style="text-align:center"><b>Dana = Kekayaan × kurs game × rasio peringkat</b></p>
     <ul id="rumus"></ul>
     <p class="muted">Dana Offshore tidak pernah masuk ke dalam match. Tidak ada pay-to-win.</p>
@@ -116,7 +116,9 @@ const store = {
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const angka = (n) => Number(n).toLocaleString('id-ID');
 
+const AKTIF = ['dg'];   // game Season 1 lama (jt, gb, mh) diarsipkan 29 Sep 2026
 const INFO = {
+  dg: { ic: '🛒', ds: 'Setahun merintis usaha keluarga dari gerobak. Bangun, bertahan dari razia & sidak, atau beli jabatan dan ikut memeras.', pemain: '1–4 pemain', durasi: '±25–30 menit', tut: 'dg_tutorial' },
   jt: { ic: '🛵', ds: 'Roll & move. Rakyat naik kelas, oknum aparat memeras lewat razia.', pemain: '4 pemain', durasi: '±20 menit', tut: 'ndbd_tutorial' },
   gb: { ic: '🏛️', ds: 'Engine building. Pengusaha membangun bisnis, jaksa menghitung "kerugian negara".', pemain: '4 pemain', durasi: '±18 menit', tut: 'gb_tutorial' },
   mh: { ic: '⚖️', ds: 'Lelang tertutup & bluffing. Putusan dijual lewat amplop, korban melawan lewat viral.', pemain: '4–5 pemain', durasi: '±17 menit', tut: 'mh_tutorial' },
@@ -125,8 +127,8 @@ const INFO = {
 function render() {
   const d = D.data();
   $('#saldo').textContent = angka(d.saldo);
-  $('#per').innerHTML = Object.keys(D.GAME).map((g) => `<div>${INFO[g].ic} ${esc(D.GAME[g].nama)}<b>${angka(d.perGame[g] || 0)}</b></div>`).join('');
-  $('#games').innerHTML = Object.keys(D.GAME).map((g) => {
+  $('#per').innerHTML = Object.keys(D.GAME).filter((g) => AKTIF.includes(g) || d.perGame[g]).map((g) => `<div>${INFO[g].ic} ${esc(D.GAME[g].nama)}<b>${angka(d.perGame[g] || 0)}</b></div>`).join('');
+  $('#games').innerHTML = AKTIF.map((g) => {
     const G = D.GAME[g], I = INFO[g], tut = store.get(I.tut, 0), bonus = d.tutorial[g];
     return `<a class="card game" href="${G.url}">
       <div class="ic" aria-hidden="true">${I.ic}</div>
@@ -139,7 +141,7 @@ function render() {
   $('#rumus').innerHTML = [
     `Rasio peringkat: juara <b>${pct(D.RASIO[0])}</b> · ke-2 ${pct(D.RASIO[1])} · ke-3 ${pct(D.RASIO[2])} · ke-4 ${pct(D.RASIO[3])} · ke-5 ${pct(D.RASIO[4])} (Meja Hijau 5 pemain).`,
     `Mode: Online <b>100%</b> · Latihan vs bot 50% · Tutorial tamat: bonus sekali +${D.BONUS_TUTORIAL}.`,
-    'Kurs tiap game disetel supaya rata-rata satu match online bernilai ±100 Dana di ketiga game.',
+    `Kurs ${D.GAME.dg.nama}: disetel supaya rata-rata satu match online bernilai ±100 Dana.`,
   ].map((x) => `<li>${x}</li>`).join('');
   const R = d.riwayat.slice(0, 10);
   const MODE = { online: '🌐 Online', latihan: '🤖 Latihan', tutorial: '🎓 Tutorial' };

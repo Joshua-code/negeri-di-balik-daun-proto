@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#14532d">
+<title>Dari Gerobak — Negeri di Balik Daun</title>
+<style>
+:root {
+  --bg: #f4f1ea; --panel: #ffffff; --ink: #1c1917; --muted: #78716c; --line: #e7e2d8;
+  --leaf: #166534; --leaf-soft: #dcfce7; --danger: #b91c1c; --danger-soft: #fee2e2; --gold: #b45309; --gold-soft: #fef3c7;
+  --road: #d6d0c4; --lot: #fbfaf7; --shadow: 0 2px 10px rgba(0,0,0,.08);
+  --s0: #b91c1c; --s1: #2563eb; --s2: #16a34a; --s3: #d97706;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12140f; --panel: #1c1f18; --ink: #ecebe6; --muted: #a8a29e; --line: #2e332a;
+    --leaf: #4ade80; --leaf-soft: #14301f; --danger: #f87171; --danger-soft: #3b1515; --gold: #fbbf24; --gold-soft: #3a2c0c;
+    --road: #2a2d25; --lot: #1f231b; --shadow: 0 2px 10px rgba(0,0,0,.4);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+button, select { font: inherit; color: inherit; cursor: pointer; }
+[hidden] { display: none !important; }
+.screen { max-width: 560px; margin: 0 auto; padding: 12px 16px 28px; min-height: 100dvh; }
+h1 { font-size: 26px; margin: 10px 0 2px; }
+h2 { font-size: 17px; margin: 18px 0 8px; }
+.muted { color: var(--muted); } .small { font-size: 12px; }
+.btn { display: block; width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); text-align: left; margin: 8px 0; box-shadow: var(--shadow); text-decoration: none; color: inherit; }
+.btn b { display: block; } .btn span { display: block; font-size: 12.5px; color: var(--muted); }
+.btn.primary { background: var(--leaf); border-color: var(--leaf); color: #fff; } .btn.primary span { color: #e6ffe9; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #06200f; } :root:not([data-theme="light"]) .btn.primary span { color: #0b3a1c; } }
+.btn:disabled { opacity: .45; cursor: default; }
+.row { display: flex; gap: 8px; align-items: center; }
+input, select { padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); width: 100%; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; box-shadow: var(--shadow); }
+.hero { text-align: center; padding: 10px 0 4px; } .hero .leaf { font-size: 48px; }
+.mimpi-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mimpi-pick button { border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 9px; text-align: left; font-size: 13px; }
+.mimpi-pick button.on { border: 2px solid var(--leaf); background: var(--leaf-soft); }
+
+/* game */
+#scr-game { padding: 0 10px 190px; }
+.topbar { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; align-items: center; gap: 6px; padding: 8px 0; }
+.topbar .title { flex: 1; font-weight: 800; font-size: 14px; }
+.topbar button { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 6px 9px; font-size: 12.5px; }
+#kabar { font-size: 12.5px; background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 10px; padding: 6px 9px; margin-bottom: 8px; }
+#jalan { position: relative; background: var(--road); border-radius: 16px; padding: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+#jalan .aspal { grid-column: 1 / -1; text-align: center; font-size: 10.5px; font-weight: 800; letter-spacing: .3em; color: var(--muted); padding: 1px 0; }
+.lot { position: relative; background: var(--lot); border: 1px solid var(--line); border-radius: 12px; padding: 6px 4px 5px; text-align: center; min-height: 104px; overflow: hidden; border-top: 5px solid var(--c, var(--line)); }
+.lot.mine { box-shadow: 0 0 0 2px var(--c); }
+.lot .sp { font-size: 34px; line-height: 1.1; filter: drop-shadow(0 2px 2px rgba(0,0,0,.15)); transition: transform .3s; }
+.lot.naik .sp { animation: naik .9s ease-out; }
+@keyframes naik { 0% { transform: scale(.4) translateY(12px); } 70% { transform: scale(1.25); } }
+.lot .nm { font-size: 10.5px; font-weight: 700; line-height: 1.15; min-height: 2.3em; }
+.lot .lv { font-size: 10px; color: var(--muted); }
+.lot .ex { font-size: 11px; min-height: 1.2em; letter-spacing: -1px; }
+.lot .mem { position: absolute; top: 3px; right: 4px; font-size: 10px; color: var(--muted); }
+.lot .liar { position: absolute; top: 2px; left: 4px; font-size: 12px; }
+.lot.npc { opacity: .85; --c: #a8a29e; }
+.lot.kosong { background: transparent; border-style: dashed; --c: transparent; }
+.lot .tape { position: absolute; inset: 0; background: repeating-linear-gradient(-35deg, rgba(234,179,8,.8) 0 10px, rgba(28,25,23,.85) 10px 20px); display: flex; align-items: center; justify-content: center; }
+.lot .tape b { background: var(--danger); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; transform: rotate(-8deg); }
+.lot.hit { animation: guncang .5s; }
+@keyframes guncang { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+#keluarga { margin-top: 10px; }
+#keluarga .hd { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+#keluarga .hd b { font-size: 15px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.chip { font-size: 12px; border: 1px solid var(--line); border-radius: 99px; padding: 2px 8px; background: var(--bg); white-space: nowrap; }
+.chip.warn { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
+.chip.gold { border-color: var(--gold); background: var(--gold-soft); }
+.stats { display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; margin-top: 4px; }
+.mimpi { margin-top: 8px; }
+.mimpi .bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 4px; }
+.mimpi .bar i { height: 9px; border-radius: 5px; background: var(--line); position: relative; overflow: hidden; }
+.mimpi .bar i b { position: absolute; inset: 0; background: var(--leaf); width: var(--w, 0%); }
+.mimpi .tahap { font-size: 11px; color: var(--muted); display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 2px; }
+#lain { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+.pl { font-size: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; border-left: 4px solid var(--c); }
+.pl b { font-size: 12.5px; }
+#log { margin-top: 8px; }
+#prompt { position: fixed; left: 0; right: 0; bottom: 0; z-index: 12; max-width: 560px; margin: 0 auto; background: var(--panel); border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; box-shadow: 0 -6px 22px rgba(0,0,0,.18); padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); max-height: 62dvh; overflow-y: auto; }
+#prompt .q { font-weight: 700; font-size: 14px; margin-bottom: 6px; display: flex; gap: 8px; align-items: flex-start; }
+#prompt .q > span { flex: 1; }
+#prompt .mini { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 2px 8px; font-size: 12px; white-space: nowrap; }
+#prompt.min .opts, #prompt.min .go, #prompt.min .wj { display: none; }
+#prompt .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#prompt .opts.one { grid-template-columns: 1fr; }
+#prompt .opt { border: 1px solid var(--line); background: var(--bg); border-radius: 11px; padding: 8px 9px; text-align: left; font-size: 13px; }
+#prompt .opt b { display: block; font-size: 13.5px; } #prompt .opt span { display: block; font-size: 11.5px; color: var(--muted); }
+#prompt .opt.on { border: 2px solid var(--leaf); background: var(--leaf-soft); }
+#prompt .opt:disabled { opacity: .4; cursor: default; }
+#prompt .opt.lock { outline: 2px dashed var(--gold); }
+#prompt .go { margin-top: 8px; width: 100%; border: 0; background: var(--leaf); color: #fff; border-radius: 11px; padding: 11px; font-weight: 800; }
+#prompt .go:disabled { opacity: .45; }
+#prompt .wait { font-size: 13px; color: var(--muted); text-align: center; padding: 6px; }
+#nego:empty { display: none; }
+.cardpop { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); z-index: 21; width: min(80vw, 310px); border-radius: 16px; background: var(--panel); border: 3px solid var(--gold); box-shadow: 0 12px 40px rgba(0,0,0,.45); padding: 14px 16px; text-align: center; animation: pop .35s ease-out; }
+.cardpop .kind { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
+.cardpop .big { font-size: 42px; line-height: 1.2; } .cardpop h4 { margin: 4px 0 6px; font-size: 18px; } .cardpop p { margin: 0; font-size: 14px; }
+.cardpop .close { margin-top: 10px; font-size: 11px; color: var(--muted); }
+.cardpop.bad { border-color: var(--danger); } .cardpop.bad .kind { color: var(--danger); }
+.cardpop.good { border-color: var(--leaf); } .cardpop.good .kind { color: var(--leaf); }
+@keyframes pop { from { transform: translate(-50%, -50%) scale(.6) rotate(-6deg); opacity: 0; } }
+.ov { position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.ov .card { max-width: 440px; width: 100%; max-height: 86dvh; overflow-y: auto; }
+.ov h3 { margin: 0 0 8px; }
+.memo { list-style: none; padding: 0; margin: 0; font-size: 13.5px; }
+.memo li { padding: 6px 0; border-bottom: 1px dashed var(--line); } .memo li.luka { color: var(--danger); } .memo li.mimpi { color: var(--leaf); font-weight: 700; }
+.memo li small { color: var(--muted); margin-right: 6px; }
+#toast { position: fixed; left: 50%; bottom: 45%; transform: translateX(-50%); z-index: 40; background: var(--ink); color: var(--bg); padding: 9px 14px; border-radius: 12px; font-size: 13px; max-width: 86vw; text-align: center; }
+#hovertip { position: fixed; z-index: 60; max-width: 240px; background: var(--ink); color: var(--bg); font-size: 12px; line-height: 1.35; padding: 6px 9px; border-radius: 8px; pointer-events: none; }
+[data-tip] { cursor: help; }
+.banner { background: var(--danger-soft); color: var(--danger); border-radius: 10px; padding: 8px 10px; font-size: 13px; margin: 6px 0; }
+#coach { position: fixed; inset: 0; z-index: 22; pointer-events: none; }
+#coach.blocking { pointer-events: auto; }
+.coach-hl { position: fixed; border-radius: 10px; pointer-events: none; transition: all .2s; }
+#coach.blocking .coach-hl { box-shadow: 0 0 0 9999px rgba(0,0,0,.62), 0 0 0 3px var(--gold); }
+#coach:not(.blocking) .coach-hl { box-shadow: 0 0 0 3px var(--gold), 0 0 18px var(--gold); }
+.coach-bubble { position: fixed; left: 10px; right: 10px; max-width: 480px; margin: 0 auto; background: var(--panel); color: var(--ink); border: 2px solid var(--gold); border-radius: 14px; padding: 11px 13px; font-size: 14px; pointer-events: auto; box-shadow: var(--shadow); }
+.coach-bubble .ch { font-size: 11px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .04em; }
+.coach-bubble .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.coach-bubble button { border: 0; background: var(--gold); color: #fff; border-radius: 9px; padding: 7px 14px; font-weight: 700; }
+.plist div { display: flex; justify-content: space-between; padding: 7px 2px; border-bottom: 1px solid var(--line); }
+.code { font-size: 34px; font-weight: 800; letter-spacing: 8px; text-align: center; }
+.rank div { display: flex; justify-content: space-between; gap: 8px; padding: 8px 4px; border-bottom: 1px solid var(--line); }
+.rank div:first-child { font-weight: 800; }
+.kisah { list-style: none; padding: 0; margin: 0; border-left: 3px solid var(--line); }
+.kisah li { position: relative; padding: 4px 0 8px 14px; font-size: 14px; }
+.kisah li::before { content: ''; position: absolute; left: -7px; top: 9px; width: 11px; height: 11px; border-radius: 50%; background: var(--panel); border: 2px solid var(--muted); }
+.kisah li.luka::before { border-color: var(--danger); } .kisah li.mimpi::before { background: var(--leaf); border-color: var(--leaf); } .kisah li.bantu::before { border-color: var(--leaf); }
+.kisah li small { display: block; color: var(--muted); font-size: 11px; }
+.korban li { margin: 5px 0; font-size: 14px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+<script src="ndbd-ui.js?v=4"></script>
+<script src="ndbd-net.js?v=4"></script>
+<script src="ndbd-dompet.js?v=4"></script>
+<script src="dg-engine.js?v=4"></script>
+<script src="tutorial.js?v=4"></script>
+<script src="dg-tutorial.js?v=4"></script>
+</head>
+<body>
+
+<!-- LOBBY -->
+<section id="scr-lobby" class="screen">
+  <a class="small muted" href="index.html" style="color:inherit">← 🍃 Negeri di Balik Daun</a>
+  <div class="hero">
+    <div class="leaf">🛒</div>
+    <h1>Dari Gerobak</h1>
+    <div class="muted">Setahun merintis usaha keluarga di Jalan Daun, di negeri tempat izin, razia, dan putusan punya tarif. Currency: <b>🍃 Daun</b>.</div>
+  </div>
+  <h2>Keluargamu</h2>
+  <label class="small muted" for="in-name">Namamu</label>
+  <input id="in-name" maxlength="14" placeholder="mis. Joshua">
+  <label class="small muted" for="in-usaha" style="display:block;margin-top:8px">Jualan apa?</label>
+  <select id="in-usaha"></select>
+  <div class="small muted" style="margin-top:8px">Mimpi keluarga</div>
+  <div class="mimpi-pick" id="mimpi-pick"></div>
+  <h2>Main</h2>
+  <button class="btn primary" id="btn-tutorial"><b>▶ Tutorial (3 bab, ±6 menit)</b><span>Belajar sambil main. Disarankan sebelum main bareng.</span></button>
+  <button class="btn" id="btn-prac"><b>🤖 Latihan vs Bot</b><span>Kamu + 3 keluarga bot. Dana Offshore ×50%.</span></button>
+  <button class="btn" id="btn-host"><b>🏠 Buat Room Online</b><span>Bagikan kode ke 1–3 teman. Kursi kosong diisi bot.</span></button>
+  <div class="row">
+    <input id="in-code" maxlength="4" placeholder="KODE" style="text-transform:uppercase;letter-spacing:4px;font-weight:700">
+    <button class="btn" id="btn-join" style="width:auto;margin:0;white-space:nowrap"><b>Gabung</b></button>
+  </div>
+  <div id="online-note" class="small muted"></div>
+  <p class="small muted">Satir fiksi. Semua tokoh & kejadian rekaan, terinspirasi pola penyimpangan hukum yang diberitakan media.</p>
+</section>
+
+<!-- WAITING -->
+<section id="scr-wait" class="screen" hidden>
+  <h2>Ruang tunggu</h2>
+  <div class="card"><div class="muted small" style="text-align:center">Kode room</div><div class="code" id="w-code">----</div>
+    <button class="btn primary" id="btn-share" style="text-align:center"><b>📤 Bagikan link ke teman</b></button></div>
+  <h2>Keluarga di Jalan Daun</h2>
+  <div class="card plist" id="w-players"></div>
+  <div id="w-host" hidden><p class="small muted">Maks. 4 keluarga; kursi kosong diisi keluarga bot.</p>
+    <button class="btn primary" id="btn-start" style="text-align:center"><b>Mulai tahun ini</b></button></div>
+  <p id="w-guest" class="muted" hidden>Menunggu host memulai…</p>
+  <button class="btn" id="btn-wait-back" style="text-align:center">Keluar</button>
+</section>
+
+<!-- GAME -->
+<section id="scr-game" class="screen" hidden>
+  <div class="topbar">
+    <div class="title" id="g-title">Bulan 1/12</div>
+    <button id="btn-skip" hidden>Lewati tutorial</button>
+    <button id="btn-speed" data-tip="Kecepatan jalannya bot & animasi">▶ Normal</button>
+    <button id="btn-help">? Aturan</button>
+  </div>
+  <div id="g-banner" class="banner" hidden></div>
+  <div id="kabar"></div>
+  <div id="nego"></div>
+  <div id="jalan"></div>
+  <div id="keluarga" class="card"></div>
+  <div id="lain"></div>
+  <div id="log"></div>
+  <div id="prompt" hidden></div>
+</section>
+
+<!-- END -->
+<section id="scr-end" class="screen" hidden>
+  <h2>📖 Kisah setahun</h2>
+  <div class="card" id="e-kisah"></div>
+  <h2>🏁 Keluarga paling sejahtera</h2>
+  <div class="card rank" id="e-rank"></div>
+  <div id="e-konversi"></div>
+  <h2>📋 Laporan Korban</h2>
+  <div class="card"><ul class="korban" id="e-korban"></ul></div>
+  <button class="btn primary" id="btn-again" style="text-align:center"><b>Main lagi</b></button>
+  <button class="btn" id="btn-end-back" style="text-align:center">Ke lobby</button>
+  <a class="btn" href="index.html" style="text-align:center"><b>🍃 Negeri di Balik Daun</b></a>
+</section>
+
+<div class="ov" id="ov" hidden><div class="card" id="ov-card"></div></div>
+<div id="toast" hidden></div>
+<div id="cardpop" class="cardpop" hidden></div>
+<div id="hovertip" hidden></div>
+<div id="coach" hidden><div class="coach-hl"></div><div class="coach-bubble"></div></div>
+
+<script>
+'use strict';
+const SB_OVERRIDE = (() => { try { return JSON.parse(localStorage.getItem('ndbd_sb')); } catch (e) { return null; } })(); // hanya untuk tes lokal
+const SB_URL = (SB_OVERRIDE && SB_OVERRIDE.url) || 'https://axlmcglultvdxuwbspci.supabase.co';
+const SB_KEY = (SB_OVERRIDE && SB_OVERRIDE.key) || 'sb_publishable_lUOhxk6WVX8jskieKVFtfg_ZPx7Dk0z';
+
+const DG = window.DariGerobak, TUT = window.Tutorial, DGT = window.DGTutorial, C = DG.C;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = NDBD.esc;
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+};
+const myId = (store.get('ndbd_id', null) || (() => { const id = Math.random().toString(36).slice(2, 10); store.set('ndbd_id', id); return id; })()) + (new URLSearchParams(location.search).get('as') || '');
+const SEAT_COLOR = ['var(--s0)', 'var(--s1)', 'var(--s2)', 'var(--s3)'];
+const JUALAN = ['Nasi Uduk', 'Bakso', 'Kopi', 'Jahit', 'Pecel Lele', 'Martabak', 'Es Teh', 'Soto'];
+const myName = () => ($('#in-name').value.trim() || 'Tamu').slice(0, 14);
+const myUsaha = () => `${$('#in-usaha').value} ${myName()}`;
+let myMimpi = store.get('dg_mimpi', 'sarjana');
+
+let mode = null, S = null, game = null, mySeat = -1, timer = null, nego = null;
+let lastEv = 0, sentFor = 0, sel = [], selFor = 0, promptMin = false;
+let tutorialChapter = null, tutorialAnswer = null, tutorialAbort = false, lock = null;
+
+const show = (id) => { for (const s of document.querySelectorAll('.screen')) s.hidden = s.id !== id; window.scrollTo(0, 0); };
+function toast(t, ms = 2200) { const el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, ms); }
+const tip = (t) => `data-tip="${esc(t)}"`;
+const SPEEDS = [['🐢 Lambat', 1500], ['▶ Normal', 1000], ['⏩ Cepat', 400]];
+let speedIdx = store.get('ndbd_speed', 1);
+const speed = () => SPEEDS[speedIdx][1];
+function renderSpeed() { $('#btn-speed').textContent = SPEEDS[speedIdx][0]; $('#btn-speed').hidden = mode === 'client'; }
+$('#btn-speed').onclick = () => { speedIdx = (speedIdx + 1) % SPEEDS.length; store.set('ndbd_speed', speedIdx); renderSpeed(); };
+
+const feed = NDBD.Feed($('#log'), { label: 'Bulan' });
+const cards = NDBD.CardQueue($('#cardpop'), { speed: () => speed() });
+const chat = NDBD.Chat({ myId, myName, mySeat: () => mySeat, send: (m) => net.send('chat', m) });
+
+// ====== render ======
+let dirty = false;
+function schedule() {
+  if (dirty) return;
+  dirty = true;
+  const go = () => { if (!dirty) return; dirty = false; render(); };
+  requestAnimationFrame(go); setTimeout(go, 120);   // rAF berhenti saat tab tersembunyi
+}
+const me = () => (S && mySeat >= 0 ? S.p[mySeat] : null);
+const lotEm = (l) => (l.kosong && l.owner === null ? '🌱' : DG.LEVEL_EM[l.level]);
+const liarLot = (l) => l.owner !== null && S.p[l.owner] && l.level > S.p[l.owner].izin;
+let naikLot = new Set(), hitLot = new Set();
+
+function render() {
+  if (!S) return;
+  const p0 = me();
+  $('#g-title').innerHTML = mode === 'tutorial' && tutorialChapter ? `Tutorial ${tutorialChapter.id}/3 · ${esc(tutorialChapter.title)}` :
+    `Bulan ${Math.max(1, S.t)}/${S.bulan}${NDBD.timerBadge(S)}`;
+  $('#kabar').innerHTML = S.kabar ? `📰 <b>${esc(DG.KABAR[S.kabar.id][0])}</b> — ${esc(DG.KABAR[S.kabar.id][1])}` : '📰 Kabar Negeri dibuka tiap awal bulan.';
+  $('#nego').innerHTML = NDBD.negoBanner(S, myId, 'Pakai 💬 chat: janjikan bantuan, ajak patungan, atau tawar "koordinasi". Janji tidak mengikat.');
+  // jalan: baris atas 0..3, baris bawah 7..4 (melingkar)
+  const urut = [0, 1, 2, 3, 7, 6, 5, 4];
+  const lotHtml = (i) => {
+    const l = S.lots[i];
+    const owner = l.owner !== null ? S.players[l.owner] : null;
+    const cls = ['lot', l.npc !== null ? 'npc' : '', l.kosong && l.owner === null ? 'kosong' : '', l.owner === mySeat ? 'mine' : '', naikLot.has(i) ? 'naik' : '', hitLot.has(i) ? 'hit' : ''].join(' ');
+    const segel = l.segelSampai >= S.t && S.t > 0;
+    const p = l.owner !== null ? S.p[l.owner] : null;
+    const kar = p && p.lots[0] === i ? '🧍'.repeat(p.karyawan.length) : '';
+    const ex = [l.level >= 2 ? '🪧' : '', l.level >= 3 ? '🛵' : '', l.fondasi > l.level ? '🧱' : '', kar].join('');
+    const name = l.kosong && l.owner === null ? 'Lahan kosong' : l.name;
+    const sub = owner ? esc(owner.name) + (p && p.jabatan ? ' ' + DG.JABATAN[p.jabatan][0] : '') : l.npc !== null ? 'warga' : `kavling ${i + 1}`;
+    return `<div class="${cls}" data-lot="${i}" style="--c:${l.owner !== null ? SEAT_COLOR[l.owner] : ''}">
+      ${liarLot(l) ? `<span class="liar" ${tip('Tanpa izin: rawan sidak & penggusuran')}>⚠️</span>` : ''}${l.mem.length ? `<span class="mem">📜${l.mem.length}</span>` : ''}
+      <div class="sp">${lotEm(l)}</div><div class="nm">${esc(name)}</div><div class="lv">${l.kosong && l.owner === null ? '' : DG.LEVEL[l.level] + ' · '}${sub}</div><div class="ex">${ex}</div>
+      ${segel ? `<div class="tape"><b>DISEGEL s/d bulan ${l.segelSampai}</b></div>` : ''}</div>`;
+  };
+  $('#jalan').innerHTML = urut.slice(0, 4).map(lotHtml).join('') + '<div class="aspal">— J A L A N · D A U N —</div>' + urut.slice(4).map(lotHtml).join('');
+  naikLot.clear(); hitLot.clear();
+  // keluargaku
+  if (p0) {
+    const m = S.lots[p0.lots[0]], M = DG.MIMPI[p0.mimpi.jenis];
+    const tahap = Math.min(3, Math.floor(p0.mimpi.celengan / C.MIMPI_TAHAP));
+    const bar = [0, 1, 2].map((k) => { const isi = Math.max(0, Math.min(1, (p0.mimpi.celengan - k * C.MIMPI_TAHAP) / C.MIMPI_TAHAP)); return `<i><b style="--w:${Math.round(isi * 100)}%"></b></i>`; }).join('');
+    const status = [];
+    if (p0.lapas >= S.t && S.t > 0) status.push(`<span class="chip warn">🔒 ditahan</span>`);
+    if (p0.jabatan) status.push(`<span class="chip gold" ${tip(`Kamu ${DG.JABATAN[p0.jabatan][1]}: mengendalikan ${DG.JABATAN[p0.jabatan][2]}`)}>${DG.JABATAN[p0.jabatan][0]} ${DG.JABATAN[p0.jabatan][1]}</span>`);
+    if (p0.dicatatSampai >= S.t) status.push(`<span class="chip warn" ${tip('Kamu dicatat aparat karena melawan: lebih sering didatangi')}>📝 dicatat</span>`);
+    if (p0.langgananSampai >= S.t) status.push(`<span class="chip" ${tip('Kamu sudah "setor": aparat membiarkanmu sebentar')}>🤝 langganan</span>`);
+    $('#keluarga').innerHTML = `<div class="hd"><b>${esc(m.name)}</b><span class="small muted">${DG.LEVEL_EM[m.level]} ${DG.LEVEL[m.level]}${p0.lots[1] !== undefined ? ` + cabang ${DG.LEVEL[S.lots[p0.lots[1]].level]}` : ''}</span></div>
+      <div class="chips"><span class="chip">🙋 ${esc(S.players[mySeat].name)}</span><span class="chip">💑 ${esc(p0.pasangan)}</span><span class="chip">🧒 ${esc(p0.anak)}</span>
+        ${p0.karyawan.map((k) => `<span class="chip" ${tip(`${k.nama}: ${DG.TRAIT[k.trait][1]} (${DG.TRAIT[k.trait][2]}). Bekerja sejak bulan ${k.sejak}.`)}>${DG.TRAIT[k.trait][0]} ${esc(k.nama)}</span>`).join('')}${status.join('')}</div>
+      <div class="stats"><span ${tip('Daun: uang keluargamu bulan ini')}>🍃 <b>${p0.daun}</b></span><span ${tip(`Izin sampai level ${DG.LEVEL[p0.izin]}${p0.berkas ? `; izin ${DG.LEVEL[p0.berkas.level]} diproses, jadi bulan ${p0.berkas.siap}` : ''}`)}>📄 ${DG.LEVEL[p0.izin]}${p0.berkas ? '⏳' : ''}</span>
+        <span ${tip('Backing: orang dalam yang melindungimu')}>🛡️ ${p0.backing}</span><span ${tip('Rekaman: bukti untuk memviralkan')}>📹 ${p0.rekaman}</span>
+        <span ${tip('Sorotan: seberapa mencolok kamu di mata aparat')}>🔦 ${p0.sorotan}</span>${p0.jejak ? `<span ${tip('Jejak proyek negara: incaran Pasal 2/3')}>👣 ${p0.jejak}</span>` : ''}${p0.utang ? `<span class="chip warn" ${tip('Utang pinjol, berbunga tiap bulan')}>📱 −${p0.utang}</span>` : ''}</div>
+      <div class="mimpi" ${tip('Isi celengan di akhir bulan. Tiap tahap = satu langkah menuju mimpi keluargamu')}>${M[0]} <b>${esc(M[1])}</b> <span class="small muted">· 🐷 celengan ${p0.mimpi.celengan}</span>
+        <div class="bar">${bar}</div><div class="tahap">${M[2].map((t, k) => `<span>${k < tahap ? '✅' : '▫️'} ${esc(t)}</span>`).join('')}</div></div>`;
+  } else $('#keluarga').innerHTML = '';
+  $('#lain').innerHTML = S.p.filter((p) => p.seat !== mySeat).map((p) => {
+    const m = S.lots[p.lots[0]];
+    const siap = S.stage === 'rencana' && (S.ready || []).includes(p.seat);
+    return `<div class="pl" style="--c:${SEAT_COLOR[p.seat]}"><b>${esc(S.players[p.seat].name)}</b>${siap ? ' ✓' : ''}${p.jabatan ? ' ' + DG.JABATAN[p.jabatan][0] : ''}<br>
+      ${DG.LEVEL_EM[m.level]} ${DG.LEVEL[m.level]} · 🍃${p.daun} · 👥${p.karyawan.length}${p.lapas >= S.t && S.t ? ' · 🔒' : ''}<div class="nd-last">${esc(feed.lastAction(S.players[p.seat].name, S.t)) || '—'}</div></div>`;
+  }).join('');
+  feed.render({ log: S.log, t: S.t, players: S.players.map((x, i) => ({ name: x.name, color: SEAT_COLOR[i] })) });
+  renderPrompt();
+  handleEvents();
+  if (S.phase === 'end' && mode !== 'tutorial') setTimeout(showEnd, 1800);
+}
+
+// ====== prompt ======
+function myPrompt() { return S && S.prompts ? S.prompts[mySeat] : null; }
+function renderPrompt() {
+  const el = $('#prompt'), p = myPrompt();
+  if (!p || p.id === sentFor) {
+    const menunggu = S && S.phase === 'play' && S.stage === 'rencana' && (S.ready || []).includes(mySeat);
+    if (menunggu) { el.hidden = false; el.innerHTML = `<div class="wait">✓ Rencanamu terkunci. Menunggu keluarga lain… (${(S.ready || []).length}/${S.players.length})</div>`; }
+    else el.hidden = true;
+    return;
+  }
+  if (selFor !== p.id) { selFor = p.id; sel = p.pick && Array.isArray(lock) ? lock.slice() : []; promptMin = false; }
+  el.hidden = false; el.classList.toggle('min', promptMin);
+  const locked = (id) => lock !== null && lock !== undefined && (Array.isArray(lock) ? !lock.includes(id) : lock !== id);
+  const wajib = p.kind === 'tagihan' ? `<div class="small muted wj" style="margin-bottom:6px">🍃 Daun-mu ${S.p[mySeat].daun} · wajib ${p.wajib} · pilihanmu ${sel.reduce((s, id) => s + biayaOpsi(p, id), 0)} · sisa <b>${S.p[mySeat].daun - p.wajib - sel.reduce((s, id) => s + biayaOpsi(p, id), 0)}</b>${S.p[mySeat].daun - p.wajib - sel.reduce((s, id) => s + biayaOpsi(p, id), 0) < 0 ? ' ⚠️ kurang: celengan dibongkar atau pinjol' : ''}</div>` : '';
+  const opts = p.options.map((o) => {
+    const on = (p.pick || p.multi) && sel.includes(o.id);
+    const dis = o.disabled || locked(o.id);
+    return `<button class="opt ${on ? 'on' : ''} ${lock !== null && !locked(o.id) ? 'lock' : ''}" data-id="${esc(JSON.stringify(o.id))}" ${dis ? 'disabled' : ''}><b>${esc(o.label)}</b>${o.sub ? `<span>${esc(o.sub)}</span>` : ''}</button>`;
+  }).join('');
+  const need = p.pick ? Math.min(p.pick, p.options.filter((o) => !o.disabled).length) : 0;
+  const go = p.pick ? `<button class="go" ${sel.length !== need ? 'disabled' : ''}>Konfirmasi rencana (${sel.length}/${need})</button>` : p.multi ? `<button class="go">Bayar yang dipilih ✔</button>` : '';
+  el.innerHTML = `<div class="q"><span>${esc(p.text)}${NDBD.timerBadge(S)}</span><button class="mini" type="button">${promptMin ? '▴ Buka' : '▾ Lihat jalan'}</button></div>${wajib}<div class="opts ${p.options.length <= 2 || p.kind === 'celengan' ? 'one' : ''}">${opts}</div>${go}`;
+}
+function biayaOpsi(p, id) {
+  const o = p.options.find((x) => x.id === id); if (!o) return 0;
+  const m = /\((\d+)\)/.exec(o.label); return m ? +m[1] : 0;
+}
+$('#prompt').addEventListener('click', (e) => {
+  const p = myPrompt(); if (!p || p.id === sentFor) return;
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  if (b.classList.contains('mini')) { promptMin = !promptMin; renderPrompt(); return; }
+  if (b.classList.contains('go')) { send(p.pick || p.multi ? sel.slice() : null); return; }
+  const id = JSON.parse(b.dataset.id);
+  if (p.pick || p.multi) {
+    if (sel.includes(id)) sel = sel.filter((x) => x !== id);
+    else if (p.multi || sel.length < p.pick) sel.push(id);
+    else { sel.shift(); sel.push(id); }
+    renderPrompt(); return;
+  }
+  send(id);
+});
+function send(choice) {
+  const p = myPrompt(); if (!p) return;
+  if (mode === 'tutorial') {
+    if (Array.isArray(lock) && (!Array.isArray(choice) || lock.some((x) => !choice.includes(x)))) return toast('Ikuti langkah tutorial dulu ya.');
+    const r = tutorialAnswer; tutorialAnswer = null; lock = null; sentFor = p.id; coach.hide(); render(); if (r) r(choice); return;
+  }
+  sentFor = p.id;
+  if (mode === 'client') { net.action(mySeat, p.id, choice); S.ready = (S.ready || []).concat(p.kind === 'rencana' ? [mySeat] : []); }
+  else game.answer(mySeat, p.id, choice);
+  render();
+}
+
+// ====== event → kartu ======
+function handleEvents() {
+  for (const e of S.events) {
+    if (e.n <= lastEv) continue;
+    lastEv = e.n;
+    const mine = e.seat === mySeat, nm = (s) => (s === mySeat ? 'Kamu' : S.players[s].name);
+    if (e.type === 'kabar') cards.show('', '📰 Kabar Negeri', '🏛️', DG.KABAR[e.id][0], DG.KABAR[e.id][1]);
+    if (e.type === 'bangun') { naikLot.add(e.lot); if (mine && e.level >= 2) cards.show('good', e.cabang ? '📍 Cabang baru' : '🔨 Usaha naik kelas', DG.LEVEL_EM[e.level], `${S.lots[e.lot].name} jadi ${DG.LEVEL[e.level]}!`, 'Satu kenangan baru tercatat di kavlingmu.'); }
+    if (e.type === 'ancaman' && e.seat !== undefined && !e.solidaritas) { hitLot.add(S.p[e.seat].lots[0]); if (mine) cards.show('bad', DG.ANCAMAN_NAMA[e.jenis], '🚨', `${DG.ANCAMAN_NAMA[e.jenis].slice(2)} mendatangi usahamu`, e.oleh !== 'sistem' && e.oleh !== undefined ? `Atas perintah ${S.players[e.oleh].name}.` : 'Aparat datang dengan "surat tugas".'); }
+    if (e.type === 'segel' && mine) cards.show('bad', '📋 Disegel', '🚧', `${S.lots[e.lot].name} disegel ${C.SEGEL} bulan`, e.pergi && e.pergi.length ? `${e.pergi.join(', ')} dirumahkan.` : 'Tidak ada pemasukan dari sini untuk sementara.');
+    if (e.type === 'gusur' && mine) cards.show('bad', '🚜 Digusur', '🧱', `${DG.LEVEL[e.dari]} dibongkar`, `Tinggal ${DG.LEVEL[e.ke]}. Fondasinya masih ada: membangun ulang lebih murah.`);
+    if (e.type === 'lapas' && mine) cards.show('bad', '🔒 Ditahan', '🔒', 'Kamu ditahan sebulan', `${S.p[mySeat].pasangan} menjaga usaha sendirian. Bulan depan kamu hanya punya 1 rencana.`);
+    if (e.type === 'mimpi' && mine) { const M = DG.MIMPI[S.p[mySeat].mimpi.jenis]; cards.show('good', '🎉 Mimpi keluarga', M[0], M[2][e.tahap - 1] + '!', `Tahap ${e.tahap} dari 3 tercapai.`); }
+    if (e.type === 'karyawan' && mine && !e.masuk) cards.show('bad', '😔 Karyawan pergi', '🧍', `${e.nama} berhenti`, e.sebab === 'malu' ? 'Ia tidak mau ikut main amplop.' : 'Gajinya tidak terbayar.');
+    if (e.type === 'bantu' && mine) cards.show('good', '🤲 Tetangga datang', '🤲', `${e.dari.join(', ')} membantu`, 'Kebaikan ini tercatat di kenangan kavlingmu.');
+    if (e.type === 'jabatan') cards.show(e.masuk ? '' : 'bad', '🎖️ Jabatan', DG.JABATAN[e.pos][0], `${nm(e.seat)} ${e.masuk ? 'kini ' + DG.JABATAN[e.pos][1] : 'lepas dari ' + DG.JABATAN[e.pos][1]}`, e.masuk ? 'Satu keluarga di Jalan Daun masuk ke dalam sistem.' : e.sebab === 'ott' ? 'Kena OTT.' : e.sebab === 'copot' ? 'Dicopot: setoran ke atas macet.' : 'Mundur.');
+    if (e.type === 'ott') cards.show('bad', '🚨 OTT', '🚨', `OTT: ${nm(e.seat)}`, 'Sorotan menyentuh 10.');
+    if (e.type === 'sidang' && mine) cards.show(e.menang ? 'good' : 'bad', '🧑‍⚖️ Putusan', e.menang ? '⚖️' : '⛓️', e.menang ? 'Kamu menang!' : 'Kamu kalah', `Dadu ${e.d} +${e.mod} vs ambang ${e.ambang}.`);
+    if (e.type === 'rencana' && mode !== 'tutorial') toast('Semua rencana dibuka!', 1200);
+  }
+}
+
+// ====== memori kavling ======
+$('#jalan').addEventListener('click', (e) => {
+  const d = e.target.closest('[data-lot]'); if (!d || !S) return;
+  const l = S.lots[+d.dataset.lot];
+  const list = l.mem.slice().reverse();
+  openOv(`<h3>${lotEm(l)} ${esc(l.kosong && l.owner === null ? 'Lahan kosong' : l.name)}</h3><div class="small muted" style="margin-bottom:6px">${l.owner !== null ? `Milik keluarga ${esc(S.players[l.owner].name)}` : l.npc !== null ? 'Usaha warga' : 'Belum ada yang membuka usaha di sini.'}</div>
+    <ul class="memo">${list.length ? list.map((m) => `<li class="${m.kind || ''}"><small>${m.t ? 'Bulan ' + m.t : 'Awal'}</small>${esc(m.text)}</li>`).join('') : '<li>Belum ada kenangan.</li>'}</ul>`);
+});
+function openOv(html) { $('#ov-card').innerHTML = html + '<button class="btn primary" style="text-align:center;margin-top:10px"><b>Tutup</b></button>'; $('#ov').hidden = false; $('#ov-card .btn').onclick = () => { $('#ov').hidden = true; }; }
+$('#btn-help').onclick = () => openOv(`<h3>Aturan singkat Dari Gerobak</h3>
+  <p><b>Setahun (${C.BULAN} bulan).</b> Tiap bulan: Kabar Negeri → semua memilih <b>2 rencana serentak</b> → usaha berproduksi → <b>Mata Aparat</b> mendatangi beberapa usaha → tagihan keluarga.</p>
+  <p><b>Usaha:</b> ${DG.LEVEL.map((x, i) => `${DG.LEVEL_EM[i]} ${x}`).join(' → ')}. Mulai Toko butuh izin. Tanpa izin = rawan sidak (segel) & penggusuran (turun level, fondasi tersisa).</p>
+  <p><b>Tetangga:</b> usaha ramai di sebelahmu memberi +1. Saat seseorang didatangi aparat, yang lain boleh patungan, meminjamkan rekaman, atau bersaksi.</p>
+  <p><b>Pilihan saat didatangi:</b> bayar (cepat, jadi "langganan" 2 bulan), viralkan (gratis, tapi Pasal Karet & kamu "dicatat"), atau lawan/terima akibatnya.</p>
+  <p><b>Keluarga:</b> biaya hidup & gaji wajib. Tagihan lain boleh dilewati, tapi ada akibatnya. <b>Celengan</b> mengisi Mimpi (3 tahap). Kurang uang: bongkar celengan atau pinjol.</p>
+  <p><b>Jabatan</b> (bulan ${C.JABATAN_DARI}–${C.JABATAN_SAMPAI}, butuh 1 Backing): kebal di bidangmu, memilih siapa yang "ditertibkan", uangnya masuk kantongmu. Tapi setor ke atas makin besar, Sorotan naik, OTT mengintai, mimpi melambat.</p>
+  <p><b>Akhir:</b> Kekayaan = Daun + nilai usaha + celengan & mimpi − utang. Dikonversi jadi 🏝️ Dana Offshore untuk dompetmu.</p>`);
+
+// ====== layar akhir ======
+function showEnd() {
+  if (!S || S.phase !== 'end' || !$('#scr-end').hidden) return;
+  const R = S.result, st = S.stats, g = (k) => st[k] || 0;
+  const p = me();
+  if (p) {
+    const lots = p.lots.map((i) => S.lots[i]);
+    const kej = lots.flatMap((l) => l.mem.map((m) => ({ t: m.t, text: m.text, kind: m.kind }))).concat(p.kisah.map((k) => ({ t: k.t, text: k.text, kind: /🎉/.test(k.text) ? 'mimpi' : /disegel|digusur|Ditahan|berhenti|dirumahkan|pinjol|tidak terbayar|dibongkar|kehilangan/.test(k.text) ? 'luka' : /Membantu/.test(k.text) ? 'bantu' : '' })));
+    const seen = new Set();
+    const list = kej.filter((k) => { const key = k.t + k.text; if (seen.has(key)) return false; seen.add(key); return true; }).sort((a, b) => a.t - b.t);
+    const M = DG.MIMPI[p.mimpi.jenis], tahap = Math.min(3, Math.floor(p.mimpi.celengan / C.MIMPI_TAHAP));
+    const nasib = [
+      `${p.pasangan}: ${p.jabatan ? 'setahun menjaga usaha sendirian, sementara kamu sibuk di kantor.' : lots.some((l) => l.level >= 3) ? 'kini tidak perlu bangun jam 3 pagi lagi.' : 'masih menemanimu di balik etalase.'}`,
+      `${p.anak}: ${M[0]} ${tahap === 3 ? M[2][2] + '. Mimpi keluarga tercapai.' : tahap ? M[2][tahap - 1] + ', tapi perjalanannya belum selesai.' : 'mimpi keluarga harus menunggu tahun depan.'}`,
+    ].concat(p.karyawan.map((k) => `${k.nama}: masih bekerja bersamamu sejak bulan ${k.sejak}.`));
+    $('#e-kisah').innerHTML = `<b>${esc(S.lots[p.lots[0]].name)}</b> <span class="small muted">· ${DG.LEVEL_EM[S.lots[p.lots[0]].level]} ${DG.LEVEL[S.lots[p.lots[0]].level]}</span>
+      <ul class="kisah" style="margin-top:10px">${list.map((k) => `<li class="${k.kind || ''}"><small>${k.t ? 'Bulan ' + k.t : 'Awal'}</small>${esc(k.text)}</li>`).join('')}</ul>
+      <h3 style="margin:14px 0 6px;font-size:15px">Nasib keluargamu</h3><ul class="korban">${nasib.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  } else $('#e-kisah').innerHTML = '<p class="muted">Kamu menonton tahun ini.</p>';
+  const akhir = NDBDDompet.layarAkhir({ game: 'dg', result: R, mySeat, mode: mode === 'practice' ? 'latihan' : 'online', matchId: S.matchId || 'dg-' + S.evN,
+    label: (x) => `${DG.LEVEL_EM[x.level]} ${DG.LEVEL[x.level]} · ${DG.MIMPI[S.p[x.seat].mimpi.jenis][0]} ${x.mimpiTahap}/3${x.pernahPejabat ? ' · 🎖️ pernah pejabat' : ''}${x.mutasi ? ' · dimutasi ×0,8' : ''}${x.utang ? ` · utang ${x.utang}` : ''}` });
+  $('#e-rank').innerHTML = akhir.rank; $('#e-konversi').innerHTML = akhir.konversi;
+  const setoran = Object.keys(st).filter((k) => k.startsWith('setoran_') && k !== 'setoran_atas').reduce((s, k) => s + st[k], 0);
+  $('#e-korban').innerHTML = [
+    `💵 <b>${setoran + g('calo') + g('amplop')}</b> Daun mengalir sebagai "86", uang damai, calo, amplop & pengamanan perkara. Ke kas sistem: ${R.sistem}.`,
+    `📋 <b>${g('segel') + g('npc_disegel')}</b> usaha disegel (${g('npc_disegel')} di antaranya milik warga yang tidak sanggup bayar) · 🚜 <b>${g('gusur')}</b> penggusuran.`,
+    `🔒 <b>${g('lapas')}</b> penahanan, <b>${g('lapas_karet')}</b> di antaranya karena Pasal Karet setelah memviralkan.`,
+    `😔 <b>${g('karyawan_pergi')}</b> karyawan kehilangan pekerjaan karena gaji tak terbayar.`,
+    `📂 <b>${g('berkas_hilang')}</b> berkas izin resmi "hilang" di kantor · 💼 calo izin: ${g('calo')} Daun.`,
+    `🐷 <b>${g('celengan_dibongkar')}</b> Daun dari celengan mimpi dipakai untuk membayar aparat & tagihan · 📱 pinjol: ${g('pinjol')}.`,
+    `🤲 <b>${g('solidaritas')}</b> kali tetangga saling membantu.`,
+  ].map((x) => `<li>${x}</li>`).join('');
+  $('#btn-again').hidden = mode === 'client';
+  show('scr-end');
+}
+$('#btn-end-back').onclick = () => { leaveAll(); show('scr-lobby'); };
+$('#btn-again').onclick = () => {
+  if (mode === 'practice') startPractice();
+  else if (mode === 'host') { S = null; net.lobby.started = false; net.pushLobby(); renderWait(); show('scr-wait'); }
+};
+
+// ====== game lokal (latihan / host) ======
+function intro() {
+  const p = me(); if (!p) return;
+  const M = DG.MIMPI[p.mimpi.jenis];
+  openOv(`<h3>🛒 ${esc(S.lots[p.lots[0]].name)}</h3><p>Kamu, <b>${esc(p.pasangan)}</b>, dan anakmu <b>${esc(p.anak)}</b> memulai tahun ini dengan sebuah gerobak dan ${p.daun} Daun.</p>
+    <p>Mimpi keluarga: ${M[0]} <b>${esc(M[1])}</b>.</p><p class="small muted">Tetanggamu: ${S.p.filter((q) => q.seat !== mySeat).map((q) => esc(S.lots[q.lots[0]].name)).join(', ')}, dan warung warga. Semua ingin bertahan. Tidak semua akan bertahan dengan cara yang sama.</p>`);
+}
+function startLocal(players, broadcast) {
+  S = null; lastEv = 0; sentFor = 0; lock = null; feed.reset(); cards.clear();
+  mySeat = players.findIndex((p) => p.pid === myId);
+  if (timer) timer.stop();
+  timer = broadcast ? NDBD.TurnTimer({ secondsFor: (k) => (k === 'rencana' ? 45 : k === 'tagihan' ? 35 : 30), answer: (seat, id, c) => !!game && game.answer(seat, id, c),
+    onTimeout: (seat) => toast(`⏱️ Waktu ${S.players[seat].name} habis: dipilihkan otomatis.`, 2500) }) : null;
+  nego = broadcast ? NDBD.Nego({ seconds: 30, onChange: () => { schedule(); net.pushState(true); } }) : null;
+  game = DG.createGame(players, {
+    delay: speed,
+    onUpdate(st) { S = st; if (timer) timer.watch(st); schedule(); if (broadcast) net.pushState(); },
+    async onPhase(kind, st) {
+      if (kind !== 'nego' || !nego) return;
+      const humans = st.players.filter((p) => p.pid && !p.bot && (p.pid === myId || net.online.has(p.pid))).map((p) => p.pid);
+      await nego.phase(st, humans);
+    },
+  });
+  S = game.S; S.matchId = `dg-${broadcast ? net.lobby.code : 'latihan'}-${Date.now().toString(36)}`;
+  show('scr-game'); renderSpeed(); render(); intro();
+  game.run().then(() => { if (broadcast) net.pushState(true); schedule(); });
+}
+function startPractice() {
+  mode = 'practice'; store.set('ndbd_name', myName());
+  const bots = [['Bu Ratna 🤖'], ['Pak Karyo 🤖'], ['Mas Doni 🤖']];
+  const players = [{ name: myName(), bot: false, pid: myId, mimpi: myMimpi, usaha: myUsaha() }].concat(bots.map(([n]) => ({ name: n, bot: true })));
+  startLocal(players, false);
+}
+$('#btn-prac').onclick = startPractice;
+
+// ====== tutorial ======
+const coach = {
+  info(step) { return new Promise((res) => this.show(step, true, res)); },
+  prompt(step) { this.show(step, false); },
+  show(step, blocking, done) {
+    const c = $('#coach'), hl = $('.coach-hl'), bub = $('.coach-bubble');
+    c.hidden = false; c.classList.toggle('blocking', blocking);
+    const tgt = step.target ? $(step.target) : null;
+    bub.innerHTML = `<div class="ch">Tutorial · Bab ${tutorialChapter.id}: ${esc(tutorialChapter.title)}</div><div>${step.text}</div>` +
+      (blocking ? '<div class="row" style="justify-content:flex-end;margin-top:8px"><button>Lanjut ▶</button></div>' : '<div class="hint">👉 Lakukan langkah yang disorot.</div>');
+    if (blocking) bub.querySelector('button').onclick = () => { c.hidden = true; done(); };
+    if (tgt && tgt.id !== 'prompt') tgt.scrollIntoView({ block: 'nearest' });
+    const place = () => {
+      if (tgt) {
+        const r = tgt.getBoundingClientRect();
+        Object.assign(hl.style, { display: 'block', left: r.left - 4 + 'px', top: r.top - 4 + 'px', width: r.width + 8 + 'px', height: r.height + 8 + 'px' });
+        const atas = r.top + r.height / 2 > innerHeight / 2;
+        if (atas) { bub.style.top = '8px'; bub.style.bottom = 'auto'; } else { bub.style.top = 'auto'; bub.style.bottom = '12px'; }
+      } else { hl.style.display = blocking ? 'block' : 'none'; Object.assign(hl.style, { left: '50%', top: '50%', width: '0px', height: '0px' }); bub.style.top = '30%'; bub.style.bottom = 'auto'; }
+    };
+    requestAnimationFrame(() => requestAnimationFrame(place));
+    this.place = place;
+  },
+  hide() { $('#coach').hidden = true; },
+};
+addEventListener('resize', () => { if (!$('#coach').hidden && coach.place) coach.place(); });
+async function startTutorial() {
+  mode = 'tutorial'; tutorialAbort = false;
+  $('#btn-skip').hidden = false;
+  show('scr-game'); renderSpeed();
+  for (const ch of DGT.CHAPTERS) {
+    if (tutorialAbort) break;
+    tutorialChapter = ch; mySeat = ch.human; lastEv = 0; sentFor = 0; feed.reset(); cards.clear();
+    const players = ch.players.map((p) => (p.bot ? p : Object.assign({}, p, { name: myName(), usaha: myUsaha(), mimpi: myMimpi })));
+    await TUT.runChapter(Object.assign({}, ch, { players }), DG, {
+      delay: speed,
+      onGame(g) { game = g; S = g.S; render(); },
+      onUpdate(st) { S = st; if (tutorialAbort) game.stop(); schedule(); },
+      step: async (step) => { if (tutorialAbort) return; render(); await new Promise((r) => setTimeout(r, 200)); await coach.info(step); },
+      answer(p, step) {
+        return new Promise((res) => {
+          tutorialAnswer = res; lock = step && step.lock !== undefined ? step.lock : null;
+          render();
+          if (step) setTimeout(() => coach.prompt(step), 150);
+          if (tutorialAbort) res(p.bot);
+        });
+      },
+    });
+  }
+  coach.hide(); $('#btn-skip').hidden = true;
+  if (!tutorialAbort) store.set('dg_tutorial', 1);
+  tutorialChapter = null; mode = null; S = null;
+  show('scr-lobby'); refreshLobby();
+  if (!tutorialAbort) {
+    const b = NDBDDompet.bonusTutorial('dg');
+    toast(b.baru ? `🎉 Tutorial selesai! Bonus +${b.dana} 🏝️ Dana Offshore masuk dompet.` : '🎉 Tutorial selesai! Coba Latihan vs Bot atau Main Online.', 3500);
+  }
+}
+$('#btn-tutorial').onclick = () => { store.set('ndbd_name', myName()); startTutorial(); };
+$('#btn-skip').onclick = () => {
+  tutorialAbort = true; coach.hide();
+  if (tutorialAnswer) { const r = tutorialAnswer; tutorialAnswer = null; const p = myPrompt(); r(p ? p.bot : null); }
+  if (game) game.stop();
+};
+
+// ====== online ======
+let myPriv = null;
+const net = NDBDNet.Room({
+  url: SB_URL, key: SB_KEY, prefix: 'dg', myId, myName, meta: () => ({ mimpi: myMimpi, usaha: myUsaha() }),
+  buatLobi: (code) => ({ code, hostId: myId, started: false, players: [] }),
+  getState: () => S,
+  publik(st) {
+    const pub = DG.redactPublic(st);
+    pub.privs = {};
+    st.players.forEach((pl, seat) => { if (pl.pid && pl.pid !== myId && !pl.bot) pub.privs[pl.pid] = Object.assign({ seat }, DG.privateFor(st, seat)); });
+    return pub;
+  },
+  onAction(a) {
+    if (!S || !game) return;
+    const pl = S.players[a.seat];
+    if (pl && pl.pid === a.pid && !pl.bot) game.answer(a.seat, a.id, a.choice);
+  },
+  onChat: (m) => chat.receive(m),
+  onReady: (pid) => { if (nego) nego.ready(pid); },
+  onLobby(L) { if (!L.started) { S = null; renderWait(); show('scr-wait'); } },
+  onState(payload) {
+    const mine = payload.privs && payload.privs[myId]; delete payload.privs;
+    NDBD.syncClock(payload.hostNow);
+    S = payload; mySeat = S.players.findIndex((p) => p.pid === myId);
+    S.prompts = {}; S.plan = {};
+    if (mine && mySeat >= 0) { if (mine.prompt) S.prompts[mySeat] = mine.prompt; if (mine.plan) S.plan[mySeat] = mine.plan; }
+    if ($('#scr-game').hidden && S.phase !== 'end') { lastEv = S.evN; sentFor = 0; show('scr-game'); renderSpeed(); intro(); }
+    schedule();
+    if (S.phase === 'end') setTimeout(showEnd, 1800);
+  },
+  onPresence(ps, hostHere) {
+    if (net.isHost) { renderWait(); if (S) schedule(); }
+    else { $('#g-banner').hidden = hostHere; $('#g-banner').textContent = '📴 Host terputus. Tunggu host kembali, atau buat room baru.'; }
+  },
+});
+document.addEventListener('click', (e) => { if (e.target.closest('[data-nego-siap]')) { if (net.isHost && nego) nego.ready(myId); else net.send('ready', { pid: myId }); } });
+function renderWait() {
+  const L = net.lobby; if (!L) return;
+  $('#w-code').textContent = L.code;
+  $('#w-players').innerHTML = L.players.slice(0, 4).map((p) => `<div><span>${p.id === L.hostId ? '🏠 ' : ''}${esc(p.name)}${p.id === myId ? ' (kamu)' : ''}</span><span class="small muted">${p.meta && p.meta.mimpi ? DG.MIMPI[p.meta.mimpi][0] + ' ' + esc(DG.MIMPI[p.meta.mimpi][1]) : ''}</span></div>`).join('')
+    + (L.players.length < 4 ? `<div class="muted"><span>+ ${4 - Math.min(4, L.players.length)} keluarga bot</span></div>` : '');
+  $('#w-host').hidden = !net.isHost; $('#w-guest').hidden = net.isHost;
+}
+function leaveAll() {
+  if (timer) timer.stop(); if (nego) nego.cancel();
+  if (game && mode !== 'client') game.stop();
+  net.leave(); mode = null; S = null; game = null; $('#g-banner').hidden = true;
+  chat.setEnabled(false); chat.reset();
+}
+function newCode() { const A = 'ABCDEFGHJKMNPQRSTUVWXYZ'; return Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join(''); }
+$('#btn-host').onclick = async () => {
+  if (!net.ready()) return toast('Mode online belum siap.');
+  store.set('ndbd_name', myName()); mode = 'host';
+  try { await net.open(newCode(), true); } catch (e) { toast('Gagal terhubung: ' + e.message); mode = null; return; }
+  chat.reset(); chat.setEnabled(true); renderWait(); show('scr-wait');
+};
+async function joinRoom(code) {
+  if (!net.ready()) return toast('Mode online belum siap.');
+  code = code.trim().toUpperCase(); if (code.length !== 4) return toast('Kode room 4 huruf.');
+  store.set('ndbd_name', myName()); mode = 'client'; S = null;
+  try { await net.open(code, false); } catch (e) { toast('Gagal terhubung: ' + e.message); mode = null; return; }
+  chat.reset(); chat.setEnabled(true); net.lobby = { code, players: [] }; renderWait(); show('scr-wait');
+}
+$('#btn-join').onclick = () => joinRoom($('#in-code').value);
+$('#btn-wait-back').onclick = () => { leaveAll(); show('scr-lobby'); };
+$('#btn-share').onclick = async () => {
+  const url = location.origin + location.pathname + '?room=' + net.lobby.code;
+  const text = `Main Dari Gerobak (Negeri di Balik Daun) bareng! Kode room: ${net.lobby.code}`;
+  try { if (navigator.share) await navigator.share({ title: 'Dari Gerobak', text, url }); else { await navigator.clipboard.writeText(url); toast('Link disalin!'); } } catch (e) {}
+};
+$('#btn-start').onclick = () => {
+  const L = net.lobby;
+  const seats = L.players.slice(0, 4).map((p) => ({ name: p.name, bot: false, pid: p.id, mimpi: p.meta && p.meta.mimpi, usaha: p.meta && p.meta.usaha }));
+  const bots = ['Bu Ratna 🤖', 'Pak Karyo 🤖', 'Mas Doni 🤖', 'Mbak Lia 🤖'];
+  while (seats.length < 4) seats.push({ name: bots[seats.length], bot: true });
+  L.started = true; net.pushLobby();
+  startLocal(seats, true);
+};
+
+// ====== tooltip ======
+const hoverTip = $('#hovertip');
+const isTouch = () => matchMedia('(hover: none)').matches;
+document.addEventListener('mouseover', (e) => {
+  const t = !isTouch() && e.target.closest('[data-tip]');
+  if (!t) { hoverTip.hidden = true; return; }
+  hoverTip.textContent = t.dataset.tip; hoverTip.hidden = false;
+  const r = t.getBoundingClientRect(), w = hoverTip.offsetWidth, h = hoverTip.offsetHeight;
+  hoverTip.style.left = Math.max(6, Math.min(innerWidth - w - 6, r.left + r.width / 2 - w / 2)) + 'px';
+  hoverTip.style.top = (r.top - h - 6 < 4 ? r.bottom + 6 : r.top - h - 6) + 'px';
+});
+document.addEventListener('click', (e) => { const t = e.target.closest('[data-tip]'); if (t && isTouch() && !t.closest('button') && !t.closest('[data-lot]')) toast(t.dataset.tip, 3500); });
+
+// ====== lobby ======
+$('#in-usaha').innerHTML = JUALAN.map((j) => `<option>${j}</option>`).join('');
+$('#in-usaha').value = store.get('dg_usaha', 'Nasi Uduk');
+$('#in-usaha').onchange = () => store.set('dg_usaha', $('#in-usaha').value);
+function renderMimpi() {
+  $('#mimpi-pick').innerHTML = Object.entries(DG.MIMPI).map(([k, M]) => `<button type="button" data-m="${k}" class="${k === myMimpi ? 'on' : ''}">${M[0]} ${esc(M[1])}</button>`).join('');
+}
+$('#mimpi-pick').onclick = (e) => { const b = e.target.closest('[data-m]'); if (!b) return; myMimpi = b.dataset.m; store.set('dg_mimpi', myMimpi); renderMimpi(); };
+function refreshLobby() {
+  const done = store.get('dg_tutorial', 0);
+  $('#btn-tutorial').classList.toggle('primary', !done);
+  $('#btn-tutorial').querySelector('b').textContent = done ? '▶ Ulangi tutorial' : '▶ Tutorial (3 bab, ±6 menit)';
+  const on = !!net.ready();
+  $('#btn-host').disabled = !on; $('#btn-join').disabled = !on;
+  $('#online-note').textContent = on ? '' : 'Mode online sedang dimuat…';
+}
+$('#in-name').value = store.get('ndbd_name', '');
+$('#in-name').addEventListener('change', () => store.set('ndbd_name', myName()));
+renderMimpi(); refreshLobby();
+addEventListener('load', refreshLobby);
+const qRoom = new URLSearchParams(location.search).get('room');
+if (qRoom) { $('#in-code').value = qRoom.toUpperCase(); toast(`Isi namamu lalu tekan Gabung untuk masuk room ${qRoom.toUpperCase()}.`, 4000); }
+</script>
+</body>
+</html>
